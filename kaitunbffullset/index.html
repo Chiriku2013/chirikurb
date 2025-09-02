@@ -5,15 +5,53 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Kaitun BF Full Set — Chiriku</title>
   <style>
-    body{margin:0;padding:20px;font-family:sans-serif;background:#071428;color:#fff}
-    .btn{display:block;width:100%;padding:12px;margin:8px 0;border:none;
-         border-radius:8px;cursor:pointer;font-weight:600;
-         background:#2563eb;color:white;text-align:center}
-    .btn:hover{background:#1d4ed8}
-    .placeholder{margin-top:20px;padding:12px;background:#1e293b;border-radius:8px;position:relative}
-    .placeholder .content{pointer-events:none;user-select:none;white-space:pre-wrap}
-    .copy-btn{position:absolute;bottom:10px;right:10px;padding:6px 10px;border:none;
-              border-radius:6px;background:#475569;color:white;cursor:pointer}
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background: #071428;
+      color: #fff;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      background: #2563eb;
+      color: white;
+      text-align: center;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    .placeholder {
+      margin-top: 20px;
+      padding: 12px;
+      background: #1e293b;
+      border-radius: 8px;
+    }
+    .content {
+      white-space: pre-wrap; /* chữ dài sẽ tự xuống dòng */
+      word-wrap: break-word; /* tự động xuống dòng khi đụng cạnh */
+      user-select: none;     /* ko copy được bằng chuột */
+      display: inline;       /* để nút copy nằm cùng dòng */
+    }
+    .copy-btn {
+      margin-left: 10px;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      background: #475569;
+      color: white;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background: #334155;
+    }
   </style>
 </head>
 <body>
@@ -25,9 +63,9 @@
   </div>
 
   <div class="placeholder">
-    <div class="content" id="placeholder-content">
+    <span class="content" id="placeholder-content">
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFFullSet/refs/heads/main/KaitunBFFullSet.lua"))()
-    </div>
+    </span>
     <button class="copy-btn" id="copy-btn">Sao Chép</button>
   </div>
 
@@ -43,7 +81,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFF
       window.open('https://apkpure.com/vn/zarchiver/ru.zdevs.zarchiver/download','_blank');
     });
 
-    // Nội dung placeholder (bạn có thể sửa ở đây)
+    // Nội dung placeholder
     const secretPlaceholderText = `loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFFullSet/refs/heads/main/KaitunBFFullSet.lua"))()`;
 
     // Nút sao chép
@@ -57,4 +95,4 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFF
     });
   </script>
 </body>
-    </html>
+</html>
