@@ -6,12 +6,12 @@
   <title>Kaitun BF Full Set — Chiriku</title>
   <style>
     body{margin:0;padding:20px;font-family:sans-serif;background:#071428;color:#fff}
-    .btn{padding:10px 14px;margin:4px;border:none;border-radius:8px;cursor:pointer;
-         font-weight:600}
-    .primary{background:#2563eb;color:white}
-    .secondary{background:#334155;color:#e2e8f0}
+    .btn{display:block;width:100%;padding:12px;margin:8px 0;border:none;
+         border-radius:8px;cursor:pointer;font-weight:600;
+         background:#2563eb;color:white;text-align:center}
+    .btn:hover{background:#1d4ed8}
     .placeholder{margin-top:20px;padding:12px;background:#1e293b;border-radius:8px;position:relative}
-    .placeholder .content{pointer-events:none;user-select:none}
+    .placeholder .content{pointer-events:none;user-select:none;white-space:pre-wrap}
     .copy-btn{position:absolute;bottom:10px;right:10px;padding:6px 10px;border:none;
               border-radius:6px;background:#475569;color:white;cursor:pointer}
   </style>
@@ -19,13 +19,15 @@
 <body>
   <h1>Kaitun BF Full Set</h1>
   <div>
-    <button class="btn primary" id="btn-tai-hack">Trang Tải Hack</button>
-    <button class="btn secondary" id="btn-taskbar">Taskbar</button>
-    <button class="btn secondary" id="btn-zarchiver">Zarchiver</button>
+    <button class="btn" id="btn-tai-hack">Trang Tải Hack</button>
+    <button class="btn" id="btn-taskbar">Taskbar</button>
+    <button class="btn" id="btn-zarchiver">Zarchiver</button>
   </div>
 
   <div class="placeholder">
-    <div class="content" id="placeholder-content">loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFFullSet/refs/heads/main/KaitunBFFullSet.lua"))()</div>
+    <div class="content" id="placeholder-content">
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFFullSet/refs/heads/main/KaitunBFFullSet.lua"))()
+    </div>
     <button class="copy-btn" id="copy-btn">Sao Chép</button>
   </div>
 
@@ -55,4 +57,4 @@
     });
   </script>
 </body>
-  </html>
+    </html>
