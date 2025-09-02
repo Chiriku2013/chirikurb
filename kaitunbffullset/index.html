@@ -7,16 +7,28 @@
   <style>
     body {
       margin: 0;
-      padding: 20px;
-      font-family: sans-serif;
+      height: 100vh; /* full chiều cao màn hình */
+      display: flex;
+      justify-content: center; /* căn giữa ngang */
+      align-items: center;     /* căn giữa dọc */
       background: #071428;
       color: #fff;
+      font-family: sans-serif;
     }
+
+    .container {
+      text-align: center; /* căn giữa chữ & nút */
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
     .btn {
       display: block;
-      width: 100%;
+      width: 250px;
       padding: 12px;
-      margin: 8px 0;
+      margin: 10px auto;
       border: none;
       border-radius: 8px;
       cursor: pointer;
@@ -24,25 +36,31 @@
       background: #2563eb;
       color: white;
       text-align: center;
+      transition: background 0.2s;
     }
     .btn:hover {
       background: #1d4ed8;
     }
+
+    /* Code box */
     .placeholder {
       margin-top: 20px;
-      padding: 12px;
+      display: inline-block;
       background: #1e293b;
       border-radius: 8px;
+      padding: 8px 10px;
+      text-align: left; /* text nằm góc trái */
     }
     .content {
-      white-space: pre-wrap; /* chữ dài sẽ tự xuống dòng */
-      word-wrap: break-word; /* tự động xuống dòng khi đụng cạnh */
-      user-select: none;     /* ko copy được bằng chuột */
-      display: inline;       /* để nút copy nằm cùng dòng */
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      user-select: none;
+      font-family: monospace;
+      font-size: 14px;
     }
     .copy-btn {
       margin-left: 10px;
-      padding: 6px 10px;
+      padding: 4px 8px;
       border: none;
       border-radius: 6px;
       background: #475569;
@@ -55,22 +73,21 @@
   </style>
 </head>
 <body>
-  <h1>Kaitun BF Full Set</h1>
-  <div>
+  <div class="container">
+    <h1>Kaitun BF Full Set</h1>
     <button class="btn" id="btn-tai-hack">Trang Tải Hack</button>
     <button class="btn" id="btn-taskbar">Taskbar</button>
     <button class="btn" id="btn-zarchiver">Zarchiver</button>
-  </div>
 
-  <div class="placeholder">
-    <span class="content" id="placeholder-content">
+    <div class="placeholder">
+      <span class="content" id="placeholder-content">
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFFullSet/refs/heads/main/KaitunBFFullSet.lua"))()
-    </span>
-    <button class="copy-btn" id="copy-btn">Sao Chép</button>
+      </span>
+      <button class="copy-btn" id="copy-btn">Sao Chép</button>
+    </div>
   </div>
 
   <script>
-    // Các link bạn sửa ở đây
     document.getElementById('btn-tai-hack').addEventListener('click', () => {
       window.open('https://www.turbolite.asia/2025/04/hack.html?m=1','_blank');
     });
@@ -81,10 +98,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFF
       window.open('https://apkpure.com/vn/zarchiver/ru.zdevs.zarchiver/download','_blank');
     });
 
-    // Nội dung placeholder
     const secretPlaceholderText = `loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/KaitunBFFullSet/refs/heads/main/KaitunBFFullSet.lua"))()`;
 
-    // Nút sao chép
     document.getElementById('copy-btn').addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(secretPlaceholderText);
