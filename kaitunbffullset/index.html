@@ -7,17 +7,17 @@
   <style>
     body {
       margin: 0;
-      height: 100vh; /* full chiều cao màn hình */
+      height: 100vh;
       display: flex;
-      justify-content: center; /* căn giữa ngang */
-      align-items: center;     /* căn giữa dọc */
+      justify-content: center;
+      align-items: center;
       background: #071428;
       color: #fff;
       font-family: sans-serif;
     }
 
     .container {
-      text-align: center; /* căn giữa chữ & nút */
+      text-align: center;
     }
 
     h1 {
@@ -44,22 +44,25 @@
 
     /* Code box */
     .placeholder {
-      margin-top: 20px;
+      margin: 20px auto 0;
       display: inline-block;
       background: #1e293b;
       border-radius: 8px;
-      padding: 8px 10px;
-      text-align: left; /* text nằm góc trái */
+      padding: 10px;
+      text-align: left;
+      max-width: 90vw; /* không vượt quá màn hình */
+      word-wrap: break-word;
     }
     .content {
+      display: inline; /* để nút có thể theo sau */
       white-space: pre-wrap;
-      word-wrap: break-word;
-      user-select: none;
       font-family: monospace;
       font-size: 14px;
+      user-select: none;
     }
     .copy-btn {
-      margin-left: 10px;
+      display: inline-block;
+      margin-left: 8px;
       padding: 4px 8px;
       border: none;
       border-radius: 6px;
