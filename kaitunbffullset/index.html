@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kaitun BF Full Set — Chiriku</title>
+  <style>
+    body{margin:0;padding:20px;font-family:sans-serif;background:#071428;color:#fff}
+    .btn{padding:10px 14px;margin:4px;border:none;border-radius:8px;cursor:pointer;
+         font-weight:600}
+    .primary{background:#2563eb;color:white}
+    .secondary{background:#334155;color:#e2e8f0}
+    .placeholder{margin-top:20px;padding:12px;background:#1e293b;border-radius:8px;position:relative}
+    .placeholder .content{pointer-events:none;user-select:none}
+    .copy-btn{position:absolute;bottom:10px;right:10px;padding:6px 10px;border:none;
+              border-radius:6px;background:#475569;color:white;cursor:pointer}
+  </style>
+</head>
+<body>
+  <h1>Kaitun BF Full Set</h1>
+  <div>
+    <button class="btn primary" id="btn-tai-hack">Trang Tải Hack</button>
+    <button class="btn secondary" id="btn-taskbar">Taskbar</button>
+    <button class="btn secondary" id="btn-zarchiver">Zarchiver</button>
+  </div>
+
+  <div class="placeholder">
+    <div class="content" id="placeholder-content">Lát cung cấp sau</div>
+    <button class="copy-btn" id="copy-btn">Sao Chép</button>
+  </div>
+
+  <script>
+    // Các link bạn sửa ở đây
+    document.getElementById('btn-tai-hack').addEventListener('click', () => {
+      window.open('https://example.com/taihack','_blank');
+    });
+    document.getElementById('btn-taskbar').addEventListener('click', () => {
+      window.open('https://example.com/taskbar','_blank');
+    });
+    document.getElementById('btn-zarchiver').addEventListener('click', () => {
+      window.open('https://example.com/zarchiver','_blank');
+    });
+
+    // Nội dung placeholder (bạn có thể sửa ở đây)
+    const secretPlaceholderText = `Lát cung cấp sau`;
+
+    // Nút sao chép
+    document.getElementById('copy-btn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(secretPlaceholderText);
+        alert('Đã sao chép nội dung!');
+      } catch (e) {
+        alert('Trình duyệt không hỗ trợ sao chép tự động.');
+      }
+    });
+  </script>
+</body>
+  </html>
