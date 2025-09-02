@@ -44,31 +44,34 @@
 
     /* Code box */
     .placeholder {
+      position: relative; /* để nút nằm trong */
       margin: 20px auto 0;
       display: inline-block;
       background: #1e293b;
       border-radius: 8px;
-      padding: 10px;
+      padding: 12px;
       text-align: left;
       max-width: 90vw; /* không vượt quá màn hình */
       word-wrap: break-word;
     }
     .content {
-      display: inline; /* để nút có thể theo sau */
       white-space: pre-wrap;
       font-family: monospace;
       font-size: 14px;
       user-select: none;
+      color: #e2e8f0;
     }
     .copy-btn {
-      display: inline-block;
-      margin-left: 8px;
-      padding: 4px 8px;
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      padding: 4px 10px;
       border: none;
       border-radius: 6px;
       background: #475569;
       color: white;
       cursor: pointer;
+      font-size: 13px;
     }
     .copy-btn:hover {
       background: #334155;
