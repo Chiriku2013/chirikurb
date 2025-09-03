@@ -1,0 +1,281 @@
+<!DOCTYPE html><html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Email 10 phút</title>
+  <style>
+    :root {
+      --bg: #0b1020; --card: #121937; --muted:#93a0ff3a; --text:#e9edff; --accent:#7e8cff; --accent-2:#b7c0ff;
+      --ok:#44d07b; --bad:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:radial-gradient(1000px 600px at 10% -20%, #1a2250, #0b1020) fixed; color:var(--text);}
+    .wrap{max-width:1000px; margin:40px auto; padding:0 16px}
+    .title{font-size:clamp(22px,2.8vw,34px); font-weight:800; letter-spacing:.3px;}
+    .sub{opacity:.85}
+    .grid{display:grid; gap:16px; grid-template-columns: 1.1fr .9fr}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }.card{background:linear-gradient(180deg, #141c42, #0f1533); border:1px solid var(--muted); border-radius:16px; box-shadow:0 10px 30px #00000055;}
+.card .hd{padding:14px 16px; border-bottom:1px solid var(--muted); display:flex; align-items:center; gap:10px}
+.card .bd{padding:16px}
+
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.pill{background:#10183a; border:1px dashed #2b356a; padding:8px 10px; border-radius:10px; font-weight:700}
+.mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+
+.input{flex:1; background:#0e1636; color:var(--text); border:1px solid #2a3571; border-radius:10px; padding:10px 12px; font-weight:700}
+.btn{cursor:pointer; border:1px solid #2c3a82; background:linear-gradient(180deg,#1a2270,#141d5c); color:var(--accent-2); padding:10px 12px; border-radius:10px; font-weight:700; transition:.2s transform,.2s opacity}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.5; cursor:not-allowed}
+.btn.ghost{background:#10183a}
+.btn.good{border-color:#1b6b46; background:linear-gradient(180deg,#1d7e57,#165e42); color:#d7ffeb}
+.btn.bad{border-color:#7b2e2e; background:linear-gradient(180deg,#a53e3e,#7a2d2d); color:#ffe6e6}
+
+.timer{font-weight:800; font-size:18px}
+
+.list{display:flex; flex-direction:column; gap:8px}
+.item{padding:12px; border:1px solid #27316a; border-radius:12px; background:#0e1534; display:grid; grid-template-columns: 1fr auto; gap:8px; cursor:pointer}
+.item:hover{background:#101a3f}
+.from{opacity:.9; font-weight:700}
+.subj{opacity:.95}
+.date{opacity:.7; font-size:12px; align-self:center}
+
+.viewer{white-space:pre-wrap; background:#0b1331; border:1px solid #27316a; border-radius:12px; padding:12px; min-height:180px}
+
+.muted{opacity:.65}
+.small{font-size:12px}
+.right{margin-left:auto}
+.badge{font-size:12px; padding:4px 8px; border-radius:999px; background:#0d1740; border:1px solid #2b356c}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title">Email 10 phút <span class="badge mono" id="version">v1.0</span></div>
+    <div class="sub muted">Vào là có email xài ngay. Hết 10 phút sẽ tự cấp email mới. Thoát trang quay lại (chưa hết giờ) vẫn giữ nguyên email & thời gian.</div><div class="grid" style="margin-top:16px">
+  <!-- Left: Controls & Inbox -->
+  <section class="card">
+    <div class="hd row">
+      <span class="pill mono" id="countdown">10:00</span>
+      <span class="muted small">Còn lại</span>
+      <button class="btn ghost right" id="btn-new" title="Tạo email mới ngay (reset 10 phút)">Tạo email mới</button>
+    </div>
+    <div class="bd">
+      <div class="row" style="margin-bottom:10px">
+        <input id="email" class="input mono" readonly value="Đang tạo..." />
+        <button id="btn-copy" class="btn">📋 Sao chép</button>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <button id="btn-refresh" class="btn">🔄 Làm mới inbox</button>
+        <span class="small muted" id="last-refresh">Chưa tải</span>
+        <span class="right small muted">Lưu cục bộ bằng localStorage</span>
+      </div>
+      <div id="inbox" class="list"></div>
+    </div>
+  </section>
+
+  <!-- Right: Message viewer -->
+  <section class="card">
+    <div class="hd row">
+      <strong>Mail</strong>
+      <span class="small muted" id="viewer-head">Chọn 1 email để xem nội dung</span>
+    </div>
+    <div class="bd">
+      <div id="viewer" class="viewer">(trống)</div>
+    </div>
+  </section>
+</div>
+
+<p class="small muted" style="margin-top:10px">Dùng API công khai của <span class="mono">mail.tm</span>. Chỉ hiển thị phần văn bản thuần (text). Một số thư HTML phức tạp có thể được giản lược để an toàn.</p>
+
+  </div><script>
+// ===== Utilities =====
+const API = 'https://api.mail.tm';
+const LS_KEY = 'tenmin_session_v1';
+const TEN_MIN_MS = 10 * 60 * 1000;
+const $ = (id)=>document.getElementById(id);
+
+function now(){ return Date.now(); }
+function fmtTime(ms){
+  if(ms < 0) ms = 0;
+  const m = Math.floor(ms/60000);
+  const s = Math.floor((ms%60000)/1000);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+function randomLocal(){
+  return 'u' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-3);
+}
+function saveSession(s){ localStorage.setItem(LS_KEY, JSON.stringify(s)); }
+function loadSession(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch{ return null; } }
+function clearSession(){ localStorage.removeItem(LS_KEY); }
+
+async function api(path, opts={}){
+  const res = await fetch(API + path, opts);
+  if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// ===== Mail session lifecycle =====
+async function getRandomDomain(){
+  const data = await api('/domains?page=1');
+  const arr = data['hydra:member'] || [];
+  if(arr.length === 0) throw new Error('Không có domain khả dụng');
+  const pick = arr[Math.floor(Math.random()*arr.length)].domain; // e.g., "@mail.tm" handled below
+  return pick;
+}
+
+async function createAccount(){
+  const domain = await getRandomDomain();
+  const address = `${randomLocal()}@${domain.replace(/^@/, '')}`;
+  const password = 'p_' + Math.random().toString(36).slice(2) + '!A1';
+  // 1) Create account
+  await api('/accounts', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ address, password })
+  });
+  // 2) Login to get token
+  const tok = await api('/token', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ address, password })
+  });
+  const expiresAt = now() + TEN_MIN_MS;
+  const session = { address, password, token: tok.token, id: tok.id || null, expiresAt };
+  saveSession(session);
+  return session;
+}
+
+async function ensureSession(){
+  let s = loadSession();
+  if(!s || !s.address || !s.token || !s.expiresAt){
+    s = await createAccount();
+  } else if (s.expiresAt <= now()) {
+    // expired → new mailbox
+    s = await createAccount();
+  } else {
+    // sanity check: try /me to verify token; if fails, recreate
+    try{
+      await api('/me', { headers:{ 'Authorization': 'Bearer ' + s.token } });
+    }catch(e){
+      s = await createAccount();
+    }
+  }
+  return s;
+}
+
+// ===== UI state =====
+let g = { session:null, timerId:null };
+
+function mountSessionUI(){
+  $('email').value = g.session.address;
+  updateCountdown();
+  if(g.timerId) clearInterval(g.timerId);
+  g.timerId = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown(){
+  const left = (g.session.expiresAt - now());
+  $('countdown').textContent = fmtTime(left);
+  if(left <= 0){
+    clearInterval(g.timerId);
+    newMailbox(true);
+  }
+}
+
+async function newMailbox(userAction=false){
+  toggleBusy(true);
+  try{
+    g.session = await createAccount();
+    mountSessionUI();
+    $('viewer').textContent = '(trống)';
+    $('viewer-head').textContent = 'Chọn 1 email để xem nội dung';
+    renderInbox([]);
+  }catch(e){
+    alert('Lỗi tạo email mới: ' + e.message);
+  }finally{ toggleBusy(false); }
+}
+
+function toggleBusy(b){
+  $('btn-refresh').disabled = b;
+  $('btn-copy').disabled = b;
+  $('btn-new').disabled = b;
+}
+
+// ===== Inbox =====
+async function fetchMessages(){
+  if(!g.session) return;
+  try{
+    toggleBusy(true);
+    const data = await api('/messages?limit=50', { headers:{ 'Authorization':'Bearer '+g.session.token }});
+    const list = (data['hydra:member']||[]).sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+    renderInbox(list);
+    $('last-refresh').textContent = 'Cập nhật: ' + new Date().toLocaleTimeString();
+  }catch(e){
+    $('last-refresh').textContent = 'Lỗi tải: ' + e.message;
+  }finally{ toggleBusy(false); }
+}
+
+function renderInbox(list){
+  const box = $('inbox');
+  if(!list || list.length === 0){ box.innerHTML = '<div class="muted">Chưa có email...</div>'; return; }
+  box.innerHTML = '';
+  for(const m of list){
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div>
+        <div class="from">${escapeHtml(m.from && m.from.address || '(ẩn)')}</div>
+        <div class="subj">${escapeHtml(m.subject || '(không tiêu đề)')}</div>
+      </div>
+      <div class="date">${new Date(m.createdAt).toLocaleString()}</div>
+    `;
+    el.addEventListener('click', ()=> openMessage(m.id));
+    box.appendChild(el);
+  }
+}
+
+async function openMessage(id){
+  try{
+    toggleBusy(true);
+    const m = await api('/messages/'+id, { headers:{ 'Authorization':'Bearer '+g.session.token }});
+    $('viewer-head').textContent = `${m.subject || '(không tiêu đề)'} — từ ${m.from && m.from.address || '(ẩn)'}`;
+    const body = (m.text || '').trim();
+    $('viewer').textContent = body || '(Nội dung trống hoặc chỉ có HTML)';
+  }catch(e){
+    $('viewer').textContent = 'Lỗi mở thư: ' + e.message;
+  }finally{ toggleBusy(false); }
+}
+
+// ===== Helpers =====
+function escapeHtml(s){
+  return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+async function copyEmail(){
+  try{
+    await navigator.clipboard.writeText(g.session.address);
+    $('btn-copy').textContent = '✅ Đã sao chép';
+    setTimeout(()=> $('btn-copy').textContent = '📋 Sao chép', 1200);
+  }catch{ alert('Không thể sao chép, hãy bôi đen và Ctrl/Cmd+C'); }
+}
+
+// ===== Events =====
+$('btn-copy').addEventListener('click', copyEmail);
+$('btn-refresh').addEventListener('click', fetchMessages);
+$('btn-new').addEventListener('click', ()=> newMailbox(true));
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible') updateCountdown();
+});
+
+// ===== Init =====
+(async function init(){
+  toggleBusy(true);
+  try{
+    g.session = await ensureSession();
+    mountSessionUI();
+    await fetchMessages();
+  }catch(e){
+    alert('Không khởi tạo được: ' + e.message);
+  }finally{ toggleBusy(false); }
+})();
+</script></body>
+</html>
