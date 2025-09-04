@@ -247,9 +247,11 @@
       }
     }
 
-    // Search note
-    searchInput.addEventListener("keypress", async (e) => {
+    // Search note (đã fix Enter mobile)
+    searchInput.addEventListener("keydown", async (e) => {
       if (e.key === "Enter") {
+        e.preventDefault(); // chặn nhảy xuống input khác
+
         const name = searchInput.value.trim();
         if (!name) return;
 
