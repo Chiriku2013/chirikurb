@@ -28,7 +28,7 @@
     button.add { background: #9333ea; color: white; }
     button.raw { background: #f97316; color: white; }
     button.delete { background: #dc2626; color: white; }
-    input[type="text"] {
+    input[type="text"], input[type="search"] {
       padding: 6px;
       border-radius: 6px;
       border: none;
@@ -76,7 +76,7 @@
 
   <!-- Search bar -->
   <div class="searchbar">
-    <input type="text" id="searchNote" placeholder="Tìm note..." />
+    <input type="search" id="searchNote" placeholder="Tìm note..." />
   </div>
 
   <!-- Toolbar -->
@@ -101,18 +101,16 @@
     const nameInput = document.getElementById("noteName");
     const searchInput = document.getElementById("searchNote");
 
-    // ==================================
     function getToken() {
-      const junk = ["!!", "xyz", "@@", "###", "%%%$", "123", "😈", "()", ">>>"];
+      const junk = ["!!","xyz","@@","###","%%%$","123","😈","()",">>>"];
       const scrambled = [
-        "Z2", junk[0], "hwX", junk[2], "1ly", junk[5], "OG", "NKV", junk[3],
-        "3FGM", "ERt", junk[1], "dWV1", "QTc", "1cT", "lEVm", junk[7], "Q0U",
-        "U1R", "aVh", junk[4], "pdD", "QzW", "jVE", "eQ==", junk[6]
+        "Z2",junk[0],"hwX",junk[2],"1ly",junk[5],"OG","NKV",junk[3],
+        "3FGM","ERt",junk[1],"dWV1","QTc","1cT","lEVm",junk[7],"Q0U",
+        "U1R","aVh",junk[4],"pdD","QzW","jVE","eQ==",junk[6]
       ];
       const filtered = scrambled.filter(s => !junk.includes(s)).join("");
       return atob(filtered);
     }
-    // ==================================
 
     function updateLineNumbers() {
       const lines = textarea.value.split("\n").length;
@@ -129,7 +127,6 @@
       lineNumbers.scrollTop = textarea.scrollTop;
     });
 
-    // init
     textarea.value = "";
     updateLineNumbers();
 
@@ -141,7 +138,6 @@
       const name = nameInput.value.trim();
       if (!name) return alert("Nhập tên note trước!");
       const content = getPlainText();
-
       const token = getToken();
       const apiUrl = `https://api.github.com/repos/Chiriku2013/chirikurb/contents/note-raw/save/${name}.txt`;
 
@@ -157,25 +153,18 @@
         })
       });
 
-      if (res.ok) {
-        alert("✅ Đã lưu note " + name + " lên GitHub!");
-      } else {
-        alert("❌ Lỗi khi lưu note!");
-      }
+      res.ok ? alert("✅ Đã lưu note " + name + " lên GitHub!") : alert("❌ Lỗi khi lưu note!");
     }
 
     async function editNote() {
       const name = nameInput.value.trim();
       if (!name) return alert("Nhập tên note trước!");
-      textarea.removeAttribute("readonly"); // cho phép chỉnh sửa
-
+      textarea.removeAttribute("readonly");
       const content = getPlainText();
       const token = getToken();
       const apiUrl = `https://api.github.com/repos/Chiriku2013/chirikurb/contents/note-raw/save/${name}.txt`;
 
-      const old = await fetch(apiUrl, {
-        headers: { "Authorization": `token ${token}` }
-      }).then(r => r.json());
+      const old = await fetch(apiUrl, { headers: { "Authorization": `token ${token}` }}).then(r => r.json());
 
       const res = await fetch(apiUrl, {
         method: "PUT",
@@ -193,9 +182,7 @@
       if (res.ok) {
         alert("✏️ Đã chỉnh sửa note " + name);
         textarea.setAttribute("readonly", true);
-      } else {
-        alert("❌ Lỗi khi chỉnh sửa!");
-      }
+      } else alert("❌ Lỗi khi chỉnh sửa!");
     }
 
     function addNote() {
@@ -208,23 +195,17 @@
     function openRaw() {
       const name = nameInput.value.trim();
       if (!name) return alert("Nhập tên note trước!");
-      window.open(
-        `https://chiriku2013.github.io/chirikurb/note-raw/save/${name}.txt`,
-        "_blank"
-      );
+      window.open(`https://chiriku2013.github.io/chirikurb/note-raw/save/${name}.txt`, "_blank");
     }
 
     async function deleteNote() {
       const name = nameInput.value.trim();
       if (!name) return alert("Nhập tên note trước!");
       if (!confirm("Bạn có chắc muốn xoá note " + name + "?")) return;
-
       const token = getToken();
       const apiUrl = `https://api.github.com/repos/Chiriku2013/chirikurb/contents/note-raw/save/${name}.txt`;
 
-      const old = await fetch(apiUrl, {
-        headers: { "Authorization": `token ${token}` }
-      }).then(r => r.json());
+      const old = await fetch(apiUrl, { headers: { "Authorization": `token ${token}` }}).then(r => r.json());
 
       const res = await fetch(apiUrl, {
         method: "DELETE",
@@ -242,16 +223,13 @@
         alert("🗑️ Đã xoá note " + name);
         textarea.value = "";
         updateLineNumbers();
-      } else {
-        alert("❌ Lỗi khi xoá!");
-      }
+      } else alert("❌ Lỗi khi xoá!");
     }
 
-    // Search note (đã fix Enter mobile)
+    // Search note (fix Enter mobile)
     searchInput.addEventListener("keydown", async (e) => {
       if (e.key === "Enter") {
-        e.preventDefault(); // chặn nhảy xuống input khác
-
+        e.preventDefault(); // chặn submit + chặn nhảy ô khác
         const name = searchInput.value.trim();
         if (!name) return;
 
@@ -260,12 +238,11 @@
           const res = await fetch(url);
           if (!res.ok) throw new Error("Không tìm thấy note!");
           const text = await res.text();
-
           nameInput.value = name;
           textarea.value = text;
-          textarea.setAttribute("readonly", true); // chỉ đọc khi search
+          textarea.setAttribute("readonly", true);
           updateLineNumbers();
-        } catch (err) {
+        } catch {
           alert("❌ Note không tồn tại!");
         }
       }
