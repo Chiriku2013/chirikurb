@@ -12,7 +12,7 @@
       background: #0f1724;
       color: #fff;
     }
-    .toolbar {
+    .toolbar, .searchbar {
       margin-bottom: 10px;
     }
     button {
@@ -66,10 +66,20 @@
       overflow: auto;
       white-space: pre;
     }
+    textarea[readonly] {
+      color: #cbd5e1;
+    }
   </style>
 </head>
 <body>
   <h1>Note/Raw — Chiriku Roblox</h1>
+
+  <!-- Search bar -->
+  <div class="searchbar">
+    <input type="text" id="searchNote" placeholder="Tìm note..." />
+  </div>
+
+  <!-- Toolbar -->
   <div class="toolbar">
     <input type="text" id="noteName" placeholder="Tên note..." />
     <button class="save" onclick="saveNote()">Save</button>
@@ -79,15 +89,17 @@
     <button class="delete" onclick="deleteNote()">Delete</button>
   </div>
 
+  <!-- Editor -->
   <div class="editor">
     <div class="line-numbers" id="lineNumbers"></div>
-    <textarea id="noteBox" spellcheck="false"></textarea>
+    <textarea id="noteBox" spellcheck="false" readonly></textarea>
   </div>
 
   <script>
     const textarea = document.getElementById("noteBox");
     const lineNumbers = document.getElementById("lineNumbers");
     const nameInput = document.getElementById("noteName");
+    const searchInput = document.getElementById("searchNote");
 
     // ==================================
     function getToken() {
@@ -155,8 +167,9 @@
     async function editNote() {
       const name = nameInput.value.trim();
       if (!name) return alert("Nhập tên note trước!");
-      const content = getPlainText();
+      textarea.removeAttribute("readonly"); // cho phép chỉnh sửa
 
+      const content = getPlainText();
       const token = getToken();
       const apiUrl = `https://api.github.com/repos/Chiriku2013/chirikurb/contents/note-raw/save/${name}.txt`;
 
@@ -179,6 +192,7 @@
 
       if (res.ok) {
         alert("✏️ Đã chỉnh sửa note " + name);
+        textarea.setAttribute("readonly", true);
       } else {
         alert("❌ Lỗi khi chỉnh sửa!");
       }
@@ -187,6 +201,7 @@
     function addNote() {
       nameInput.value = "";
       textarea.value = "";
+      textarea.removeAttribute("readonly");
       updateLineNumbers();
     }
 
@@ -231,6 +246,28 @@
         alert("❌ Lỗi khi xoá!");
       }
     }
+
+    // Search note
+    searchInput.addEventListener("keypress", async (e) => {
+      if (e.key === "Enter") {
+        const name = searchInput.value.trim();
+        if (!name) return;
+
+        const url = `https://chiriku2013.github.io/chirikurb/note-raw/save/${name}.txt`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Không tìm thấy note!");
+          const text = await res.text();
+
+          nameInput.value = name;
+          textarea.value = text;
+          textarea.setAttribute("readonly", true); // chỉ đọc khi search
+          updateLineNumbers();
+        } catch (err) {
+          alert("❌ Note không tồn tại!");
+        }
+      }
+    });
   </script>
 </body>
 </html>
