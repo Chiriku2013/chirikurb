@@ -83,7 +83,7 @@
   <div class="toolbar">
     <input type="text" id="noteName" placeholder="Tên note..." />
     <button class="save" onclick="saveNote()">Save</button>
-    <button class="edit" onclick="editNote()">Edit</button>
+    <button class="edit" onclick="startEdit()">Edit</button>
     <button class="add" onclick="addNote()">Add</button>
     <button class="raw" onclick="openRaw()">Raw</button>
     <button class="delete" onclick="deleteNote()">Delete</button>
@@ -134,12 +134,21 @@
       return textarea.value;
     }
 
+    // Save note (create or update)
     async function saveNote() {
       const name = nameInput.value.trim();
       if (!name) return alert("Nhập tên note trước!");
       const content = getPlainText();
       const token = getToken();
       const apiUrl = `https://api.github.com/repos/Chiriku2013/chirikurb/contents/note-raw/save/${name}.txt`;
+
+      // check sha nếu file đã tồn tại
+      let sha = undefined;
+      const old = await fetch(apiUrl, { headers: { "Authorization": `token ${token}` }});
+      if (old.ok) {
+        const data = await old.json();
+        sha = data.sha;
+      }
 
       const res = await fetch(apiUrl, {
         method: "PUT",
@@ -149,42 +158,27 @@
         },
         body: JSON.stringify({
           message: `Save note ${name}`,
-          content: btoa(unescape(encodeURIComponent(content)))
-        })
-      });
-
-      res.ok ? alert("✅ Đã lưu note " + name + " lên GitHub!") : alert("❌ Lỗi khi lưu note!");
-    }
-
-    async function editNote() {
-      const name = nameInput.value.trim();
-      if (!name) return alert("Nhập tên note trước!");
-      textarea.removeAttribute("readonly");
-      const content = getPlainText();
-      const token = getToken();
-      const apiUrl = `https://api.github.com/repos/Chiriku2013/chirikurb/contents/note-raw/save/${name}.txt`;
-
-      const old = await fetch(apiUrl, { headers: { "Authorization": `token ${token}` }}).then(r => r.json());
-
-      const res = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "Authorization": `token ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: `Edit note ${name}`,
           content: btoa(unescape(encodeURIComponent(content))),
-          sha: old.sha
+          ...(sha ? { sha } : {})
         })
       });
 
       if (res.ok) {
-        alert("✏️ Đã chỉnh sửa note " + name);
+        alert("✅ Đã lưu note " + name + " lên GitHub!");
         textarea.setAttribute("readonly", true);
-      } else alert("❌ Lỗi khi chỉnh sửa!");
+      } else {
+        alert("❌ Lỗi khi lưu note!");
+      }
     }
 
+    // Chỉ bật chế độ chỉnh sửa
+    function startEdit() {
+      if (!nameInput.value.trim()) return alert("Nhập tên note trước!");
+      textarea.removeAttribute("readonly");
+      alert("✏️ Đã mở chế độ chỉnh sửa, sửa xong nhớ bấm Save!");
+    }
+
+    // Add = tạo note mới
     function addNote() {
       nameInput.value = "";
       textarea.value = "";
@@ -226,10 +220,10 @@
       } else alert("❌ Lỗi khi xoá!");
     }
 
-    // Search note (fix Enter mobile)
+    // Search note (Enter trên mobile cũng ok)
     searchInput.addEventListener("keydown", async (e) => {
       if (e.key === "Enter") {
-        e.preventDefault(); // chặn submit + chặn nhảy ô khác
+        e.preventDefault();
         const name = searchInput.value.trim();
         if (!name) return;
 
