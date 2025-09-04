@@ -42,7 +42,6 @@
       border-radius: 8px;
       color: #fff;
       overflow: auto;
-      white-space: pre;
       font-family: monospace;
       line-height: 1.4;
     }
@@ -52,9 +51,12 @@
       text-align: right;
       margin-right: 10px;
       color: #94a3b8;
-      user-select: none;
+      user-select: none; /* không select được số */
     }
-    .text { flex: 1; white-space: pre-wrap; }
+    .text {
+      flex: 1;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -67,7 +69,7 @@
     <button class="raw" onclick="openRaw()">Raw</button>
     <button class="delete" onclick="deleteNote()">Delete</button>
   </div>
-  <div id="noteBox" contenteditable="true"></div>
+  <div id="noteBox"></div>
 
   <script>
     const box = document.getElementById("noteBox");
@@ -75,36 +77,96 @@
 
     // ====== Token Protect (scrambled + junk) ======
     function getToken() {
-      const junk = [
-        "!!", "xyz", "@@", "###", "%%%$", "123", "😈", "()", ">>>"
-      ];
-
+      const junk = ["!!", "xyz", "@@", "###", "%%%$", "123", "😈", "()", ">>>"];
       const scrambled = [
         "Z2", junk[0], "hwX", junk[2], "1ly", junk[5], "OG", "NKV", junk[3],
         "3FGM", "ERt", junk[1], "dWV1", "QTc", "1cT", "lEVm", junk[7], "Q0U",
         "U1R", "aVh", junk[4], "pdD", "QzW", "jVE", "eQ==", junk[6]
       ];
-
       const filtered = scrambled.filter(s => !junk.includes(s)).join("");
       return atob(filtered);
     }
     // ==================================
 
+    // Vẽ text ra với số dòng
     function renderText(text) {
       const lines = text.split("\n");
       box.innerHTML = "";
       lines.forEach((line, i) => {
         const div = document.createElement("div");
         div.className = "line";
-        div.innerHTML = `<div class="num">${i+1}</div><div class="text">${line}</div>`;
+
+        const num = document.createElement("div");
+        num.className = "num";
+        num.innerText = i + 1;
+
+        const txt = document.createElement("div");
+        txt.className = "text";
+        txt.contentEditable = "true";
+        txt.innerText = line;
+
+        div.appendChild(num);
+        div.appendChild(txt);
         box.appendChild(div);
       });
     }
 
     function getPlainText() {
       return Array.from(box.querySelectorAll(".text"))
-        .map(div => div.innerText).join("\n");
+        .map(div => div.innerText)
+        .join("\n");
     }
+
+    // Tự cập nhật số dòng khi gõ
+    box.addEventListener("input", () => {
+      renderText(getPlainText());
+    });
+
+    // Xử lý Enter để thêm dòng mới
+    box.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const sel = window.getSelection();
+        const range = sel.getRangeAt(0);
+        const node = range.startContainer;
+        const lineDiv = node.closest(".line");
+        const textDiv = lineDiv.querySelector(".text");
+
+        const cursorPos = range.startOffset;
+        const text = textDiv.innerText;
+
+        const before = text.slice(0, cursorPos);
+        const after = text.slice(cursorPos);
+
+        textDiv.innerText = before;
+
+        const newLine = document.createElement("div");
+        newLine.className = "line";
+
+        const num = document.createElement("div");
+        num.className = "num";
+        num.innerText = "?";
+
+        const txt = document.createElement("div");
+        txt.className = "text";
+        txt.contentEditable = "true";
+        txt.innerText = after;
+
+        newLine.appendChild(num);
+        newLine.appendChild(txt);
+
+        lineDiv.insertAdjacentElement("afterend", newLine);
+
+        renderText(getPlainText());
+
+        const newTxt = box.querySelectorAll(".text")[Array.from(box.children).indexOf(newLine)];
+        const range2 = document.createRange();
+        range2.setStart(newTxt, 0);
+        range2.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range2);
+      }
+    });
 
     async function saveNote() {
       const name = nameInput.value.trim();
@@ -141,7 +203,6 @@
       const token = getToken();
       const apiUrl = `https://api.github.com/repos/Chiriku2013/chirikurb/contents/note-raw/save/${name}.txt`;
 
-      // Lấy SHA cũ để update
       const old = await fetch(apiUrl, {
         headers: { "Authorization": `token ${token}` }
       }).then(r => r.json());
@@ -169,7 +230,6 @@
     function addNote() {
       nameInput.value = "";
       renderText("");
-      box.contentEditable = "true";
     }
 
     function openRaw() {
@@ -213,8 +273,8 @@
       }
     }
 
-    // Khởi tạo trống
+    // Khởi tạo rỗng
     renderText("");
   </script>
 </body>
-  </html>
+</html>
