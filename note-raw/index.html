@@ -34,28 +34,37 @@
       border: none;
       width: 200px;
     }
-    #noteBox {
-      width: 100%;
-      height: 70vh;
-      padding: 10px;
-      background: #1e293b;
+    .editor {
+      display: flex;
       border-radius: 8px;
-      color: #fff;
-      overflow: auto;
-      font-family: monospace;
-      line-height: 1.4;
+      background: #1e293b;
+      overflow: hidden;
+      height: 70vh;
     }
-    .line { display: flex; }
-    .num {
-      width: 40px;
-      text-align: right;
-      margin-right: 10px;
+    .line-numbers {
+      background: #0f172a;
       color: #94a3b8;
-      user-select: none; /* không select được số */
+      padding: 10px 4px;
+      text-align: right;
+      user-select: none;
+      overflow: hidden;
     }
-    .text {
+    .line-numbers div {
+      height: 1.4em;
+    }
+    textarea {
       flex: 1;
-      white-space: pre-wrap;
+      padding: 10px;
+      border: none;
+      outline: none;
+      resize: none;
+      background: #1e293b;
+      color: #fff;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4em;
+      overflow: auto;
+      white-space: pre;
     }
   </style>
 </head>
@@ -69,10 +78,15 @@
     <button class="raw" onclick="openRaw()">Raw</button>
     <button class="delete" onclick="deleteNote()">Delete</button>
   </div>
-  <div id="noteBox"></div>
+
+  <div class="editor">
+    <div class="line-numbers" id="lineNumbers"></div>
+    <textarea id="noteBox" spellcheck="false"></textarea>
+  </div>
 
   <script>
-    const box = document.getElementById("noteBox");
+    const textarea = document.getElementById("noteBox");
+    const lineNumbers = document.getElementById("lineNumbers");
     const nameInput = document.getElementById("noteName");
 
     // ====== Token Protect (scrambled + junk) ======
@@ -88,85 +102,28 @@
     }
     // ==================================
 
-    // Vẽ text ra với số dòng
-    function renderText(text) {
-      const lines = text.split("\n");
-      box.innerHTML = "";
-      lines.forEach((line, i) => {
+    function updateLineNumbers() {
+      const lines = textarea.value.split("\n").length;
+      lineNumbers.innerHTML = "";
+      for (let i = 1; i <= lines; i++) {
         const div = document.createElement("div");
-        div.className = "line";
-
-        const num = document.createElement("div");
-        num.className = "num";
-        num.innerText = i + 1;
-
-        const txt = document.createElement("div");
-        txt.className = "text";
-        txt.contentEditable = "true";
-        txt.innerText = line;
-
-        div.appendChild(num);
-        div.appendChild(txt);
-        box.appendChild(div);
-      });
+        div.textContent = i;
+        lineNumbers.appendChild(div);
+      }
     }
+
+    textarea.addEventListener("input", updateLineNumbers);
+    textarea.addEventListener("scroll", () => {
+      lineNumbers.scrollTop = textarea.scrollTop;
+    });
+
+    // init
+    textarea.value = "";
+    updateLineNumbers();
 
     function getPlainText() {
-      return Array.from(box.querySelectorAll(".text"))
-        .map(div => div.innerText)
-        .join("\n");
+      return textarea.value;
     }
-
-    // Tự cập nhật số dòng khi gõ
-    box.addEventListener("input", () => {
-      renderText(getPlainText());
-    });
-
-    // Xử lý Enter để thêm dòng mới
-    box.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const sel = window.getSelection();
-        const range = sel.getRangeAt(0);
-        const node = range.startContainer;
-        const lineDiv = node.closest(".line");
-        const textDiv = lineDiv.querySelector(".text");
-
-        const cursorPos = range.startOffset;
-        const text = textDiv.innerText;
-
-        const before = text.slice(0, cursorPos);
-        const after = text.slice(cursorPos);
-
-        textDiv.innerText = before;
-
-        const newLine = document.createElement("div");
-        newLine.className = "line";
-
-        const num = document.createElement("div");
-        num.className = "num";
-        num.innerText = "?";
-
-        const txt = document.createElement("div");
-        txt.className = "text";
-        txt.contentEditable = "true";
-        txt.innerText = after;
-
-        newLine.appendChild(num);
-        newLine.appendChild(txt);
-
-        lineDiv.insertAdjacentElement("afterend", newLine);
-
-        renderText(getPlainText());
-
-        const newTxt = box.querySelectorAll(".text")[Array.from(box.children).indexOf(newLine)];
-        const range2 = document.createRange();
-        range2.setStart(newTxt, 0);
-        range2.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range2);
-      }
-    });
 
     async function saveNote() {
       const name = nameInput.value.trim();
@@ -229,7 +186,8 @@
 
     function addNote() {
       nameInput.value = "";
-      renderText("");
+      textarea.value = "";
+      updateLineNumbers();
     }
 
     function openRaw() {
@@ -267,14 +225,12 @@
 
       if (res.ok) {
         alert("🗑️ Đã xoá note " + name);
-        renderText("");
+        textarea.value = "";
+        updateLineNumbers();
       } else {
         alert("❌ Lỗi khi xoá!");
       }
     }
-
-    // Khởi tạo rỗng
-    renderText("");
   </script>
 </body>
 </html>
