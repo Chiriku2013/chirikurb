@@ -7,7 +7,7 @@ local player = Players.LocalPlayer
 loadstring(game:HttpGet("https://get.nathub.xyz/loader"))()
 
 -- QueueOnTeleport bằng link
-local link = "https://your-link-here.com/script.lua" -- thay link script bạn muốn
+local link = "https://chiriku2013.github.io/chirikurb/note-raw/save/AutoGBPS.txt" -- thay link script bạn muốn
 if syn and syn.queue_on_teleport then
     syn.queue_on_teleport("loadstring(game:HttpGet('" .. link .. "'))()")
 elseif queue_on_teleport then
