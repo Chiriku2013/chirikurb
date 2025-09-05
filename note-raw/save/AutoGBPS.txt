@@ -1,0 +1,20 @@
+--// Script Auto Execute + Rejoin sau 20s
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Chạy script gốc ngay khi execute
+loadstring(game:HttpGet("https://get.nathub.xyz/loader"))()
+
+-- QueueOnTeleport bằng link
+local link = "https://your-link-here.com/script.lua" -- thay link script bạn muốn
+if syn and syn.queue_on_teleport then
+    syn.queue_on_teleport("loadstring(game:HttpGet('" .. link .. "'))()")
+elseif queue_on_teleport then
+    queue_on_teleport("loadstring(game:HttpGet('" .. link .. "'))()")
+end
+
+-- Sau 20s sẽ rejoin
+task.delay(20, function()
+    TeleportService:Teleport(game.PlaceId, player)
+end)
