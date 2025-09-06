@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rút Gọn Link -- Chiriku Roblox</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0}
+    body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a;color:#e6eef8;padding:20px}
+    .card{width:100%;max-width:760px;background:linear-gradient(180deg,#0b1220, #071021);border-radius:12px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,.7)}
+    h1{font-size:20px;margin:0 0 8px}
+    p.small{margin:6px 0 18px;color:#98a8c7;font-size:13px}
+    .row{display:flex;gap:10px}
+    label{font-size:12px;color:#bcd0f0}
+    input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:inherit}
+    .control{margin-bottom:12px}
+    .muted{font-size:12px;color:#7f98bf}
+    button#createBtn{background:#22c55e;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer}
+    .result{margin-top:14px;padding:12px;background:rgba(255,255,255,.02);border-radius:8px;border:1px solid rgba(255,255,255,.03)}
+    .note{margin-top:12px;font-size:13px;color:#9bb0d6}
+    .links-list{margin-top:12px}
+    .links-list li{margin:6px 0}
+    .small-btn{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.05);background:transparent;color:inherit;cursor:pointer}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    .footer{margin-top:18px;font-size:12px;color:#89a3d0}
+    a.link{color:#93c5fd}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Rút Gọn Link — Chiriku Roblox</h1>
+    <p class="small">Nhập tên (ví dụ: Tên link), một ô thêm ("gì đó cũng đc, tùy") và link cần rút gọn. Nhấn <strong>Create</strong> để tạo link rút gọn. (Bản demo dùng API rút gọn công khai — link rút gọn sẽ có thể truy cập được bởi mọi người.)</p><div class="control">
+  <label>Tên (name)</label>
+  <input id="name" type="text" placeholder="Ví dụ: Bài viết hay, Tải game..." />
+  <div class="muted">Tên sẽ được lưu kèm (nếu bạn chạy backend riêng). Ở bản demo này tên chỉ dùng để hiển thị.</div>
+</div>
+
+<div class="control">
+  <label>Gì đó cũng đc, tùy (extra)</label>
+  <input id="extra" type="text" placeholder="Ghi chú, tag, ví dụ: 'mạng xã hội'" />
+</div>
+
+<div class="control">
+  <label>Link cần rút gọn</label>
+  <input id="url" type="text" placeholder="Ví dụ: https://example.com" />
+</div>
+
+<div class="row" style="margin-top:8px;align-items:center">
+  <button id="createBtn">Create</button>
+  <button id="copyLast" class="small-btn">Copy result</button>
+  <button id="openLast" class="small-btn">Open result</button>
+</div>
+
+<div id="status" class="result" style="display:none"></div>
+
+<p class="note">Lưu ý:
+  <ul>
+    <li>Trang này sử dụng <strong>shrtco.de</strong> public API để rút gọn link (demo). Link ngắn tạo ra bởi API đó là <em>global</em> — mọi người có thể truy cập URL rút gọn.</li>
+    <li>Để <strong>lưu thông tin (name / extra)</strong> cho tất cả mọi người (không lưu local), bạn cần một backend (API) hoặc dịch vụ lưu trữ công khai (ví dụ: Firebase, a small Node.js server với DB). Ở cuối file có hướng dẫn mẫu để bạn triển khai backend nếu muốn.</li>
+  </ul>
+</p>
+
+<div class="footer">Nếu bạn muốn, tôi có thể tạo luôn hướng dẫn để deploy backend (Node.js + tiny JSON DB hoặc Firebase). Bạn sẽ cần một server để "lưu cho tất cả mọi người".</div>
+
+<!-- Sample backend hint (developer): POST /api/save with JSON {name,extra,original,short} -->
+
+  </main>  <script>
+    const nameInput = document.getElementById('name');
+    const extraInput = document.getElementById('extra');
+    const urlInput = document.getElementById('url');
+    const createBtn = document.getElementById('createBtn');
+    const status = document.getElementById('status');
+    const copyLast = document.getElementById('copyLast');
+    const openLast = document.getElementById('openLast');
+
+    let lastShort = '';
+
+    function showStatus(html){
+      status.style.display = 'block';
+      status.innerHTML = html;
+    }
+
+    function isValidUrl(str){
+      try{ new URL(str); return true }catch(e){ return false }
+    }
+
+    createBtn.addEventListener('click', async ()=>{
+      const original = urlInput.value.trim();
+      const name = nameInput.value.trim();
+      const extra = extraInput.value.trim();
+
+      if(!original){ showStatus('<strong style="color:#ffd066">Vui lòng nhập link cần rút gọn.</strong>'); return }
+      if(!isValidUrl(original)) { showStatus('<strong style="color:#ff8b8b">Link không hợp lệ. Hãy bắt đầu bằng https://</strong>'); return }
+
+      showStatus('Đang tạo link ngắn...');
+      try{
+        // Using shrtco.de public API (no API key). It returns JSON and supports CORS.
+        const resp = await fetch('https://api.shrtco.de/v2/shorten?url=' + encodeURIComponent(original));
+        const data = await resp.json();
+        if(!data || !data.ok){ throw new Error((data && data.error) || 'Lỗi từ dịch vụ rút gọn') }
+
+        const short = data.result.full_short_link;
+        lastShort = short;
+
+        // Show result, and include name/extra for user's reference.
+        showStatus(`
+          <div><strong>Short:</strong> <a class="link" href="${short}" target="_blank" rel="noreferrer">${short}</a></div>
+          <div><strong>Original:</strong> ${original}</div>
+          <div><strong>Name:</strong> ${name || '<em>(không đặt)</em>'} &nbsp; <strong>Extra:</strong> ${extra || '<em>(trống)</em>'}</div>
+          <div style="margin-top:8px;color:#b9d6ac">Link được tạo bằng dịch vụ công khai — link rút gọn có thể truy cập được bởi mọi người.</div>
+        `);
+
+        // Optional: try to save metadata to a backend API if you have one at /api/save
+        // NOTE: this is just an example call — your server must implement this endpoint.
+        /*
+        try{
+          await fetch('/api/save', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({name, extra, original, short})
+          });
+        }catch(e){ console.warn('Could not save metadata to /api/save (no server).', e) }
+        */
+
+      }catch(err){
+        console.error(err);
+        showStatus('<strong style="color:#ffb4b4">Tạo link thất bại: '+ (err.message||err) + '</strong>');
+      }
+    });
+
+    copyLast.addEventListener('click', ()=>{
+      if(!lastShort) return showStatus('<em>Chưa có kết quả để copy.</em>');
+      navigator.clipboard.writeText(lastShort).then(()=>{
+        showStatus('Đã copy: <a class="link" href="'+lastShort+'" target="_blank" rel="noreferrer">'+lastShort+'</a>');
+      }).catch(()=> showStatus('Không thể copy vào clipboard.'));
+    });
+
+    openLast.addEventListener('click', ()=>{
+      if(!lastShort) return showStatus('<em>Chưa có kết quả để mở.</em>');
+      window.open(lastShort, '_blank');
+    });
+  </script>  <!--
+    Hướng dẫn nhanh để lưu metadata (name/extra) cho tất cả mọi người (không dùng localStorage):
+
+    1) Triển khai một backend nhỏ (Node.js + Express) với endpoint POST /api/save để nhận {name,extra,original,short}
+    2) Lưu dữ liệu vào database (MongoDB, Firebase, PostgreSQL) hoặc file JSON (lowdb) và cho phép GET /api/list để lấy danh sách.
+    3) Cấu hình CORS để frontend có thể gọi API.
+
+    Ví dụ Node.js nhanh (server.js):
+
+    const express = require('express');
+    const cors = require('cors');
+    const fs = require('fs');
+    const app = express();
+    app.use(cors());
+    app.use(express.json());
+
+    const DB = 'db.json';
+    function readDB(){ try{return JSON.parse(fs.readFileSync(DB,'utf8'))}catch(e){return []} }
+    function writeDB(arr){ fs.writeFileSync(DB, JSON.stringify(arr, null, 2)) }
+
+    app.post('/api/save', (req,res)=>{
+      const {name,extra,original,short} = req.body;
+      if(!original||!short) return res.status(400).json({error:'missing'});
+      const items = readDB();
+      items.push({id:Date.now(), name, extra, original, short, created: new Date().toISOString()});
+      writeDB(items);
+      res.json({ok:true});
+    });
+
+    app.get('/api/list', (req,res)=>{ res.json(readDB()) });
+
+    app.listen(3000, ()=>console.log('Listening on :3000'));
+
+    Triển khai server này trên Render / Railway / Fly / Vercel (nếu dùng serverless, chuyển sang file-based storage khác) và cấu hình HTTPS.
+  --></body>
+  </html>
