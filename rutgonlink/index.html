@@ -5,41 +5,43 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Rút Gọn Link -- Chiriku Roblox</title>
   <style>
-    body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a;color:#e6eef8;font-family:sans-serif;margin:0}
-    .card{width:100%;max-width:760px;background:#111827;border-radius:12px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,.7)}
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0}
+    body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a;color:#e6eef8;padding:20px}
+    .card{width:100%;max-width:760px;background:linear-gradient(180deg,#0b1220, #071021);border-radius:12px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,.7)}
     h1{font-size:20px;margin:0 0 8px}
-    p{font-size:13px;color:#9ca3af}
-    label{font-size:12px;color:#cbd5e1}
-    input{width:100%;padding:10px;border-radius:8px;border:1px solid #374151;background:#1f2937;color:#f9fafb}
+    p.small{margin:6px 0 18px;color:#98a8c7;font-size:13px}
+    .row{display:flex;gap:10px}
+    label{font-size:12px;color:#bcd0f0}
+    input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:inherit}
     .control{margin-bottom:12px}
-    button{cursor:pointer;border:none;border-radius:8px;padding:10px 16px;font-weight:600}
-    #createBtn{background:#22c55e;color:#fff}
-    .small-btn{background:#374151;color:#e5e7eb;margin-left:8px}
-    .result{margin-top:14px;padding:12px;background:#1e293b;border-radius:8px;border:1px solid #334155}
+    .muted{font-size:12px;color:#7f98bf}
+    button#createBtn{background:#22c55e;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer}
+    .result{margin-top:14px;padding:12px;background:rgba(255,255,255,.02);border-radius:8px;border:1px solid rgba(255,255,255,.03)}
+    .small-btn{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.05);background:transparent;color:inherit;cursor:pointer}
     a.link{color:#93c5fd}
   </style>
 </head>
 <body>
   <main class="card">
     <h1>Rút Gọn Link — Chiriku Roblox</h1>
-    <p>Nhập <b>Tên</b>, <b>Suffix</b> ("gì đó cũng đc") và <b>Link</b> cần rút gọn. Bấm <b>Create</b> để tạo.</p>
-
+    <p class="small">Nhập tên (name), suffix (extra) và link cần rút gọn. Nhấn <strong>Create</strong> để tạo.</p>
+    
     <div class="control">
       <label>Tên (name)</label>
-      <input id="name" type="text" placeholder="Ví dụ: haha">
+      <input id="name" type="text" placeholder="Ví dụ: haha" />
     </div>
 
     <div class="control">
       <label>Suffix (extra)</label>
-      <input id="extra" type="text" placeholder="Ví dụ: com">
+      <input id="extra" type="text" placeholder="Ví dụ: com" />
     </div>
 
     <div class="control">
       <label>Link cần rút gọn</label>
-      <input id="url" type="text" placeholder="Ví dụ: https://example.com">
+      <input id="url" type="text" placeholder="Ví dụ: https://example.com" />
     </div>
 
-    <div>
+    <div class="row" style="margin-top:8px;align-items:center">
       <button id="createBtn">Create</button>
       <button id="copyLast" class="small-btn">Copy</button>
       <button id="openLast" class="small-btn">Open</button>
@@ -78,18 +80,15 @@
 
       showStatus('Đang tạo link ngắn...');
       try{
-        const resp = await fetch("https://cleanuri.com/api/v1/shorten", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: "url=" + encodeURIComponent(original)
-        });
+        // API này hỗ trợ CORS, dùng được trong browser
+        const resp = await fetch('https://api.shrtco.de/v2/shorten?url=' + encodeURIComponent(original));
         const data = await resp.json();
-        if(!data || !data.result_url){ throw new Error("Lỗi từ API CleanURI") }
+        if(!data || !data.ok){ throw new Error((data && data.error) || 'Lỗi từ dịch vụ rút gọn'); }
 
-        const short = data.result_url;
+        const short = data.result.full_short_link;
         lastShort = short;
 
-        const custom = (name && extra) ? `${name}.${extra}` : "(chưa nhập)`;
+        const custom = (name && extra) ? `${name}.${extra}` : "(không nhập)";
 
         showStatus(`
           <div><strong>Custom:</strong> ${custom}</div>
@@ -98,6 +97,7 @@
         `);
 
       }catch(err){
+        console.error(err);
         showStatus('<strong style="color:#ffb4b4">Tạo link thất bại: '+ (err.message||err) + '</strong>');
       }
     });
