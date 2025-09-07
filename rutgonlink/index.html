@@ -52,69 +52,67 @@
   </main>
 
   <script>
-    const nameInput = document.getElementById('name');
-    const extraInput = document.getElementById('extra');
-    const urlInput = document.getElementById('url');
-    const createBtn = document.getElementById('createBtn');
-    const status = document.getElementById('status');
-    const copyLast = document.getElementById('copyLast');
-    const openLast = document.getElementById('openLast');
+  const nameInput = document.getElementById('name');
+  const extraInput = document.getElementById('extra');
+  const urlInput = document.getElementById('url');
+  const createBtn = document.getElementById('createBtn');
+  const status = document.getElementById('status');
+  const copyLast = document.getElementById('copyLast');
+  const openLast = document.getElementById('openLast');
 
-    let lastShort = '';
+  let lastShort = '';
 
-    function showStatus(html){
-      status.style.display = 'block';
-      status.innerHTML = html;
+  function showStatus(html){
+    status.style.display = 'block';
+    status.innerHTML = html;
+  }
+
+  function isValidUrl(str){
+    try{ new URL(str); return true }catch(e){ return false }
+  }
+
+  createBtn.addEventListener('click', async ()=>{
+    const original = urlInput.value.trim();
+    const name = nameInput.value.trim();
+    const extra = extraInput.value.trim();
+
+    if(!original) return showStatus('<strong style="color:#ffd066">Vui lòng nhập link cần rút gọn.</strong>');
+    if(!isValidUrl(original)) return showStatus('<strong style="color:#ff8b8b">Link không hợp lệ. Hãy bắt đầu bằng https://</strong>');
+
+    showStatus('Đang tạo link ngắn...');
+
+    try {
+      // Gọi API qua AllOrigins để tránh CORS
+      const apiUrl = 'https://api.shrtco.de/v2/shorten?url=' + encodeURIComponent(original);
+      const resp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl));
+      const data = await resp.json();
+
+      if(!data || !data.ok) throw new Error(data.error || 'Lỗi API');
+
+      const short = data.result.full_short_link;
+      lastShort = short;
+
+      showStatus(`
+        <div><strong>Short:</strong> <a class="link" href="${short}" target="_blank">${short}</a></div>
+        <div><strong>Original:</strong> ${original}</div>
+        <div><strong>Name:</strong> ${name || '<em>(không đặt)</em>'} &nbsp; <strong>Extra:</strong> ${extra || '<em>(trống)</em>'}</div>
+      `);
+    } catch(err) {
+      showStatus('<strong style="color:#ffb4b4">Tạo link thất bại: '+ (err.message||err) + '</strong>');
     }
+  });
 
-    function isValidUrl(str){
-      try{ new URL(str); return true }catch(e){ return false }
-    }
+  copyLast.addEventListener('click', ()=>{
+    if(!lastShort) return showStatus('<em>Chưa có kết quả để copy.</em>');
+    navigator.clipboard.writeText(lastShort).then(()=>{
+      showStatus('Đã copy: <a class="link" href="'+lastShort+'" target="_blank">'+lastShort+'</a>');
+    }).catch(()=> showStatus('Không thể copy vào clipboard.'));
+  });
 
-    createBtn.addEventListener('click', async ()=>{
-      const original = urlInput.value.trim();
-      const name = nameInput.value.trim();
-      const extra = extraInput.value.trim();
-
-      if(!original) return showStatus('<strong style="color:#ffd066">Vui lòng nhập link cần rút gọn.</strong>');
-      if(!isValidUrl(original)) return showStatus('<strong style="color:#ff8b8b">Link không hợp lệ. Hãy bắt đầu bằng https://</strong>');
-
-      showStatus('Đang tạo link ngắn...');
-
-      try {
-        // Gọi qua AllOrigins để tránh CORS
-        const resp = await fetch(
-          'https://api.allorigins.win/get?url=' + encodeURIComponent('https://api.shrtco.de/v2/shorten?url=' + original)
-        );
-        const wrapper = await resp.json();
-        const data = JSON.parse(wrapper.contents);
-
-        if(!data || !data.ok) throw new Error(data.error || 'Lỗi API');
-
-        const short = data.result.full_short_link;
-        lastShort = short;
-
-        showStatus(`
-          <div><strong>Short:</strong> <a class="link" href="${short}" target="_blank">${short}</a></div>
-          <div><strong>Original:</strong> ${original}</div>
-          <div><strong>Name:</strong> ${name || '<em>(không đặt)</em>'} &nbsp; <strong>Extra:</strong> ${extra || '<em>(trống)</em>'}</div>
-        `);
-      } catch(err) {
-        showStatus('<strong style="color:#ffb4b4">Tạo link thất bại: '+ (err.message||err) + '</strong>');
-      }
-    });
-
-    copyLast.addEventListener('click', ()=>{
-      if(!lastShort) return showStatus('<em>Chưa có kết quả để copy.</em>');
-      navigator.clipboard.writeText(lastShort).then(()=>{
-        showStatus('Đã copy: <a class="link" href="'+lastShort+'" target="_blank">'+lastShort+'</a>');
-      }).catch(()=> showStatus('Không thể copy vào clipboard.'));
-    });
-
-    openLast.addEventListener('click', ()=>{
-      if(!lastShort) return showStatus('<em>Chưa có kết quả để mở.</em>');
-      window.open(lastShort, '_blank');
-    });
-  </script>
+  openLast.addEventListener('click', ()=>{
+    if(!lastShort) return showStatus('<em>Chưa có kết quả để mở.</em>');
+    window.open(lastShort, '_blank');
+  });
+        </script>
 </body>
 </html>
