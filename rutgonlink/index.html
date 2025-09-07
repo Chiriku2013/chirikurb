@@ -73,8 +73,6 @@
 
   createBtn.addEventListener('click', async ()=>{
     const original = urlInput.value.trim();
-    const name = nameInput.value.trim();
-    const extra = extraInput.value.trim();
 
     if(!original) return showStatus('<strong style="color:#ffd066">Vui lòng nhập link cần rút gọn.</strong>');
     if(!isValidUrl(original)) return showStatus('<strong style="color:#ff8b8b">Link không hợp lệ. Hãy bắt đầu bằng https://</strong>');
@@ -82,22 +80,21 @@
     showStatus('Đang tạo link ngắn...');
 
     try {
-      // TinyURL API (hỗ trợ CORS)
-      const resp = await fetch(`https://api.tinyurl.com/create`, {
+      // API TinyURL
+      const resp = await fetch("https://api.tinyurl.com/create", {
         method: "POST",
         headers: {
-          "Authorization": "4ZtIOo8UHp077cPvrHUdxh16wDiAXHb936e9Hnk5cxVFecW2Knd3OfhNRwWQ", // cần token (free đăng ký TinyURL)
+          "Authorization": "4ZtIOo8UHp077cPvrHUdxh16wDiAXHb936e9Hnk5cxVFecW2Knd3OfhNRwWQ", // 🔹 Thay bằng token TinyURL của bạn
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
           url: original,
-          domain: "tinyurl.com",
-          alias: name && extra ? `${name}.${extra}` : undefined
+          domain: "tinyurl.com"
         })
       });
 
       const data = await resp.json();
-      if(!data || !data.data) throw new Error("Lỗi API TinyURL");
+      if(!data || !data.data || !data.data.tiny_url) throw new Error("Lỗi API TinyURL");
 
       const short = data.data.tiny_url;
       lastShort = short;
@@ -105,8 +102,6 @@
       showStatus(`
         <div><strong>Short:</strong> <a class="link" href="${short}" target="_blank">${short}</a></div>
         <div><strong>Original:</strong> ${original}</div>
-        <div><strong>Name:</strong> ${name || '<em>(không đặt)</em>'} &nbsp; 
-             <strong>Extra:</strong> ${extra || '<em>(trống)</em>'}</div>
       `);
     } catch(err) {
       showStatus('<strong style="color:#ffb4b4">Tạo link thất bại: '+ (err.message||err) + '</strong>');
