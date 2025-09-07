@@ -82,14 +82,14 @@
     showStatus('Đang tạo link ngắn...');
 
     try {
-      // Gọi API qua AllOrigins để tránh CORS
-      const apiUrl = 'https://api.shrtco.de/v2/shorten?url=' + encodeURIComponent(original);
-      const resp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(apiUrl));
+      // Gọi API trực tiếp từ is.gd (có hỗ trợ CORS)
+      const apiUrl = 'https://is.gd/create.php?format=json&url=' + encodeURIComponent(original);
+      const resp = await fetch(apiUrl);
       const data = await resp.json();
 
-      if(!data || !data.ok) throw new Error(data.error || 'Lỗi API');
+      if(!data.shorturl) throw new Error(data.errormessage || 'Lỗi API');
 
-      const short = data.result.full_short_link;
+      const short = data.shorturl;
       lastShort = short;
 
       showStatus(`
@@ -113,6 +113,6 @@
     if(!lastShort) return showStatus('<em>Chưa có kết quả để mở.</em>');
     window.open(lastShort, '_blank');
   });
-        </script>
+  </script>
 </body>
 </html>
