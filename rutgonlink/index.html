@@ -80,8 +80,10 @@
     showStatus('Đang tạo link ngắn...');
 
     try {
-      // API TinyURL
-      const resp = await fetch("https://api.tinyurl.com/create", {
+      // Proxy AllOrigins để tránh lỗi CORS
+      const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.tinyurl.com/create");
+
+      const resp = await fetch(proxyUrl, {
         method: "POST",
         headers: {
           "Authorization": "ImQJBUYqHNjn0drxU1qPJoDOG6TEv4eWF7y1sDUU7FSwvHvlX3QBnNLHrHo3", // 🔹 Thay bằng token TinyURL của bạn
