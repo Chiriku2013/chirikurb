@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
@@ -18,18 +18,14 @@
     button#createBtn{background:#22c55e;border:none;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer}
     .result{margin-top:14px;padding:12px;background:rgba(255,255,255,.02);border-radius:8px;border:1px solid rgba(255,255,255,.03)}
     .note{margin-top:12px;font-size:13px;color:#9bb0d6}
-    .links-list{margin-top:12px}
-    .links-list li{margin:6px 0}
     .small-btn{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.05);background:transparent;color:inherit;cursor:pointer}
-    .flex-between{display:flex;justify-content:space-between;align-items:center}
-    .footer{margin-top:18px;font-size:12px;color:#89a3d0}
     a.link{color:#93c5fd}
   </style>
 </head>
 <body>
   <main class="card">
     <h1>Rút Gọn Link — Chiriku Roblox</h1>
-    <p class="small">Nhập tên (name), suffix (extra) và link cần rút gọn. Nhấn <strong>Create</strong> để tạo.</p>
+    <p class="small">Nhập tên, suffix ("gì đó cũng đc") và link cần rút gọn. Nhấn <strong>Create</strong> để tạo link rút gọn. (Demo dùng API công khai)</p>
 
     <div class="control">
       <label>Tên (name)</label>
@@ -84,25 +80,26 @@
       if(!isValidUrl(original)) return showStatus('<strong style="color:#ff8b8b">Link không hợp lệ. Hãy bắt đầu bằng https://</strong>');
 
       showStatus('Đang tạo link ngắn...');
-      try{
-        // Sử dụng proxy để tránh CORS
-        const resp = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.shrtco.de/v2/shorten?url=' + original));
-        const data = await resp.json();
-        if(!data || !data.ok){ throw new Error((data && data.error) || 'Lỗi từ dịch vụ rút gọn'); }
+
+      try {
+        // Gọi qua AllOrigins để tránh CORS
+        const resp = await fetch(
+          'https://api.allorigins.win/get?url=' + encodeURIComponent('https://api.shrtco.de/v2/shorten?url=' + original)
+        );
+        const wrapper = await resp.json();
+        const data = JSON.parse(wrapper.contents);
+
+        if(!data || !data.ok) throw new Error(data.error || 'Lỗi API');
 
         const short = data.result.full_short_link;
         lastShort = short;
 
-        const custom = (name && extra) ? `${name}.${extra}` : "(không nhập)";
-
         showStatus(`
-          <div><strong>Custom:</strong> ${custom}</div>
           <div><strong>Short:</strong> <a class="link" href="${short}" target="_blank">${short}</a></div>
           <div><strong>Original:</strong> ${original}</div>
+          <div><strong>Name:</strong> ${name || '<em>(không đặt)</em>'} &nbsp; <strong>Extra:</strong> ${extra || '<em>(trống)</em>'}</div>
         `);
-
-      }catch(err){
-        console.error(err);
+      } catch(err) {
         showStatus('<strong style="color:#ffb4b4">Tạo link thất bại: '+ (err.message||err) + '</strong>');
       }
     });
