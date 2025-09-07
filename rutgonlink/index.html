@@ -61,7 +61,7 @@
   const openLast = document.getElementById('openLast');
 
   let lastShort = '';
-  const API_TOKEN = "ImQJBUYqHNjn0drxU1qPJoDOG6TEv4eWF7y1sDUU7FSwvHvlX3QBnNLHrHo3"; // 👉 điền token TinyURL vào đây (nếu có). Nếu để trống thì sẽ dùng API public
+  const API_TOKEN = "ImQJBUYqHNjn0drxU1qPJoDOG6TEv4eWF7y1sDUU7FSwvHvlX3QBnNLHrHo3"; // 🔹 Token TinyURL của bạn
 
   function showStatus(html){
     status.style.display = 'block';
@@ -83,32 +83,23 @@
     showStatus('Đang tạo link ngắn...');
 
     try {
-      let short = "";
+      const resp = await fetch(`https://api.tinyurl.com/create`, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + API_TOKEN,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          url: original,
+          domain: "tinyurl.com",
+          alias: name && extra ? `${name}-${extra}` : (name || undefined) // alias nếu có
+        })
+      });
 
-      if(API_TOKEN){ 
-        // Dùng API TinyURL chính thức (có token, hỗ trợ alias)
-        const resp = await fetch(`https://api.tinyurl.com/create`, {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + API_TOKEN,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            url: original,
-            domain: "tinyurl.com",
-            alias: name && extra ? `${name}.${extra}` : (name || undefined)
-          })
-        });
-        const data = await resp.json();
-        if(!data || !data.data) throw new Error("API TinyURL lỗi");
-        short = data.data.tiny_url;
-      } else {
-        // Fallback sang API public (không cần token, random alias)
-        const resp = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(original)}`);
-        short = await resp.text();
-        if(!short.startsWith("http")) throw new Error("API public lỗi");
-      }
+      const data = await resp.json();
+      if(!data || !data.data || !data.data.tiny_url) throw new Error("API TinyURL trả về lỗi");
 
+      const short = data.data.tiny_url;
       lastShort = short;
 
       showStatus(`
@@ -117,7 +108,6 @@
         <div><strong>Name:</strong> ${name || '<em>(không đặt)</em>'} &nbsp; 
              <strong>Extra:</strong> ${extra || '<em>(trống)</em>'}</div>
       `);
-
     } catch(err) {
       showStatus('<strong style="color:#ffb4b4">Tạo link thất bại: '+ (err.message||err) + '</strong>');
     }
