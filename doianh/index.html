@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang Đổi Ảnh -- Chiriku Roblox</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      color: #333;
+    }
+    .converter {
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+    }
+    select {
+      padding: 8px;
+      margin-bottom: 15px;
+    }
+    .drop-zone {
+      border: 2px dashed #999;
+      padding: 40px;
+      border-radius: 12px;
+      background: #fafafa;
+      cursor: pointer;
+    }
+    .file-item {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Trang Đổi Ảnh -- Chiriku Roblox</h1>
+
+  <div class="converter">
+    <label for="format">Chọn phương thức đổi:</label><br>
+    <select id="format">
+      <option value="png">JPG → PNG</option>
+      <option value="jpeg">JPG → JPEG</option>
+      <option value="jpg">PNG → JPG</option>
+      <option value="jpeg">PNG → JPEG</option>
+      <option value="png">JPEG → PNG</option>
+      <option value="jpg">JPEG → JPG</option>
+    </select>
+
+    <div class="drop-zone" id="dropZone">
+      Thả ảnh vào đây hoặc bấm để chọn file
+      <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
+    </div>
+
+    <div id="fileList"></div>
+  </div>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const fileList = document.getElementById("fileList");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const formatSelect = document.getElementById("format");
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.style.background = "#e0ffe0";
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.style.background = "#fafafa";
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.style.background = "#fafafa";
+      handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener("change", () => {
+      handleFiles(fileInput.files);
+    });
+
+    function handleFiles(files) {
+      [...files].forEach(file => {
+        if (!file.type.startsWith("image/")) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const newFormat = formatSelect.value;
+            const dataURL = canvas.toDataURL("image/" + newFormat);
+
+            const fileItem = document.createElement("div");
+            fileItem.className = "file-item";
+            fileItem.innerHTML = `<strong>${file.name}</strong><br>`;
+            
+            const downloadBtn = document.createElement("button");
+            downloadBtn.textContent = "Download";
+            downloadBtn.onclick = () => {
+              const a = document.createElement("a");
+              a.href = dataURL;
+              let originalName = file.name.split(".")[0];
+              a.download = `Chiriku-${originalName}.${newFormat}`;
+              a.click();
+            };
+
+            fileItem.appendChild(downloadBtn);
+            fileList.appendChild(fileItem);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+  </html>
