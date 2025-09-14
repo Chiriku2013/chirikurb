@@ -1,0 +1,44 @@
+repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
+getgenv().Team    = "Pirates"
+getgenv().Hide_UI = true
+_G.VxezeConfig = {
+    Main = {
+        ["Auto Start"] = true,
+        ["Choose Mode"] = "Fishing Rip", -- Fishing / Fishing Rip
+        ["Auto Random Fruit"] = false,
+        ["Auto Celestial Token"] = true,
+    },
+    Fishing = {
+        ["Select Rod"] = "Fishing Rod",
+        ["Select Bait"] = "Basic Bait",
+        ["Use Power"] = true,
+        ["Sell Fishing"] = false, -- Normal / Rip Event
+        ["Quest Fishing"] = true,
+        ["Craft Bait"] = true,
+    },
+    Store = {
+        ["Mythical"] = true,
+        ["Legendary"] = true,
+        ["Rare"] = true,
+        ["Uncommon"] = false,
+        ["Common"] = false,
+    },
+    Items = {
+        ["Auto Buy Haki Color"] = false,
+        ["Auto Buy Sword Legendary"] = false,
+    },
+    Chat = {
+        ["Enabled"] = false,
+        ["Message"] = {"Vxeze Hub Kaitun Event"},
+        ["Delay"] = 5,
+    },
+    Misc = {
+        ["White Screen"] = false,
+        ["Boots FPS"] = false,
+        ["Tween Player"] = 350,
+        ["Select Weapon"] = "Melee",
+        ["Auto Rejoin"] = true,
+        ["Hopping 30 minutes"] = false,
+    }
+}
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Dex-Bear/Vxezehub/refs/heads/main/KaitunFishing.lua"))()
