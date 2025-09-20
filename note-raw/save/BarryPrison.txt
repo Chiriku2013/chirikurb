@@ -13,7 +13,7 @@ local Map1Target = Vector3.new(-3543.80469, 1076.37036, -453.318512)
 local Map2RayGunMid = Vector3.new(1046.32043, 397.748322, -510.007385)
 local Map2BeforeGate = Vector3.new(1261.442993, 396.065643, -657.96228)
 local Map2AfterBoss = Vector3.new(1465.67358, 329.464233, -664.305664)
-local FlySpeed = 1
+local FlySpeed = 16
 
 -- === Noclip ===
 local function EnableNoclip()
