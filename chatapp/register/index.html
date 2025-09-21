@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Đăng ký</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#071025;color:#e6eef8;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .box{width:360px;padding:20px;border-radius:10px;background:#071b2b;box-shadow:0 6px 24px rgba(0,0,0,.6)}
+    input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:#062234;color:#e6eef8}
+    button{width:100%;padding:10px;border-radius:8px;border:none;background:#06b6d4;color:#012;font-weight:700;cursor:pointer}
+    .back{margin-top:8px;background:#111827}
+    #msg{margin-top:8px;color:#9fb6d1}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Đăng ký tài khoản</h2>
+    <input id="username" placeholder="Tên đăng nhập" />
+    <input id="password" placeholder="Mật khẩu" type="password" />
+    <button id="btnReg">Đăng ký</button>
+    <button id="btnBack" class="back">Đăng nhập</button>
+    <div id="msg"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-app.js";
+    import { getDatabase, ref, get, child, set } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-database.js";
+    import { firebaseConfig } from "../config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const username = document.getElementById('username');
+    const password = document.getElementById('password');
+    const btnReg = document.getElementById('btnReg');
+    const btnBack = document.getElementById('btnBack');
+    const msg = document.getElementById('msg');
+
+    btnBack.onclick = ()=> location.href = '../login/index.html';
+
+    btnReg.onclick = async () => {
+      const user = username.value.trim();
+      const pass = password.value.trim();
+      msg.textContent = '';
+
+      if (!user || !pass) { msg.textContent = 'Vui lòng nhập đủ thông tin!'; return; }
+
+      try {
+        const snapshot = await get(child(ref(db), `users/users/${user}`));
+        if (snapshot.exists()) {
+          msg.textContent = 'Tài khoản đã tồn tại!';
+        } else {
+          await set(ref(db, `users/users/${user}`), { password: pass });
+          msg.textContent = 'Đăng ký thành công! Đang chuyển hướng...';
+          setTimeout(()=> location.href = '../login/index.html', 900);
+        }
+      } catch (e) {
+        console.error(e);
+        msg.textContent = 'Lỗi kết nối Firebase!';
+      }
+    };
+  </script>
+</body>
+</html>
