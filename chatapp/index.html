@@ -25,11 +25,11 @@
 <script>
   // Nếu đã login → chuyển thẳng đến choose
   if (localStorage.getItem('currentUser')) {
-    window.location.href = '../choose/index.html';
+    window.location.href = 'chatapp/choose/';
   }
 
-  document.getElementById('btnLogin').onclick = ()=> window.location.href = '../login/';
-  document.getElementById('btnRegister').onclick = ()=> window.location.href = '../register/';
+  document.getElementById('btnLogin').onclick = ()=> window.location.href = 'chatapp/login/';
+  document.getElementById('btnRegister').onclick = ()=> window.location.href = 'chatapp/register/';
 </script>
 </body>
 </html>
