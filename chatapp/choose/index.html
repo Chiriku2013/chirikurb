@@ -29,9 +29,9 @@
     const logout = document.getElementById('logout');
 
     const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) location.href = '../login/index.html';
+    if (!currentUser) location.href = '../login/';
 
-    logout.onclick = () => { localStorage.removeItem('currentUser'); location.href = '../login/index.html'; };
+    logout.onclick = () => { localStorage.removeItem('currentUser'); location.href = '../login/'; };
 
     async function loadUsers() {
       const snapshot = await get(child(ref(db), "users/users"));
@@ -42,7 +42,7 @@
             const li = document.createElement("li");
             const btn = document.createElement("button");
             btn.textContent = u;
-            btn.onclick = ()=> { localStorage.setItem("chatWith", u); location.href="../chat/index.html"; };
+            btn.onclick = ()=> { localStorage.setItem("chatWith", u); location.href="../chat/"; };
             li.appendChild(btn);
             userList.appendChild(li);
           }
