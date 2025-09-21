@@ -23,7 +23,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-database.js";
-    import { firebaseConfig } from "../config.js";
+    import { firebaseConfig } from "chatapp/config.js";
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -35,7 +35,7 @@
 
     const currentUser = localStorage.getItem("currentUser");
     const chatWith = localStorage.getItem("chatWith");
-    if (!currentUser || !chatWith) location.href = "../choose/";
+    if (!currentUser || !chatWith) location.href = "chatapp/choose/";
 
     const chatId = [currentUser, chatWith].sort().join("_");
     const chatRef = ref(db, `chats/${chatId}`);
@@ -48,7 +48,7 @@
       }
     };
 
-    backBtn.onclick = ()=> location.href = "../choose/";
+    backBtn.onclick = ()=> location.href = "chatapp/choose/";
 
     onChildAdded(chatRef, (snapshot)=>{
       const data = snapshot.val();
