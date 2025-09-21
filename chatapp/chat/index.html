@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#071025;color:#e6eef8;margin:0;padding:20px}
+    #chatBox{height:60vh;overflow-y:auto;border:1px solid #333;padding:10px;margin-bottom:10px;background:#071b2b}
+    .me{color:#06b6d4}
+    .other{color:#9fb6d1}
+    input{width:75%;padding:8px;border-radius:8px;border:none;background:#062234;color:#e6eef8}
+    button{padding:8px 12px;border:none;border-radius:8px;background:#06b6d4;color:#012;margin-left:5px;cursor:pointer}
+  </style>
+</head>
+<body>
+  <h2>Phòng chat</h2>
+  <div id="chatBox"></div>
+  <input id="msgInput" placeholder="Nhập tin nhắn..." />
+  <button id="sendBtn">Gửi</button>
+  <button id="backBtn">Quay lại</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-app.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-database.js";
+    import { firebaseConfig } from "../config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const chatBox = document.getElementById("chatBox");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const backBtn = document.getElementById("backBtn");
+
+    const currentUser = localStorage.getItem("currentUser");
+    const chatWith = localStorage.getItem("chatWith");
+    if (!currentUser || !chatWith) location.href = "../choose/index.html";
+
+    const chatId = [currentUser, chatWith].sort().join("_");
+    const chatRef = ref(db, `chats/${chatId}`);
+
+    sendBtn.onclick = async ()=>{
+      const text = msgInput.value.trim();
+      if (text) {
+        await push(chatRef, { sender: currentUser, text, time: Date.now() });
+        msgInput.value = "";
+      }
+    };
+
+    backBtn.onclick = ()=> location.href = "../choose/index.html";
+
+    onChildAdded(chatRef, (snapshot)=>{
+      const data = snapshot.val();
+      const div = document.createElement("div");
+      div.className = data.sender === currentUser ? "me" : "other";
+      div.textContent = `${data.sender}: ${data.text}`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
+</body>
+</html>
