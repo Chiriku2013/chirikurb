@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chọn bạn chat</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#071025;color:#e6eef8;margin:0;padding:20px}
+    h2{margin-bottom:10px}
+    ul{list-style:none;padding:0}
+    li{margin:5px 0}
+    button{padding:6px 12px;border:none;border-radius:8px;background:#06b6d4;color:#012;cursor:pointer}
+  </style>
+</head>
+<body>
+  <h2>Chọn bạn chat</h2>
+  <ul id="userList"></ul>
+  <button id="logout">Đăng xuất</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-database.js";
+    import { firebaseConfig } from "../config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const userList = document.getElementById('userList');
+    const logout = document.getElementById('logout');
+
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) location.href = '../login/index.html';
+
+    logout.onclick = () => { localStorage.removeItem('currentUser'); location.href = '../login/index.html'; };
+
+    async function loadUsers() {
+      const snapshot = await get(child(ref(db), "users/users"));
+      userList.innerHTML = "";
+      if (snapshot.exists()) {
+        Object.keys(snapshot.val()).forEach(u=>{
+          if (u !== currentUser) {
+            const li = document.createElement("li");
+            const btn = document.createElement("button");
+            btn.textContent = u;
+            btn.onclick = ()=> { localStorage.setItem("chatWith", u); location.href="../chat/index.html"; };
+            li.appendChild(btn);
+            userList.appendChild(li);
+          }
+        });
+      }
+    }
+    loadUsers();
+  </script>
+</body>
+  </html>
