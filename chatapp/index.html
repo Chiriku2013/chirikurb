@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat App - Main</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#0f1724;color:#e6eef8}
+    .card{width:320px;padding:20px;border-radius:12px;background:linear-gradient(180deg,#0b1220,#0e1a2b);box-shadow:0 8px 30px rgba(2,6,23,.6);text-align:center}
+    h1{margin:0 0 14px;font-size:20px}
+    button{width:100%;padding:10px;border-radius:8px;border:none;margin-top:10px;font-weight:600;cursor:pointer}
+    .btn-login{background:#06b6d4;color:#012;}
+    .btn-register{background:#111827;color:#e6eef8;border:1px solid rgba(255,255,255,.04)}
+    small{display:block;margin-top:12px;color:#9fb6d1}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Chat App (Web)</h1>
+    <button class="btn-login" id="btnLogin">Đăng nhập</button>
+    <button class="btn-register" id="btnRegister">Đăng ký</button>
+    <small>Ứng dụng chat realtime dùng Firebase Realtime Database</small>
+  </div>
+
+<script>
+  // Nếu đã login → chuyển thẳng đến choose
+  if (localStorage.getItem('currentUser')) {
+    window.location.href = '../choose/index.html';
+  }
+
+  document.getElementById('btnLogin').onclick = ()=> window.location.href = '../login/index.html';
+  document.getElementById('btnRegister').onclick = ()=> window.location.href = '../register/index.html';
+</script>
+</body>
+</html>
