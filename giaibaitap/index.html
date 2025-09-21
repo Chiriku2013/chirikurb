@@ -32,15 +32,17 @@ img.generated { max-width: 100%; border-radius: 8px; margin-top: 10px; }
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
-const API_KEY = "AIzaSyCQ26QOV8JtdVzy3Bgq7VgPh82UO54k57o"; // Thay bằng Gemini API key
+const API_KEY = "AIzaSyCQ26QOV8JtdVzy3Bgq7VgPh82UO54k57o"; // Gemini API key
 const MODEL = "gemini-2.5-flash";
-const IMAGE_MODEL = "imagen-3.0"; // Model tạo hình ảnh
+const IMAGE_MODEL = "imagen-3.0";
 
+// Detect language
 function detectLanguage(text){
-    const vietnameseChars = /[ăâđêôơưáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/i;
-    return vietnameseChars.test(text) ? "Tiếng Việt" : "English";
+    const vn = /[ăâđêôơưáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/i;
+    return vn.test(text) ? "Tiếng Việt" : "English";
 }
 
+// System prompt
 function buildSystemPrompt(lang){
     return `
 Bạn là trợ lý AI siêu thông minh, luôn trả lời **ngắn gọn, chỉ kết quả cuối nếu có phép tính**, không giải chi tiết. 
@@ -50,6 +52,7 @@ Bạn là trợ lý AI siêu thông minh, luôn trả lời **ngắn gọn, ch�
 `;
 }
 
+// Format text với markdown nhẹ
 function formatText(text){
     return text
         .replace(/```([\s\S]*?)```/g,"<pre><code>$1</code></pre>")
@@ -63,38 +66,55 @@ function formatText(text){
         .replace(/\n/g,"<br>");
 }
 
+// Call Gemini API
 async function callGemini(userParts, lang){
     const body = { contents: [
         { role:"user", parts:[{text: buildSystemPrompt(lang)}] },
         { role:"user", parts:userParts }
     ]};
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify(body)
-    });
+    const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+        { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) }
+    );
     return await res.json();
 }
 
+// Image gen API
 async function generateImage(prompt){
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateImage?key=${API_KEY}`, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ prompt: { text: prompt }, size: "1024x1024" })
-    });
+    const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:generateImage?key=${API_KEY}`,
+        { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ prompt: { text: prompt }, size: "1024x1024" }) }
+    );
     return await res.json();
 }
 
+// Display
 async function displayResult(text){
     const resultDiv = document.getElementById("result");
     resultDiv.innerHTML = formatText(text);
     if(window.MathJax){
-        MathJax.typesetPromise([resultDiv])
-            .catch(err=>console.error("❌ MathJax error:", err));
+        MathJax.typesetPromise([resultDiv]).catch(err=>console.error("❌ MathJax:", err));
     }
 }
 
-// Solve text + OCR nhiều ảnh
+// OCR song song nhiều ảnh
+async function ocrMultipleImages(files){
+    const tasks = [...files].map(file => new Promise(resolve=>{
+        const reader = new FileReader();
+        reader.onload=()=>{
+            Tesseract.recognize(reader.result, 'eng+vie').then(({data:{text}})=>{
+                resolve(text.trim());
+            }).catch(e=>{
+                console.error("OCR error:", e);
+                resolve("");
+            });
+        };
+        reader.readAsDataURL(file);
+    }));
+    return await Promise.all(tasks);
+}
+
+// Solve button
 document.getElementById("solveBtn").addEventListener("click", async ()=>{
     const text = document.getElementById("textInput").value.trim();
     const files = document.getElementById("imageInput").files;
@@ -106,47 +126,29 @@ document.getElementById("solveBtn").addEventListener("click", async ()=>{
         let finalText = text;
         if(files.length > 0){
             resultDiv.textContent="🔍 Đang OCR nhiều ảnh...";
-            for(const file of files){
-                const dataUrl = await new Promise(r=>{
-                    const reader = new FileReader();
-                    reader.onload=()=>r(reader.result);
-                    reader.readAsDataURL(file);
-                });
-                const { data:{ text: ocrText } } = await Tesseract.recognize(dataUrl, 'eng+vie');
-                finalText += "\n" + ocrText.trim();
-            }
+            const texts = await ocrMultipleImages(files);
+            finalText += "\n" + texts.filter(t=>t).join("\n");
         }
+
         const lang = detectLanguage(finalText);
         resultDiv.textContent="⏳ Đang gọi AI... ("+lang+")";
+
         const data = await callGemini([{text: finalText}], lang);
 
-        if(data?.candidates?.length > 0){
-            const firstCandidate = data.candidates[0];
-            let outputText = "";
-
-            if(firstCandidate.content?.parts?.length){
-                outputText = firstCandidate.content.parts
-                    .map(p => p.text || "")
-                    .join("\n")
-                    .trim();
-            }
-
-            if(outputText){
-                await displayResult(outputText);
-            } else {
-                resultDiv.textContent = "❌ API trả về rỗng (không có text).";
-                console.log("Response:", data);
-            }
+        if(data?.candidates?.length){
+            const first = data.candidates[0];
+            let output = first.content?.parts?.map(p=>p.text||"").join("\n").trim();
+            if(output) await displayResult(output);
+            else resultDiv.textContent="❌ API trả về rỗng.";
         } else {
-            resultDiv.textContent = "❌ API không trả kết quả.";
-            console.log("Response:", data);
+            resultDiv.textContent="❌ API không trả kết quả.";
         }
     } catch(err){
         resultDiv.textContent="❌ Lỗi: "+err.message;
     }
 });
 
-// Sinh hình ảnh
+// Image button
 document.getElementById("imgGenBtn").addEventListener("click", async ()=>{
     const text = document.getElementById("textInput").value.trim();
     const resultDiv = document.getElementById("result");
@@ -156,14 +158,15 @@ document.getElementById("imgGenBtn").addEventListener("click", async ()=>{
     try{
         resultDiv.textContent="🎨 Đang tạo hình ảnh...";
         const data = await generateImage(text);
-        if(data.images?.length){
-            resultDiv.innerHTML = `<p>✅ Ảnh đã tạo:</p>`;
-            data.images.forEach(img=>{
-                resultDiv.innerHTML += `<img class="generated" src="data:image/png;base64,${img.base64}" alt="Generated Image">`;
-            });
+
+        // Check cả 2 trường hợp: data.images hoặc data.image
+        const imgs = data.images || data.image || [];
+        if(imgs.length){
+            resultDiv.innerHTML = `<p>✅ Ảnh đã tạo:</p>` + 
+                imgs.map(img=>`<img class="generated" src="data:image/png;base64,${img.base64}" alt="Generated">`).join("");
         } else {
             resultDiv.textContent="❌ API không trả ảnh.";
-            console.log("Image Response:", data);
+            console.log("Image resp:", data);
         }
     } catch(err){
         resultDiv.textContent="❌ Lỗi tạo ảnh: "+err.message;
