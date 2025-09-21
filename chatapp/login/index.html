@@ -37,7 +37,7 @@
     const btnBack = document.getElementById('btnBack');
     const msg = document.getElementById('msg');
 
-    btnBack.onclick = ()=> location.href = '../register/index.html';
+    btnBack.onclick = ()=> location.href = '../register/';
 
     btnLogin.onclick = async () => {
       const user = username.value.trim();
@@ -55,7 +55,7 @@
         } else {
           localStorage.setItem('currentUser', user);
           msg.textContent = 'Đăng nhập thành công!';
-          setTimeout(()=> location.href = '../choose/index.html', 900);
+          setTimeout(()=> location.href = '../choose/', 900);
         }
       } catch (e) {
         console.error(e);
