@@ -20,7 +20,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-app.js";
     import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.11.0/firebase-database.js";
-    import { firebaseConfig } from "../config.js";
+    import { firebaseConfig } from "chatapp/config.js";
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -29,7 +29,7 @@
     const logout = document.getElementById('logout');
 
     const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) location.href = '../login/';
+    if (!currentUser) location.href = 'chatapp/login/';
 
     logout.onclick = () => { localStorage.removeItem('currentUser'); location.href = '../login/'; };
 
@@ -42,7 +42,7 @@
             const li = document.createElement("li");
             const btn = document.createElement("button");
             btn.textContent = u;
-            btn.onclick = ()=> { localStorage.setItem("chatWith", u); location.href="../chat/"; };
+            btn.onclick = ()=> { localStorage.setItem("chatWith", u); location.href="chatapp/chat/"; };
             li.appendChild(btn);
             userList.appendChild(li);
           }
