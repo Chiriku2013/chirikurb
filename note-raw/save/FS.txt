@@ -1,12 +1,12 @@
 repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
-getgenv().Team    = "Pirates"
+getgenv().Team    = "Marines"
 getgenv().Hide_UI = true
 _G.VxezeConfig = {
     Main = {
         ["Auto Start"] = true,
-        ["Choose Mode"] = "Fishing Rip", -- Fishing / Fishing Rip
+        ["Choose Mode"] = "Fishing", -- Fishing / Fishing Rip
         ["Auto Random Fruit"] = false,
-        ["Auto Celestial Token"] = true,
+        ["Auto Celestial Token"] = false,
     },
     Fishing = {
         ["Select Rod"] = "Fishing Rod",
