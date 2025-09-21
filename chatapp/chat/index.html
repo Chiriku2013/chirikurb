@@ -35,7 +35,7 @@
 
     const currentUser = localStorage.getItem("currentUser");
     const chatWith = localStorage.getItem("chatWith");
-    if (!currentUser || !chatWith) location.href = "../choose/index.html";
+    if (!currentUser || !chatWith) location.href = "../choose/";
 
     const chatId = [currentUser, chatWith].sort().join("_");
     const chatRef = ref(db, `chats/${chatId}`);
@@ -48,7 +48,7 @@
       }
     };
 
-    backBtn.onclick = ()=> location.href = "../choose/index.html";
+    backBtn.onclick = ()=> location.href = "../choose/";
 
     onChildAdded(chatRef, (snapshot)=>{
       const data = snapshot.val();
