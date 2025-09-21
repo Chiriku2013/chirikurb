@@ -37,7 +37,7 @@
     const btnBack = document.getElementById('btnBack');
     const msg = document.getElementById('msg');
 
-    btnBack.onclick = ()=> location.href = '../login/index.html';
+    btnBack.onclick = ()=> location.href = '../login/';
 
     btnReg.onclick = async () => {
       const user = username.value.trim();
@@ -53,7 +53,7 @@
         } else {
           await set(ref(db, `users/users/${user}`), { password: pass });
           msg.textContent = 'Đăng ký thành công! Đang chuyển hướng...';
-          setTimeout(()=> location.href = '../login/index.html', 900);
+          setTimeout(()=> location.href = '../login/', 900);
         }
       } catch (e) {
         console.error(e);
