@@ -1,5 +1,5 @@
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyBolPBpLhLtRcxPdtYONK_wkSrcdKwtbr4",
   authDomain: "chat-app-web-a3f29.firebaseapp.com",
   databaseURL: "https://chat-app-web-a3f29-default-rtdb.asia-southeast1.firebasedatabase.app",
