@@ -1,10 +1,10 @@
-// config.js
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 export const firebaseConfig = {
-  apiKey: "AIzaSyBolPBpLhLtRcxPdtYONK_wkSrcdKwtbr4",
-  authDomain: "chat-app-202f3.firebaseapp.com",
-  databaseURL: "https://chat-app-202f3-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "chat-app-202f3",
-  storageBucket: "chat-app-202f3.appspot.com",
-  messagingSenderId: "914610018913",
-  appId: "1:914610018913:android:d2c1b1e47341f16a992820"
+  apiKey: "AIzaSyCP1SjtCN5v2gCbwB7UMa69KsgxAOAZdPs",
+  authDomain: "chat-app-web-a3f29.firebaseapp.com",
+  projectId: "chat-app-web-a3f29",
+  storageBucket: "chat-app-web-a3f29.firebasestorage.app",
+  messagingSenderId: "110363862630",
+  appId: "1:110363862630:web:d5c1f27ec438ff98f62fa7",
+  measurementId: "G-XF2SRTP5H2"
 };
