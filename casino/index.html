@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎰 Chiriku Casino</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at center, #222 0%, #000 100%);
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+header {
+  background: #111;
+  padding: 15px;
+  font-size: 22px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#coins {
+  background: gold;
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+#langSelect {
+  background: #444;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-left: 10px;
+}
+.lobby {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 20px;
+  padding: 30px;
+}
+.game-btn {
+  background: #333;
+  padding: 20px;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 18px;
+}
+.game-btn:hover {
+  background: #444;
+  transform: scale(1.08) rotate(-2deg);
+}
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.9);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #222;
+  padding: 25px;
+  border-radius: 25px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  box-shadow: 0 0 20px gold;
+}
+.close {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  cursor: pointer;
+  font-size: 24px;
+  color: #f55;
+  transition: 0.3s;
+}
+.close:hover { color: #fff; transform: scale(1.2); }
+button {
+  background: crimson;
+  border: none;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+  transition: all 0.3s;
+}
+button:hover { background: darkred; transform: scale(1.05); }
+.result { margin-top: 15px; font-size: 20px; transition: all 0.6s; }
+#slotDisplay span, #diceDisplay, #baucuaDisplay, #bjPlayer, #bjDealer {
+  display:inline-block;
+  transition: transform 0.5s, opacity 0.5s;
+  font-size: 36px;
+}
+</style>
+</head>
+<body>
+<header>
+  <div id="headerText">🎰 Chiriku Casino</div>
+  <div>
+    <span id="coins">💰 Coins: 1000</span>
+    <select id="langSelect" onchange="setLang()">
+      <option value="en">English</option>
+      <option value="vi">Tiếng Việt</option>
+      <option value="ja">日本語</option>
+      <option value="ko">한국어</option>
+      <option value="zh">中文</option>
+      <option value="fr">Français</option>
+      <option value="es">Español</option>
+    </select>
+  </div>
+</header>
+
+<div class="lobby">
+  <div class="game-btn" id="slotBtn" onclick="openGame('slot')">🎰 Slot Machine</div>
+  <div class="game-btn" id="diceBtn" onclick="openGame('dice')">🎲 Dice</div>
+  <div class="game-btn" id="baucuaBtn" onclick="openGame('baucua')">🐓 Bầu Cua</div>
+  <div class="game-btn" id="rouletteBtn" onclick="openGame('roulette')">🎡 Roulette</div>
+  <div class="game-btn" id="blackjackBtn" onclick="openGame('blackjack')">🃏 Blackjack</div>
+  <div class="game-btn" id="resetBtn" onclick="resetCoins()">🔄 Reset Coins</div>
+  <div class="game-btn" id="addBtn" onclick="addCoins()">➕ Add Coins</div>
+</div>
+
+<!-- Slot Machine -->
+<div class="modal" id="slot">
+  <div class="modal-content">
+    <span class="close" onclick="closeGame('slot')">✖</span>
+    <h2 id="slotTitle">🎰 Slot Machine</h2>
+    <div id="slotDisplay"><span>🍒</span> <span>⭐</span> <span>🍋</span></div>
+    <button id="slotButton" onclick="playSlot()">Spin (Bet 50)</button>
+    <div class="result" id="slotResult"></div>
+  </div>
+</div>
+
+<!-- Dice -->
+<div class="modal" id="dice">
+  <div class="modal-content">
+    <span class="close" onclick="closeGame('dice')">✖</span>
+    <h2 id="diceTitle">🎲 Dice</h2>
+    <div id="diceDisplay">🎲 ?</div>
+    <button id="diceButton" onclick="playDice()">Roll (Bet 50)</button>
+    <div class="result" id="diceResult"></div>
+  </div>
+</div>
+
+<!-- Bầu Cua -->
+<div class="modal" id="baucua">
+  <div class="modal-content">
+    <span class="close" onclick="closeGame('baucua')">✖</span>
+    <h2 id="baucuaTitle">🐓 Bầu Cua</h2>
+    <div id="baucuaDisplay">❓ ❓ ❓</div>
+    <button id="baucuaButton" onclick="playBauCua()">Play (Bet 100)</button>
+    <div class="result" id="baucuaResult"></div>
+  </div>
+</div>
+
+<!-- Roulette -->
+<div class="modal" id="roulette">
+  <div class="modal-content">
+    <span class="close" onclick="closeGame('roulette')">✖</span>
+    <h2 id="rouletteTitle">🎡 Roulette</h2>
+    <p id="rouletteInfo">Bet on Red/Black (100 coins)</p>
+    <button id="rouletteRed" onclick="playRoulette('red')">Red 🔴</button>
+    <button id="rouletteBlack" onclick="playRoulette('black')">Black ⚫</button>
+    <div class="result" id="rouletteResult"></div>
+  </div>
+</div>
+
+<!-- Blackjack -->
+<div class="modal" id="blackjack">
+  <div class="modal-content">
+    <span class="close" onclick="closeGame('blackjack')">✖</span>
+    <h2 id="blackjackTitle">🃏 Blackjack</h2>
+    <div id="bjPlayer">Your hand: </div>
+    <div id="bjDealer">Dealer: </div>
+    <button id="blackjackButton" onclick="playBlackjack()">Play (Bet 200)</button>
+    <div class="result" id="bjResult"></div>
+  </div>
+</div>
+
+<script>
+// --- Language Data ---
+const translations = {
+  en:{
+    header:"🎰 Chiriku Casino",
+    slotTitle:"🎰 Slot Machine",
+    slotButton:"Spin (Bet 50)",
+    diceTitle:"🎲 Dice",
+    diceButton:"Roll (Bet 50)",
+    bauCuaTitle:"🐓 Bầu Cua",
+    bauCuaButton:"Play (Bet 100)",
+    rouletteTitle:"🎡 Roulette",
+    rouletteInfo:"Bet on Red/Black (100 coins)",
+    rouletteRed:"Red 🔴",
+    rouletteBlack:"Black ⚫",
+    blackjackTitle:"🃏 Blackjack",
+    blackjackButton:"Play (Bet 200)",
+    resetConfirm:"Reset coins to 1000?",
+    resetAlert:"Coins reset!",
+    addPrompt:"Enter coins to add:",
+    addAlert:"Coins added!",
+    notEnough:"Not enough coins!",
+    slotJackpot:"Jackpot! +500",
+    slotSmall:"Small Win +100",
+    slotLose:"You lost!",
+    dice6:"You rolled 6! +200",
+    diceLose:"You lost!",
+    bauTriple:"Triple! +500",
+    bauLose:"Better luck next time!",
+    rouletteWin:" - You Win +200!",
+    rouletteLose:" - You Lose!",
+    bjBust:"Bust! You Lose!",
+    bjWin:"You Win! +400",
+    bjPush:"Push! Refund 200",
+    bjDealerWin:"Dealer Wins!"
+  },
+  vi:{
+    header:"🎰 Sòng Bạc Chiriku",
+    slotTitle:"🎰 Máy Xèng",
+    slotButton:"Quay (Cược 50)",
+    diceTitle:"🎲 Xúc Xắc",
+    diceButton:"Rút (Cược 50)",
+    bauCuaTitle:"🐓 Bầu Cua",
+    bauCuaButton:"Chơi (Cược 100)",
+    rouletteTitle:"🎡 Roulette",
+    rouletteInfo:"Cược Đỏ/Đen (100 coins)",
+    rouletteRed:"Đỏ 🔴",
+    rouletteBlack:"Đen ⚫",
+    blackjackTitle:"🃏 Blackjack",
+    blackjackButton:"Chơi (Cược 200)",
+    resetConfirm:"Đặt lại số coin về 1000?",
+    resetAlert:"Đã đặt lại coins!",
+    addPrompt:"Nhập số coin muốn thêm:",
+    addAlert:"Đã thêm coins!",
+    notEnough:"Không đủ coins!",
+    slotJackpot:"Jackpot! +500",
+    slotSmall:"Thắng nhỏ +100",
+    slotLose:"Thua rồi!",
+    dice6:"Bạn rút 6! +200",
+    diceLose:"Thua rồi!",
+    bauTriple:"Ba giống nhau! +500",
+    bauLose:"Chúc may mắn lần sau!",
+    rouletteWin:" - Bạn thắng +200!",
+    rouletteLose:" - Bạn thua!",
+    bjBust:"Vượt quá! Bạn thua!",
+    bjWin:"Bạn thắng! +400",
+    bjPush:"Hòa! Hoàn 200",
+    bjDealerWin:"Nhà cái thắng!"
+  }
+  // Bạn có thể thêm ja, ko, zh, fr, es theo mẫu
+};
+
+// --- Detect Language ---
+let lang = localStorage.getItem('lang') || (["en","vi"].includes(navigator.language.slice(0,2)) ? navigator.language.slice(0,2) : "vi");
+document.getElementById('langSelect').value = lang;
+
+// --- Coins ---
+let coins = parseInt(localStorage.getItem('coins')) || 1000;
+function updateCoins(){ 
+  document.getElementById('coins').innerText='💰 Coins: '+coins; 
+  localStorage.setItem('coins', coins);
+}
+updateCoins();
+
+// --- Update Language ---
+function updateLanguage(){
+  const t = translations[lang];
+  if(!t) return;
+  document.getElementById('headerText').innerText = t.header;
+  document.getElementById('slotTitle').innerText = t.slotTitle;
+  document.getElementById('slotButton').innerText = t.slotButton;
+  document.getElementById('diceTitle').innerText = t.diceTitle;
+  document.getElementById('diceButton').innerText = t.diceButton;
+  document.getElementById('baucuaTitle').innerText = t.bauCuaTitle;
+  document.getElementById('baucuaButton').innerText = t.bauCuaButton;
+  document.getElementById('rouletteTitle').innerText = t.rouletteTitle;
+  document.getElementById('rouletteInfo').innerText = t.rouletteInfo;
+  document.getElementById('rouletteRed').innerText = t.rouletteRed;
+  document.getElementById('rouletteBlack').innerText = t.rouletteBlack;
+  document.getElementById('blackjackTitle').innerText = t.blackjackTitle;
+  document.getElementById('blackjackButton').innerText = t.blackjackButton;
+}
+updateLanguage();
+
+function setLang(){ 
+  lang = document.getElementById('langSelect').value; 
+  localStorage.setItem('lang', lang);
+  updateLanguage();
+}
+
+// --- Modal ---
+function openGame(id){ document.getElementById(id).style.display='flex'; }
+function closeGame(id){ document.getElementById(id).style.display='none'; }
+
+// --- Reset/Add Coins ---
+function resetCoins(){ 
+  const t=translations[lang]; 
+  if(confirm(t.resetConfirm)){ coins=1000; updateCoins(); alert(t.resetAlert); } 
+}
+function addCoins(){ 
+  const t=translations[lang]; 
+  let n=parseInt(prompt(t.addPrompt,"500")); 
+  if(!isNaN(n)&&n>0){ coins+=n; updateCoins(); alert(t.addAlert); } 
+}
+
+// --- Slot ---
+function playSlot(){
+  const t=translations[lang]; 
+  if(coins<50){ alert(t.notEnough); return; }
+  coins-=50;
+  let icons=['🍒','⭐','🍋','🔔','7️⃣'];
+  let a=icons[Math.floor(Math.random()*icons.length)];
+  let b=icons[Math.floor(Math.random()*icons.length)];
+  let c=icons[Math.floor(Math.random()*icons.length)];
+  const display=document.getElementById('slotDisplay');
+  display.innerHTML=`<span>${a}</span> <span>${b}</span> <span>${c}</span>`;
+  display.querySelectorAll('span').forEach((s,i)=>{ s.style.transform='translateY(-50px) rotate(360deg)'; setTimeout(()=>s.style.transform='translateY(0px) rotate(0deg)',300+i*150); });
+  const result=document.getElementById('slotResult');
+  if(a===b&&b===c){ coins+=500; result.innerText=t.slotJackpot; }
+  else if(a===b||b===c||a===c){ coins+=100; result.innerText=t.slotSmall; }
+  else{ result.innerText=t.slotLose; }
+  updateCoins();
+}
+
+// --- Dice ---
+function playDice(){
+  const t=translations[lang]; 
+  if(coins<50){ alert(t.notEnough); return; }
+  coins-=50;
+  let roll=Math.floor(Math.random()*6)+1;
+  const display=document.getElementById('diceDisplay');
+  display.innerText='🎲 ' + roll;
+  display.style.transform='scale(1.5) rotate(360deg)';
+  setTimeout(()=>display.style.transform='scale(1) rotate(0deg)',400);
+  const result=document.getElementById('diceResult');
+  if(roll===6){ coins+=200; result.innerText=t.dice6; }
+  else{ result.innerText=t.diceLose; }
+  updateCoins();
+}
+
+// --- Bầu Cua ---
+function playBauCua(){
+  const t=translations[lang]; 
+  if(coins<100){ alert(t.notEnough); return; }
+  coins-=100;
+  let icons=['🐟','🦀','🐓','🍑','🍐','🦌'];
+  let res=[icons[Math.floor(Math.random()*6)],icons[Math.floor(Math.random()*6)],icons[Math.floor(Math.random()*6)]];
+  const display=document.getElementById('baucuaDisplay');
+  display.innerText=res.join(' ');
+  display.style.transform='scale(1.5)'; setTimeout(()=>display.style.transform='scale(1)',500);
+  const result=document.getElementById('baucuaResult');
+  if(new Set(res).size===1){ coins+=500; result.innerText=t.bauTriple; }
+  else{ result.innerText=t.bauLose; }
+  updateCoins();
+}
+
+// --- Roulette ---
+function playRoulette(choice){
+  const t=translations[lang]; 
+  if(coins<100){ alert(t.notEnough); return; }
+  coins-=100;
+  let spin=Math.floor(Math.random()*37);
+  let color=(spin%2===0)?'red':'black';
+  const result=document.getElementById('rouletteResult');
+  result.innerText=`Ball landed on ${spin} (${color})`;
+  if(choice===color){ coins+=200; result.innerText+=t.rouletteWin; }
+  else{ result.innerText+=t.rouletteLose; }
+  updateCoins();
+}
+
+// --- Blackjack ---
+function drawCard(){ return Math.floor(Math.random()*11)+1; }
+function playBlackjack(){
+  const t=translations[lang]; 
+  if(coins<200){ alert(t.notEnough); return; }
+  coins-=200;
+  let player=drawCard()+drawCard();
+  let dealer=drawCard()+drawCard();
+  document.getElementById('bjPlayer').innerText='Your hand: '+player;
+  document.getElementById('bjDealer').innerText='Dealer: '+dealer;
+  const result=document.getElementById('bjResult');
+  if(player>21) result.innerText=t.bjBust;
+  else if(dealer>21||player>dealer){ coins+=400; result.innerText=t.bjWin; }
+  else if(player===dealer){ coins+=200; result.innerText=t.bjPush; }
+  else result.innerText=t.bjDealerWin;
+  updateCoins();
+}
+</script>
+</body>
+  </html>
