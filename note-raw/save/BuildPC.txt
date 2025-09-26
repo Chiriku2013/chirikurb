@@ -1,0 +1,53 @@
+🔧 Danh sách linh kiện đề xuất
+
+CPU: Intel Xeon E3-1240 v5 (4 nhân / 8 luồng, 3.5 – 3.9GHz, hiệu năng ngang i7-6700 non-K).
+
+Mainboard: H110 / B150 / B250 (socket LGA1151, hỗ trợ Xeon v5 và DDR4).
+
+RAM: DDR4 16GB (2×8GB bus 2133–2400).
+
+VGA (card màn hình): NVIDIA GTX 1650 4GB GDDR5 (bản 2 fan càng tốt để mát và bền).
+
+SSD: 240 – 256GB SATA (Kingston, Crucial, WD Green, Apacer…).
+
+PSU (nguồn): 400 – 450W (Xigmatek, Acbel, Cooler Master, Huntkey 80+ White).
+
+Case: Mid Tower thường, có kính hông, quạt LED (khoảng 250–300k).
+
+
+👉 Tổng ngân sách: khoảng 4.2 – 4.5 triệu (nếu săn hàng cũ ở Đồng Nai/HCM).
+
+
+---
+
+🎮 Hiệu năng dự kiến
+
+Game e-sport (1080p, Medium/High):
+
+LoL: ~170 FPS
+
+Valorant: ~140 FPS
+
+CS:GO/CS2: ~120 FPS
+
+Dota 2: ~120 FPS
+
+
+Game online phổ biến:
+
+Genshin Impact: ~60 FPS Medium
+
+PUBG PC: ~55–60 FPS Low–Med
+
+
+AAA (1080p):
+
+GTA V: ~70–80 FPS High
+
+Elden Ring: ~50–55 FPS Medium
+
+Cyberpunk 2077: ~40–45 FPS Low
+
+
+
+👉 Build này vừa treo giả lập Android nhiều cửa sổ (LDPlayer, Bluestacks) mượt, vừa chơi game PC ổn ở 1080p.
