@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Basketball Game - James</title>
+  <style>
+    body { margin: 0; background: #222; overflow: hidden; }
+    canvas { display: block; background: #333; }
+    #scoreboard {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      color: #fff;
+      font-size: 50px;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+      text-shadow: 2px 2px 5px black;
+    }
+    #highscore {
+      position: absolute;
+      top: 90px;
+      right: 30px;
+      color: #ffd700;
+      font-size: 30px;
+      font-family: Arial, sans-serif;
+    }
+    #progress {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 20px;
+      background: #444;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+    }
+    #message {
+      position: absolute;
+      top: 150px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 40px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 2px 2px 5px black;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <div id="scoreboard">Điểm: 0</div>
+  <div id="highscore">Điểm Cao: 0</div>
+  <div id="message"></div>
+  <div id="progress"><div id="progress-bar"></div></div>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const scoreboard = document.getElementById("scoreboard");
+const highscoreEl = document.getElementById("highscore");
+const messageEl = document.getElementById("message");
+const progressBar = document.getElementById("progress-bar");
+
+// Âm thanh online
+const swishSoundURL = "https://actions.google.com/sounds/v1/cartoon/slide_whistle_to_drum_hit.ogg";
+const bounceSoundURL = "https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg";
+let audioEnabled = true;
+function enableAudio() {
+  if (!audioEnabled) audioEnabled = true;
+}
+document.body.addEventListener("click", enableAudio);
+document.body.addEventListener("keydown", enableAudio);
+document.body.addEventListener("touchstart", enableAudio);
+
+function playSound(url) {
+  if (audioEnabled) {
+    const s = new Audio(url);
+    s.volume = 1.0;
+    s.play().catch(()=>{});
+  }
+}
+
+// Canvas resize
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  james.x = canvas.width/2;
+  james.y = canvas.height - 100;
+  resetBall();
+  hoop.x = canvas.width/2;
+}
+window.addEventListener("resize", resizeCanvas);
+
+// Entities
+const james = { x: 0, y: 0, size: 120, jumping: 0 };
+const ballTypes = ["🏀","🏀","🏀","🏀","🏀"];
+let ball = { x: 0, y: 0, vx: 0, vy: 0, active: false, size: 100, icon: "🏀" };
+let hoop = { x: 0, y: 250, w: 160, h: 25, dir: 3, moving: false, speed: 3 };
+let obstacles = [];
+
+let drawingPath = [];
+let score = 0;
+let combo = 1;
+let highscore = localStorage.getItem("highscore") || 0;
+highscoreEl.innerText = "Điểm Cao: " + highscore;
+
+// Aura particles (mutation)
+let auraParticles = [];
+let auraColor = null;
+function spawnAuraParticles() {
+  auraParticles = [];
+  auraColor = `hsl(${Math.random()*360},100%,60%)`;
+  for (let i = 0; i < 50; i++) {
+    auraParticles.push({
+      angle: Math.random() * Math.PI * 2,
+      radius: Math.random() * 40 + 20,
+      size: Math.random() * 8 + 6,
+      speed: Math.random() * 0.02 + 0.01
+    });
+  }
+}
+function updateAuraParticles() {
+  for (let p of auraParticles) p.angle += p.speed;
+}
+function drawAuraParticles() {
+  if (!auraColor) return;
+  for (let p of auraParticles) {
+    let px = ball.x + Math.cos(p.angle) * p.radius;
+    let py = ball.y + Math.sin(p.angle) * p.radius;
+    ctx.beginPath();
+    ctx.fillStyle = auraColor;
+    ctx.globalAlpha = 0.7;
+    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// Fireworks particles khi ghi điểm
+let particles = [];
+function createParticles(x, y){
+  for(let i=0;i<30;i++){
+    particles.push({
+      x, y,
+      vx: (Math.random()*4-2)*3,
+      vy: (Math.random()*4-2)*3,
+      size: Math.random()*6+2,
+      life: 60
+    });
+  }
+}
+function updateParticles(){
+  for(let p of particles){
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life--;
+  }
+  particles = particles.filter(p=>p.life>0);
+}
+function drawParticles(){
+  for(let p of particles){
+    ctx.fillStyle = `hsl(${Math.random()*360},100%,60%)`;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+// Draw functions
+function drawJames(){
+  ctx.font = james.size + "px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("👨‍🦲", james.x, james.y - james.jumping);
+}
+function drawBall(){
+  ctx.font = ball.size + "px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(ball.icon, ball.x, ball.y);
+}
+function drawHoop(){
+  ctx.strokeStyle = "#f44336";
+  ctx.lineWidth = 8;
+  ctx.strokeRect(hoop.x - hoop.w/2, hoop.y, hoop.w, hoop.h);
+}
+function drawObstacles(){
+  for (let o of obstacles) {
+    ctx.font = o.size + "px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("🚧", o.x, o.y);
+  }
+}
+function drawGuideLine(){
+  if(drawingPath.length > 1){
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(drawingPath[0].x, drawingPath[0].y);
+    for(let i=1; i<drawingPath.length; i++){
+      ctx.lineTo(drawingPath[i].x, drawingPath[i].y);
+    }
+    ctx.stroke();
+  }
+}
+
+// Update ball
+function updateBall(){
+  if(ball.active){
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.vy += 0.35;
+
+    // Bounce walls
+    if(ball.x < ball.size/2){
+      ball.x = ball.size/2 + 1;
+      ball.vx *= -0.9;
+      playSound(bounceSoundURL);
+    }
+    else if(ball.x > canvas.width - ball.size/2){
+      ball.x = canvas.width - ball.size/2 - 1;
+      ball.vx *= -0.9;
+      playSound(bounceSoundURL);
+    }
+    if(ball.y < ball.size/2){
+      ball.y = ball.size/2 + 1;
+      ball.vy *= -0.9;
+      if(Math.abs(ball.vy) < 2) ball.vy = 2;
+      playSound(bounceSoundURL);
+    }
+
+    // Hoop collision
+    if(ball.x > hoop.x - hoop.w/2 && ball.x < hoop.x + hoop.w/2 &&
+      ball.y + ball.size/2 > hoop.y && ball.y - ball.size/2 < hoop.y + hoop.h){
+      score += combo;
+      combo++;
+      scoreboard.innerText = "Điểm: " + score;
+      showMessage(["Nice!","Perfect!","Slam Dunk!","🔥 Hot!","Pro Player!"][Math.floor(Math.random()*5)]);
+      playSound(swishSoundURL);
+      createParticles(ball.x, ball.y);
+      resetBall();
+      levelUp();
+    }
+
+    // Obstacles
+    for (let o of obstacles) {
+      if(Math.abs(ball.x - o.x) < o.size/2 &&
+         Math.abs(ball.y - o.y) < o.size/2){
+        resetBall();
+        combo = 1;
+      }
+    }
+
+    // Out of screen
+    if(ball.y > canvas.height){
+      resetBall();
+      combo = 1;
+    }
+  }
+}
+
+// Update hoop
+function updateHoop(){
+  if(hoop.moving){
+    hoop.x += hoop.dir * hoop.speed;
+    let leftLimit = 150;
+    let rightLimit = canvas.width - 150;
+    if(hoop.x - hoop.w/2 < leftLimit || hoop.x + hoop.w/2 > rightLimit){
+      hoop.dir *= -1;
+    }
+  }
+}
+
+// Update obstacles
+function spawnObstacles() {
+  obstacles = [];
+  let count = Math.floor(Math.random() * 3) + 1;
+  for (let i = 0; i < count; i++) {
+    obstacles.push({
+      x: Math.random()*(canvas.width-200)+100,
+      y: Math.random()*(canvas.height/2-200)+300,
+      size: 80,
+      dir: Math.random()<0.5?1:-1,
+      speed: Math.random()*6+3
+    });
+  }
+}
+function updateObstacles(){
+  for (let o of obstacles) {
+    o.x += o.dir * o.speed;
+    if(o.x < 100 || o.x > canvas.width-100) o.dir *= -1;
+  }
+}
+
+// Reset ball
+function resetBall(){
+  ball.x = james.x;
+  ball.y = james.y - 80;
+  ball.vx = 0;
+  ball.vy = 0;
+  ball.active = false;
+  drawingPath = [];
+  james.jumping = 0;
+  ball.icon = ballTypes[Math.floor(Math.random()*ballTypes.length)];
+}
+
+// Level up
+function levelUp(){
+  if(score >= 5) hoop.moving = true;
+  if(score >= 10 && Math.random()<0.5) spawnObstacles();
+  if(score % 10 === 0) hoop.speed++;
+
+  let percent = (score % 10)*10;
+  progressBar.style.width = percent + "%";
+  if(percent === 0 && score > 0) spawnAuraParticles();
+
+  if(score > highscore){
+    highscore = score;
+    localStorage.setItem("highscore", highscore);
+    highscoreEl.innerText = "Điểm Cao: " + highscore;
+  }
+}
+
+function showMessage(text){
+  messageEl.innerText = text;
+  messageEl.style.opacity = 1;
+  setTimeout(()=>messageEl.style.opacity=0, 1000);
+}
+
+// Controls (mouse/touch)
+canvas.addEventListener("mousedown", e=>{
+  if(!ball.active) drawingPath = [{x: e.offsetX, y: e.offsetY}];
+});
+canvas.addEventListener("mousemove", e=>{
+  if(drawingPath.length) drawingPath.push({x: e.offsetX, y: e.offsetY});
+});
+canvas.addEventListener("mouseup", e=>{
+  if(drawingPath.length > 1){
+    let dx = drawingPath.at(-1).x - drawingPath[0].x;
+    let dy = drawingPath.at(-1).y - drawingPath[0].y;
+    ball.vx = dx/10; ball.vy = dy/10;
+    ball.active = true; james.jumping = 30;
+  }
+  drawingPath = [];
+});
+canvas.addEventListener("touchstart", e=>{
+  if(!ball.active) drawingPath = [{x: e.touches[0].clientX, y: e.touches[0].clientY}];
+});
+canvas.addEventListener("touchmove", e=>{
+  if(drawingPath.length) drawingPath.push({x: e.touches[0].clientX, y: e.touches[0].clientY});
+});
+canvas.addEventListener("touchend", e=>{
+  if(drawingPath.length > 1){
+    let dx = drawingPath.at(-1).x - drawingPath[0].x;
+    let dy = drawingPath.at(-1).y - drawingPath[0].y;
+    ball.vx = dx/10; ball.vy = dy/10;
+    ball.active = true; james.jumping = 30;
+  }
+  drawingPath = [];
+});
+
+// Game loop
+function gameLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawJames();
+  drawHoop();
+  drawObstacles();
+  drawAuraParticles();
+  drawBall();
+  drawGuideLine();
+  drawParticles();
+  updateBall();
+  updateHoop();
+  updateObstacles();
+  updateParticles();
+  updateAuraParticles();
+  if(james.jumping>0) james.jumping--;
+  requestAnimationFrame(gameLoop);
+}
+
+resizeCanvas();
+gameLoop();
+</script>
+</body>
+</html>
