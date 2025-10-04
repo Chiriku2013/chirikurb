@@ -1,0 +1,404 @@
+local ScreenGui = Instance.new("ScreenGui")
+local ImageButton = Instance.new("ImageButton")
+local UICorner = Instance.new("UICorner")
+local ClickSound = Instance.new("Sound")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local VirtualInput = game:GetService("VirtualInputManager")
+local UserInputService = game:GetService("UserInputService")
+
+-- 🧠 Trạng thái toggle
+getgenv().UIVisible = true
+
+-- 🪟 Cài đặt UI
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+ImageButton.Parent = ScreenGui
+ImageButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ImageButton.BorderSizePixel = 0
+ImageButton.Position = UDim2.new(0.218742043, 0, -0.155235752, 0)
+ImageButton.Size = UDim2.new(0, 50, 0, 50)
+ImageButton.Draggable = true
+ImageButton.Active = true
+ImageButton.Image = "http://www.roblox.com/asset/?id=81787064714217"
+
+UICorner.CornerRadius = UDim.new(1, 0)
+UICorner.Parent = ImageButton
+
+-- 🎵 Âm thanh click
+ClickSound.Name = "ClickSound"
+ClickSound.SoundId = "rbxassetid://535716488"
+ClickSound.Volume = 5
+ClickSound.Parent = ImageButton
+
+-- 🔄 Animation xoay + bounce
+local isRotating = false
+local function rotateAndBounce(clockwise)
+	if isRotating then return end
+	isRotating = true
+
+	local bounceOut = TweenService:Create(ImageButton, TweenInfo.new(0.07, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 42, 0, 42)})
+	local bounceIn = TweenService:Create(ImageButton, TweenInfo.new(0.07, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 50, 0, 50)})
+	bounceOut:Play()
+	bounceOut.Completed:Wait()
+	bounceIn:Play()
+
+	local total = 0
+	local step = clockwise and -30 or 30
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		ImageButton.Rotation += step
+		total += math.abs(step)
+		if total >= 360 then
+			conn:Disconnect()
+			isRotating = false
+		end
+	end)
+end
+
+-- 📱 Kiểm tra thiết bị
+local isMobile = UserInputService.TouchEnabled
+
+-- 🧩 Load Fluent UI trước
+repeat task.wait() until game:IsLoaded()
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "Chiriku Roblox Hub-Evade [Freemium]",
+    SubTitle = "by Chiriku Roblox",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(555, 320),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.End
+})
+
+local Tabs = {
+    Main0 = Window:AddTab({ Title = "Info", Icon = "info" }),
+    Main1 = Window:AddTab({ Title = "Main", Icon = "home" }),
+    Main2 = Window:AddTab({ Title = "Auto Farm", Icon = "leaf" }),
+    Main3 = Window:AddTab({ Title = "Local Player", Icon = "skull" }),
+    Main4 = Window:AddTab({ Title = "ESP", Icon = "eye" }),
+    Main5 = Window:AddTab({ Title = "Misc", Icon = "heart" }),
+}
+
+-- 🎛️ Khi nhấn nút toggle
+ImageButton.MouseButton1Click:Connect(function()
+	ClickSound:Play()
+	rotateAndBounce(getgenv().UIVisible)
+
+	if isMobile then
+		-- Mobile: bật/tắt trực tiếp
+		if getgenv().UIVisible then
+			Window:Minimize(true)
+		else
+			Window:Minimize(false)
+		end
+	else
+		-- PC: gửi phím End
+		VirtualInput:SendKeyEvent(true, Enum.KeyCode.End, false, game)
+		task.wait()
+		VirtualInput:SendKeyEvent(false, Enum.KeyCode.End, false, game)
+	end
+
+	getgenv().UIVisible = not getgenv().UIVisible
+end)
+
+Tabs.Main0:AddParagraph({
+    Title = "Development",
+    Content = "Chiriku Roblox"
+})
+
+local executorName
+if identifyexecutor then
+    executorName=identifyexecutor()
+elseif getexecutorname then
+    executorName=getexecutorname()
+end
+if executorName then
+    Tabs.Main0:AddParagraph({
+        Title = "Client Has Use",
+        Content = executorName
+    })
+end
+
+local Time = Tabs.Main0:AddParagraph({
+    Title = "Time Zone",
+    Content = "Local Time: Updating..."
+})
+
+local function UpdateLocalTime()
+    local date = os.date("*t")
+    local hour = date.hour % 24
+    local ampm = hour < 12 and "AM" or "PM"
+    local formattedTime = string.format("%02i:%02i:%02i %s", ((hour - 1) % 12) + 1, date.min, date.sec, ampm)
+    local formattedDate = string.format("%02d/%02d/%04d", date.day, date.month, date.year)
+    local LocalizationService = game:GetService("LocalizationService")
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local regionCode = "Unknown"
+    local success, code = pcall(function()
+        return LocalizationService:GetCountryRegionForPlayerAsync(player)
+    end)
+    if success then
+        regionCode = code
+    end
+    Time:SetDesc("Local Time: " .. formattedDate .. " - " .. formattedTime .. " [ " .. regionCode .. " ]")
+end
+
+spawn(function()
+    while true do
+        UpdateLocalTime()
+        game:GetService("RunService").RenderStepped:Wait()
+    end
+end)
+
+-- 💤 Anti AFK (chuẩn Infinite Yield thật, không giả lập gì khác)
+Tabs.Main1:AddToggle("AntiAFK_Toggle", {
+    Title = "Anti AFK",
+    Default = false
+}):OnChanged(function(state)
+    getgenv().AntiAFK = state
+    if state then
+        task.spawn(function()
+            local vu = game:GetService("VirtualUser")
+            local player = game.Players.LocalPlayer
+            player.Idled:Connect(function()
+                if getgenv().AntiAFK then
+                    vu:CaptureController()
+                    vu:ClickButton2(Vector2.new())
+                end
+            end)
+        end)
+    end
+end)
+
+-- ⚡ Anti Lag (tối ưu hiệu suất client)
+Tabs.Main1:AddToggle("AntiLag_Toggle", {
+    Title = "Anti Lag",
+    Description = "Làm game mượt hơn, tắt hiệu ứng & texture thừa",
+    Default = false
+}):OnChanged(function(state)
+    getgenv().AntiLag = state
+    if state then
+        task.spawn(function()
+            while getgenv().AntiLag do
+                for _, v in pairs(workspace:GetDescendants()) do
+                    if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
+                        v.Enabled = false
+                    elseif v:IsA("BasePart") and v.Material ~= Enum.Material.SmoothPlastic then
+                        v.Material = Enum.Material.SmoothPlastic
+                    end
+                end
+                task.wait(5)
+            end
+        end)
+    end
+end)
+
+-- 🤖 Anti Bot (Evade)
+Tabs.Main1:AddToggle("AntiBot_Toggle", {
+    Title = "Anti Bot",
+    Description = "Phát hiện bot trong Evade và dịch chuyển tránh xa",
+    Default = false
+}):OnChanged(function(state)
+    getgenv().AntiBot = state
+    if state then
+        task.spawn(function()
+            local player = game.Players.LocalPlayer
+            while getgenv().AntiBot do
+                pcall(function()
+                    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+
+                    for _, obj in pairs(workspace:GetDescendants()) do
+                        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+                            local isBot = false
+                            for _, child in pairs(obj:GetDescendants()) do
+                                if child:IsA("Script") or child:IsA("LocalScript") then
+                                    local src = child.Name:lower()
+                                    if src:find("bot") or src:find("ai") or src:find("enemy") then
+                                        isBot = true
+                                        break
+                                    end
+                                elseif child:IsA("Decal") or child:IsA("Texture") then
+                                    if tostring(child.Texture):find("rbxassetid://") then
+                                        isBot = true
+                                        break
+                                    end
+                                end
+                            end
+
+                            if isBot then
+                                local botHRP = obj:FindFirstChild("HumanoidRootPart")
+                                local dist = (botHRP.Position - hrp.Position).Magnitude
+                                if dist < 250 then
+                                    local direction = (hrp.Position - botHRP.Position).Unit
+                                    local safePos = hrp.Position + direction * 350
+                                    hrp.CFrame = CFrame.new(safePos)
+                                    task.wait(2)
+                                end
+                            end
+                        end
+                    end
+                end)
+                task.wait(1)
+            end
+        end)
+    end
+end)
+
+-- 🦘 Auto Jump Toggle (có draggable, active)
+Tabs.Main1:AddToggle("AutoJump_Toggle", {
+    Title = "Auto Jump Toggle",
+    Description = "Hiện nút Auto Jump có thể di chuyển và bật/tắt",
+    Default = false
+}):OnChanged(function(state)
+    getgenv().ShowAutoJump = state
+    if state then
+        if not getgenv().AutoJumpUI then
+            local sg = Instance.new("ScreenGui", game.CoreGui)
+            sg.Name = "AutoJump_UI"
+
+            local btn = Instance.new("TextButton", sg)
+            btn.Text = "Auto Jump: OFF"
+            btn.Font = Enum.Font.GothamBold
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.TextScaled = true
+            btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+            btn.BackgroundTransparency = 0.5 -- Gần như trong suốt
+            btn.Size = UDim2.new(0, 200, 0, 60)
+            btn.Position = UDim2.new(0.5, -100, 0.5, -30)
+            btn.Active = true
+            btn.Draggable = true
+            local corner = Instance.new("UICorner", btn)
+            corner.CornerRadius = UDim.new(0.3, 0)
+
+            getgenv().AutoJumpActive = false
+            btn.MouseButton1Click:Connect(function()
+                getgenv().AutoJumpActive = not getgenv().AutoJumpActive
+                btn.Text = "Auto Jump: " .. (getgenv().AutoJumpActive and "ON" or "OFF")
+
+                if getgenv().AutoJumpActive then
+                    task.spawn(function()
+                        local player = game.Players.LocalPlayer
+                        local char = player.Character
+                        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+
+                        while getgenv().AutoJumpActive do
+                            if humanoid and humanoid.FloorMaterial ~= Enum.Material.Air then
+                                -- Kiểm tra nếu nhân vật chạm đất và nhảy lại ngay lập tức
+                                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                            end
+                            task.wait(0.05) -- Kiểm tra liên tục mà không delay quá lâu
+                        end
+                    end)
+                end
+            end)
+
+            getgenv().AutoJumpUI = sg
+        else
+            getgenv().AutoJumpUI.Enabled = true
+        end
+    else
+        if getgenv().AutoJumpUI then
+            getgenv().AutoJumpUI.Enabled = false
+            getgenv().AutoJumpActive = false
+        end
+    end
+end)
+
+-- 🏆 Toggle: Auto Farm Win
+Tabs.Main2:AddToggle("AutoFarmWin_Toggle", {
+    Title = "Auto Farm Win",
+    Description = "Automatically win every round",
+	Default = false,
+	Callback = function(state)
+		ActiveAutoWin = state
+		if ActiveAutoWin then
+			task.spawn(function()
+				while ActiveAutoWin do
+					local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+					local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+					if character and rootPart then
+						if character:GetAttribute("Downed") then
+							ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
+							task.wait(0.5)
+						end
+
+						if not character:GetAttribute("Downed") then
+							local securityPart = Instance.new("Part")
+							securityPart.Name = "SecurityPartTemp"
+							securityPart.Size = Vector3.new(10, 1, 10)
+							securityPart.Position = Vector3.new(0, 500, 0)
+							securityPart.Anchored = true
+							securityPart.Transparency = 1
+							securityPart.CanCollide = true
+							securityPart.Parent = Workspace
+
+							rootPart.CFrame = securityPart.CFrame + Vector3.new(0, 3, 0)
+							task.wait(0.5)
+							securityPart:Destroy()
+						end
+					end
+					task.wait(0.1)
+				end
+			end)
+		end
+	end
+})
+
+-- 🎟️ Toggle: Auto Farm Event - Tickets
+Tabs.Main2:AddToggle("AutoFarmTickets_Toggle", {
+    Title = "Auto Farm Event - Tickets",
+    Description = "In the new update has an event",
+	Default = false,
+	Callback = function(state)
+		AutoFarmSummerEvent = state
+		if AutoFarmSummerEvent then
+			task.spawn(function()
+				while AutoFarmSummerEvent do
+					local tickets = Workspace:FindFirstChild("Game")
+						and Workspace.Game:FindFirstChild("Effects")
+						and Workspace.Game.Effects:FindFirstChild("Tickets")
+
+					if tickets then
+						local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+						local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+
+						if character and rootPart then
+							if character:GetAttribute("Downed") then
+								ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
+								task.wait(0.5)
+							end
+
+							for _, ticket in ipairs(tickets:GetChildren()) do
+								local ticketPart = ticket:FindFirstChild("HumanoidRootPart") or ticket.PrimaryPart
+								if ticketPart and rootPart then
+									rootPart.CFrame = ticketPart.CFrame + Vector3.new(0, 2, 0)
+									task.wait(0.2)
+								end
+							end
+
+							local securityPart = Instance.new("Part")
+							securityPart.Name = "SecurityPartTemp"
+							securityPart.Size = Vector3.new(10, 1, 10)
+							securityPart.Position = Vector3.new(0, 500, 0)
+							securityPart.Anchored = true
+							securityPart.Transparency = 1
+							securityPart.CanCollide = true
+							securityPart.Parent = Workspace
+
+							rootPart.CFrame = securityPart.CFrame + Vector3.new(0, 3, 0)
+							task.wait(0.3)
+							securityPart:Destroy()
+						end
+					end
+					task.wait(1)
+				end
+			end)
+		end
+	end
+})
