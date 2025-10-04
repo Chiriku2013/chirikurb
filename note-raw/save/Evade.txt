@@ -291,7 +291,7 @@ Tabs.Main1:AddToggle("AutoJump_Toggle", {
                                 -- Kiểm tra nếu nhân vật chạm đất và nhảy lại ngay lập tức
                                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                             end
-                            task.wait(0.05) -- Kiểm tra liên tục mà không delay quá lâu
+                            task.wait(0.01) -- Kiểm tra liên tục mà không delay quá lâu
                         end
                     end)
                 end
