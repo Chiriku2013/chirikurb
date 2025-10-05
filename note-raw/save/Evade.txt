@@ -1,3 +1,11 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local TeleportService = game:GetService("TeleportService")
+local VirtualUser = game:GetService("VirtualUser")
+local Workspace = game:GetService("Workspace")
+local InsertService = game:GetService("InsertService") -- Make sure InsertService is defined
+local StarterGui = game:GetService("StarterGui")
 local ScreenGui = Instance.new("ScreenGui")
 local ImageButton = Instance.new("ImageButton")
 local UICorner = Instance.new("UICorner")
@@ -197,53 +205,50 @@ Tabs.Main1:AddToggle("AntiLag_Toggle", {
     end
 end)
 
--- 🤖 Anti Bot (Evade)
+-- 🤖 Anti Bot (Evade - Optimized)
 Tabs.Main1:AddToggle("AntiBot_Toggle", {
     Title = "Anti Bot",
-    Description = "Phát hiện bot trong Evade và dịch chuyển tránh xa",
+    Description = "Phát hiện NextBot thật và dịch chuyển tránh xa (chuẩn Evade)",
     Default = false
 }):OnChanged(function(state)
     getgenv().AntiBot = state
     if state then
         task.spawn(function()
-            local player = game.Players.LocalPlayer
+            local player = Players.LocalPlayer
             while getgenv().AntiBot do
                 pcall(function()
-                    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                    if not hrp then return end
+                    local char = player.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then
+                        task.wait(0.5)
+                        return
+                    end
 
-                    for _, obj in pairs(workspace:GetDescendants()) do
-                        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
-                            local isBot = false
-                            for _, child in pairs(obj:GetDescendants()) do
-                                if child:IsA("Script") or child:IsA("LocalScript") then
-                                    local src = child.Name:lower()
-                                    if src:find("bot") or src:find("ai") or src:find("enemy") then
-                                        isBot = true
-                                        break
+                    local botsFolder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players")
+                    if botsFolder then
+                        for _, bot in ipairs(botsFolder:GetChildren()) do
+                            if bot:IsA("Model") and bot:FindFirstChild("Hitbox") then
+                                local botHRP = bot:FindFirstChild("HumanoidRootPart") or bot:FindFirstChild("Hitbox")
+                                if botHRP then
+                                    local dist = (hrp.Position - botHRP.Position).Magnitude
+                                    if dist < 250 then
+                                        -- 🌀 Teleport tránh xa
+                                        local direction = (hrp.Position - botHRP.Position).Unit
+                                        local safePos = hrp.Position + direction * 350
+                                        hrp.CFrame = CFrame.new(safePos)
+                                        Fluent:Notify({
+                                            Title = "⚠️ Anti Bot",
+                                            Content = "Tránh khỏi bot: " .. bot.Name .. " (" .. math.floor(dist) .. "m)",
+                                            Duration = 2
+                                        })
+                                        task.wait(1.5)
                                     end
-                                elseif child:IsA("Decal") or child:IsA("Texture") then
-                                    if tostring(child.Texture):find("rbxassetid://") then
-                                        isBot = true
-                                        break
-                                    end
-                                end
-                            end
-
-                            if isBot then
-                                local botHRP = obj:FindFirstChild("HumanoidRootPart")
-                                local dist = (botHRP.Position - hrp.Position).Magnitude
-                                if dist < 250 then
-                                    local direction = (hrp.Position - botHRP.Position).Unit
-                                    local safePos = hrp.Position + direction * 350
-                                    hrp.CFrame = CFrame.new(safePos)
-                                    task.wait(2)
                                 end
                             end
                         end
                     end
                 end)
-                task.wait(1)
+                task.wait(0.2)
             end
         end)
     end
@@ -267,7 +272,7 @@ Tabs.Main1:AddToggle("AutoJump_Toggle", {
             btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             btn.TextScaled = true
             btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            btn.BackgroundTransparency = 0.5 -- Gần như trong suốt
+            btn.BackgroundTransparency = 0.5
             btn.Size = UDim2.new(0, 200, 0, 60)
             btn.Position = UDim2.new(0.5, -100, 0.5, -30)
             btn.Active = true
@@ -276,24 +281,43 @@ Tabs.Main1:AddToggle("AutoJump_Toggle", {
             corner.CornerRadius = UDim.new(0.3, 0)
 
             getgenv().AutoJumpActive = false
+            local player = game.Players.LocalPlayer
+
+            -- 🔁 Cập nhật auto jump khi bật
             btn.MouseButton1Click:Connect(function()
                 getgenv().AutoJumpActive = not getgenv().AutoJumpActive
                 btn.Text = "Auto Jump: " .. (getgenv().AutoJumpActive and "ON" or "OFF")
 
                 if getgenv().AutoJumpActive then
                     task.spawn(function()
-                        local player = game.Players.LocalPlayer
-                        local char = player.Character
-                        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-
                         while getgenv().AutoJumpActive do
+                            task.wait(0.01)
+                            local char = player.Character
+                            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+
                             if humanoid and humanoid.FloorMaterial ~= Enum.Material.Air then
-                                -- Kiểm tra nếu nhân vật chạm đất và nhảy lại ngay lập tức
                                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
                             end
-                            task.wait(0.01) -- Kiểm tra liên tục mà không delay quá lâu
                         end
                     end)
+                end
+            end)
+
+            -- 🔄 Auto cập nhật khi player respawn
+            player.CharacterAdded:Connect(function(newChar)
+                task.wait(1)
+                if getgenv().AutoJumpActive then
+                    local humanoid = newChar:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        task.spawn(function()
+                            while getgenv().AutoJumpActive and humanoid.Parent do
+                                task.wait(0.01)
+                                if humanoid.FloorMaterial ~= Enum.Material.Air then
+                                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                                end
+                            end
+                        end)
+                    end
                 end
             end)
 
@@ -321,11 +345,12 @@ Tabs.Main2:AddToggle("AutoFarmWin_Toggle", {
 				while ActiveAutoWin do
 					local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 					local rootPart = character:FindFirstChild("HumanoidRootPart")
-
+					local replicated = game:GetService("ReplicatedStorage")
+					
 					if character and rootPart then
 						if character:GetAttribute("Downed") then
-							ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
-							task.wait(0.5)
+							replicated.Events.Player.ChangePlayerMode:FireServer(true)
+							task.wait(0.3)
 						end
 
 						if not character:GetAttribute("Downed") then
@@ -336,10 +361,10 @@ Tabs.Main2:AddToggle("AutoFarmWin_Toggle", {
 							securityPart.Anchored = true
 							securityPart.Transparency = 1
 							securityPart.CanCollide = true
-							securityPart.Parent = Workspace
+							securityPart.Parent = workspace
 
 							rootPart.CFrame = securityPart.CFrame + Vector3.new(0, 3, 0)
-							task.wait(0.5)
+							task.wait(0.3)
 							securityPart:Destroy()
 						end
 					end
@@ -360,45 +385,466 @@ Tabs.Main2:AddToggle("AutoFarmTickets_Toggle", {
 		if AutoFarmSummerEvent then
 			task.spawn(function()
 				while AutoFarmSummerEvent do
-					local tickets = Workspace:FindFirstChild("Game")
-						and Workspace.Game:FindFirstChild("Effects")
-						and Workspace.Game.Effects:FindFirstChild("Tickets")
+					pcall(function()
+						local tickets = workspace:FindFirstChild("Game")
+							and workspace.Game:FindFirstChild("Effects")
+							and workspace.Game.Effects:FindFirstChild("Tickets")
 
-					if tickets then
-						local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-						local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+						if tickets then
+							local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+							local rootPart = character:FindFirstChild("HumanoidRootPart")
 
-						if character and rootPart then
-							if character:GetAttribute("Downed") then
-								ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
-								task.wait(0.5)
-							end
-
-							for _, ticket in ipairs(tickets:GetChildren()) do
-								local ticketPart = ticket:FindFirstChild("HumanoidRootPart") or ticket.PrimaryPart
-								if ticketPart and rootPart then
-									rootPart.CFrame = ticketPart.CFrame + Vector3.new(0, 2, 0)
-									task.wait(0.2)
+							if character and rootPart then
+								if character:GetAttribute("Downed") then
+									ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
+									task.wait(0.3)
 								end
+
+								for _, ticket in ipairs(tickets:GetChildren()) do
+									local ticketPart = ticket:FindFirstChild("HumanoidRootPart") or ticket.PrimaryPart
+									if ticketPart and rootPart then
+										rootPart.CFrame = ticketPart.CFrame + Vector3.new(0, 2, 0)
+										task.wait(0.1)
+									end
+								end
+
+								local securityPart = Instance.new("Part")
+								securityPart.Name = "SecurityPartTemp"
+								securityPart.Size = Vector3.new(10, 1, 10)
+								securityPart.Position = Vector3.new(0, 500, 0)
+								securityPart.Anchored = true
+								securityPart.Transparency = 1
+								securityPart.CanCollide = true
+								securityPart.Parent = workspace
+
+								rootPart.CFrame = securityPart.CFrame + Vector3.new(0, 3, 0)
+								task.wait(0.3)
+								securityPart:Destroy()
 							end
-
-							local securityPart = Instance.new("Part")
-							securityPart.Name = "SecurityPartTemp"
-							securityPart.Size = Vector3.new(10, 1, 10)
-							securityPart.Position = Vector3.new(0, 500, 0)
-							securityPart.Anchored = true
-							securityPart.Transparency = 1
-							securityPart.CanCollide = true
-							securityPart.Parent = Workspace
-
-							rootPart.CFrame = securityPart.CFrame + Vector3.new(0, 3, 0)
-							task.wait(0.3)
-							securityPart:Destroy()
 						end
-					end
-					task.wait(1)
+					end)
+					task.wait(0.5)
 				end
 			end)
 		end
 	end
+})
+
+-- 💨 Real Speed Boost (chuẩn Draconic Hub, CFrame-based)
+local speedBoost = 16 -- mặc định của Draconic Hub
+local checkInterval = 0.01
+getgenv().SpeedBypassEnabled = true
+local autoReviveEnabled = false
+
+-- ⚡ Hàm di chuyển thực sự bằng CFrame (Evade nhận đúng thanh speed)
+local function moveWithSpeed(dt)
+    local player = game.Players.LocalPlayer
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not (player and hrp and hum) then return end
+    if hum:GetState() == Enum.HumanoidStateType.Dead then return end
+
+    local moveDir = hum.MoveDirection
+    if moveDir.Magnitude > 0 then
+        hrp.CFrame += moveDir * ((speedBoost / 50) * dt)
+    end
+end
+
+-- ⚡ Speed Input (CFrame-Based)
+Tabs.Main3:AddInput("SpeedBoost_Input", {
+    Title = "Speed Boost",
+    Default = tostring(speedBoost),
+    Placeholder = "Input Speed (1–10000)...",
+    Callback = function(text)
+        local num = tonumber(text)
+        if num and num >= 1 and num <= 10000 then
+            speedBoost = num
+            Fluent:Notify({
+                Title = "✅ Speed Updated",
+                Content = "New speed set to " .. num,
+                Duration = 3
+            })
+        else
+            Fluent:Notify({
+                Title = "⚠️ Warning",
+                Content = "Speed must be between 1 and 10000!",
+                Duration = 4
+            })
+        end
+    end
+})
+
+-- ❤️ Auto Revive Toggle
+Tabs.Main3:AddToggle("AutoRevive_Toggle", {
+    Title = "Auto Revive My Self",
+    Default = false,
+    Callback = function(state)
+        autoReviveEnabled = state
+    end
+})
+
+-- ♻️ Auto Revive Loop (rất nhẹ, không spam)
+task.spawn(function()
+    while task.wait(checkInterval) do
+        if autoReviveEnabled then
+            local player = game.Players.LocalPlayer
+            local char = player.Character
+            if char and char:GetAttribute("Downed") then
+                game.ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
+            end
+        end
+    end
+end)
+
+-- 🏃‍♂️ CFrame Speed Loop (chuẩn, nhẹ, không giật)
+task.spawn(function()
+    local last = tick()
+    while task.wait(checkInterval) do
+        if getgenv().SpeedBypassEnabled then
+            local now = tick()
+            local dt = now - last
+            last = now
+            moveWithSpeed(dt)
+        end
+    end
+end)
+
+-- Khi respawn thì giữ tốc độ CFrame luôn
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if getgenv().SpeedBypassEnabled then
+        -- Reset timer để tránh lỗi di chuyển sau khi respawn
+        last = tick()
+    end
+end)
+
+-- 🧠 ESP System (Stable, Respawn-Proof)
+local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local function ensureESPFolder()
+local folder = playerGui:FindFirstChild("Chiriku_ESP")
+if not folder then
+folder = Instance.new("Folder")
+folder.Name = "Chiriku_ESP"
+folder.Parent = playerGui
+end
+return folder
+end
+
+local function createBillboard(name, adornee, color)
+if not adornee or not adornee:IsDescendantOf(workspace) then return end
+local billboard = Instance.new("BillboardGui")
+billboard.Name = "ESP_" .. name
+billboard.Adornee = adornee
+billboard.Size = UDim2.new(0, 100, 0, 25)
+billboard.AlwaysOnTop = true
+billboard.StudsOffset = Vector3.new(0, 2, 0)
+billboard.Parent = ensureESPFolder()
+
+local text = Instance.new("TextLabel")  
+text.Size = UDim2.new(1, 0, 1, 0)  
+text.BackgroundTransparency = 1  
+text.TextColor3 = color  
+text.TextStrokeTransparency = 0.2  
+text.Font = Enum.Font.GothamBold  
+text.TextScaled = true  
+text.Text = name  
+text.Parent = billboard  
+
+return billboard, text
+
+end
+
+local function updateBillboard(billboard, text, name, adornee, color)
+if not billboard or not adornee then return end
+billboard.Adornee = adornee
+text.TextColor3 = color
+
+local playerChar = LocalPlayer.Character  
+local hrp = playerChar and playerChar:FindFirstChild("HumanoidRootPart")  
+if hrp then  
+    local dist = math.floor((hrp.Position - adornee.Position).Magnitude)  
+    text.Text = string.format("%s (%dm)", name, dist)  
+end
+
+end
+
+-- 🔄 ESP Lists
+local espPlayers, espBots, espTickets = {}, {}, {}
+
+local function clearTable(t)
+for _, v in pairs(t) do
+if v.gui then v.gui:Destroy() end
+end
+table.clear(t)
+end
+
+local function refreshESP()
+ensureESPFolder()
+clearTable(espPlayers)
+clearTable(espBots)
+clearTable(espTickets)
+end
+
+-- ⚰️ Khi chết → tạo lại ESP sau khi hồi sinh
+LocalPlayer.CharacterAdded:Connect(function()
+task.wait(1.5)
+refreshESP()
+end)
+
+-- 👥 ESP Players
+Tabs.Main4:AddToggle("ESP_Players", {
+Title = "ESP Players",
+Default = false,
+Callback = function(state)
+espPlayersEnabled = state
+if not state then clearTable(espPlayers) return end
+
+task.spawn(function()  
+        while espPlayersEnabled do  
+            pcall(function()  
+                for _, player in ipairs(Players:GetPlayers()) do  
+                    if player ~= LocalPlayer and player.Character then  
+                        local hrp = player.Character:FindFirstChild("HumanoidRootPart")  
+                        if hrp then  
+                            local downed = player.Character:GetAttribute("Downed")  
+                            local color = downed and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)  
+
+                            local tag = player.Name  
+                            local record = espPlayers[tag]  
+                            if not record then  
+                                local gui, text = createBillboard(player.DisplayName or tag, hrp, color)  
+                                espPlayers[tag] = { gui = gui, text = text, adornee = hrp }  
+                            else  
+                                updateBillboard(record.gui, record.text, player.DisplayName or tag, hrp, color)  
+                            end  
+                        end  
+                    end  
+                end  
+            end)  
+            task.wait(0.2)  
+        end  
+        clearTable(espPlayers)  
+    end)  
+end
+
+})
+
+-- 🤖 ESP Bots
+Tabs.Main4:AddToggle("ESP_Bots", {
+    Title = "ESP Bots",
+    Default = false,
+    Callback = function(state)
+        espBotsEnabled = state
+        if not state then clearTable(espBots) return end
+
+        task.spawn(function()
+            while espBotsEnabled do
+                pcall(function()
+                    local folder = Workspace:FindFirstChild("Game") and Workspace.Game:FindFirstChild("Players")
+                    if folder then
+                        for _, bot in pairs(folder:GetChildren()) do
+                            if bot:IsA("Model") and bot:FindFirstChild("Hitbox") then
+                                local tag = bot.Name
+                                local record = espBots[tag]
+                                local hrp = bot:FindFirstChild("Hitbox")
+
+                                if hrp then
+                                    if not record then
+                                        local gui, text = createBillboard(tag, hrp, Color3.fromRGB(0, 150, 255))
+                                        espBots[tag] = { gui = gui, text = text, adornee = hrp }
+                                    else
+                                        -- ⚡ Cập nhật thông tin và thêm " - Bot"
+                                        local playerChar = LocalPlayer.Character
+                                        local lpHrp = playerChar and playerChar:FindFirstChild("HumanoidRootPart")
+                                        if lpHrp then
+                                            local dist = math.floor((lpHrp.Position - hrp.Position).Magnitude)
+                                            record.text.Text = string.format("%s (%dm) - Bot", tag, dist)
+                                        end
+                                        record.text.TextColor3 = Color3.fromRGB(0, 150, 255)
+                                        record.gui.Adornee = hrp
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.3)
+            end
+            clearTable(espBots)
+        end)
+    end
+})
+
+-- 🎟️ ESP Tickets
+Tabs.Main4:AddToggle("ESP_Tickets", {
+Title = "ESP Tickets",
+Default = false,
+Callback = function(state)
+espTicketsEnabled = state
+if not state then clearTable(espTickets) return end
+
+task.spawn(function()  
+        while espTicketsEnabled do  
+            pcall(function()  
+                local tickets = workspace:FindFirstChild("Game")  
+                    and workspace.Game:FindFirstChild("Effects")  
+                    and workspace.Game.Effects:FindFirstChild("Tickets")  
+
+                if tickets then  
+                    for _, t in ipairs(tickets:GetChildren()) do  
+                        local part = t.PrimaryPart or t:FindFirstChildWhichIsA("BasePart")  
+                        if part then  
+                            local tag = "Ticket_" .. t.Name  
+                            local record = espTickets[tag]  
+                            if not record then  
+                                local gui, text = createBillboard("🎟 Ticket", part, Color3.fromRGB(255, 255, 0))  
+                                espTickets[tag] = { gui = gui, text = text, adornee = part }  
+                            else  
+                                updateBillboard(record.gui, record.text, "🎟 Ticket", part, Color3.fromRGB(255, 255, 0))  
+                            end  
+                        end  
+                    end  
+                end  
+            end)  
+            task.wait(0.4)  
+        end  
+        clearTable(espTickets)  
+    end)  
+end
+
+})
+
+-- 🌞 Full Bright
+Tabs.Main5:AddToggle("FullBrightToggle", {
+    Title = "Full Bright",
+    Default = false,
+    Callback = function(state)
+        if state then
+            game.Lighting.Brightness = 2
+            game.Lighting.ClockTime = 12
+            game.Lighting.GlobalShadows = false
+            game.Lighting.Ambient = Color3.new(1, 1, 1)
+        else
+            game.Lighting.Brightness = 1
+            game.Lighting.ClockTime = 14
+            game.Lighting.GlobalShadows = true
+            game.Lighting.Ambient = Color3.new(0.5, 0.5, 0.5)
+        end
+    end
+})
+
+-- 🌫️ No Fog
+Tabs.Main5:AddToggle("NoFogToggle", {
+    Title = "No Fog",
+    Default = false,
+    Callback = function(state)
+        if state then
+            game.Lighting.FogEnd = 1e6
+            game.Lighting.FogStart = 0
+        else
+            game.Lighting.FogEnd = 500
+            game.Lighting.FogStart = 0
+        end
+    end
+})
+
+-- 🌈 Vibrant +200%
+Tabs.Main5:AddToggle("VibrantToggle", {
+    Title = "Vibrant +200%",
+    Default = false,
+    Callback = function(state)
+        if state then
+            if not game.Lighting:FindFirstChild("ColorCorrectionEffect") then
+                local cc = Instance.new("ColorCorrectionEffect")
+                cc.Name = "ColorCorrectionEffect"
+                cc.Saturation = 0.8
+                cc.Contrast = 0.6
+                cc.Brightness = 0.05
+                cc.Parent = game.Lighting
+            else
+                local cc = game.Lighting:FindFirstChild("ColorCorrectionEffect")
+                cc.Enabled = true
+                cc.Saturation = 0.8
+                cc.Contrast = 0.6
+                cc.Brightness = 0.05
+            end
+        else
+            local cc = game.Lighting:FindFirstChild("ColorCorrectionEffect")
+            if cc then cc.Enabled = false end
+        end
+    end
+})
+
+-- 💎 RTX Shader (Heavy)
+Tabs.Main5:AddButton({
+    Title = "RTX Shader",
+    Description = "Enable ultra-realistic lighting and reflections",
+    Callback = function()
+        local lighting = game.Lighting
+        lighting.GlobalShadows = true
+        lighting.EnvironmentDiffuseScale = 1
+        lighting.EnvironmentSpecularScale = 1
+        lighting.Brightness = 3
+        lighting.ClockTime = 13
+        lighting.FogEnd = 1200
+        lighting.ExposureCompensation = 0.4
+
+        local bloom = Instance.new("BloomEffect", lighting)
+        bloom.Intensity = 0.6
+        bloom.Threshold = 0.8
+        bloom.Size = 35
+
+        local sunRays = Instance.new("SunRaysEffect", lighting)
+        sunRays.Intensity = 0.3
+        sunRays.Spread = 1
+
+        local cc = Instance.new("ColorCorrectionEffect", lighting)
+        cc.Saturation = 0.3
+        cc.Contrast = 0.4
+        cc.Brightness = 0.05
+    end
+})
+
+-- 💡 Low RTX Shader (Light)
+Tabs.Main5:AddButton({
+    Title = "Low RTX Shader",
+    Description = "Lighter RTX for Mobile / Low-end Devices",
+    Callback = function()
+        local lighting = game.Lighting
+        lighting.GlobalShadows = true
+        lighting.Brightness = 2
+        lighting.ClockTime = 14
+        lighting.FogEnd = 2500
+        lighting.ExposureCompensation = 0.2
+
+        local bloom = Instance.new("BloomEffect", lighting)
+        bloom.Intensity = 0.3
+        bloom.Size = 20
+
+        local cc = Instance.new("ColorCorrectionEffect", lighting)
+        cc.Saturation = 0.2
+        cc.Contrast = 0.3
+        cc.Brightness = 0.02
+    end
+})
+
+-- 🚀 FPS Boost
+Tabs.Main5:AddButton({
+    Title = "FPS Boost",
+    Description = "Boost FPS by optimizing map details",
+    Callback = function()
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.Material = Enum.Material.SmoothPlastic
+                v.Reflectance = 0
+            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+                v.Enabled = false
+            end
+        end
+        game.Lighting.GlobalShadows = false
+        game.Lighting.Brightness = 1
+        game.Lighting.FogEnd = 1e6
+    end
 })
