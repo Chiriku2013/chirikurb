@@ -4,12 +4,8 @@ local LocalPlayer = Players.LocalPlayer
 local TeleportService = game:GetService("TeleportService")
 local VirtualUser = game:GetService("VirtualUser")
 local Workspace = game:GetService("Workspace")
-local InsertService = game:GetService("InsertService") -- Make sure InsertService is defined
+local InsertService = game:GetService("InsertService")
 local StarterGui = game:GetService("StarterGui")
-local ScreenGui = Instance.new("ScreenGui")
-local ImageButton = Instance.new("ImageButton")
-local UICorner = Instance.new("UICorner")
-local ClickSound = Instance.new("Sound")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local VirtualInput = game:GetService("VirtualInputManager")
@@ -18,11 +14,11 @@ local UserInputService = game:GetService("UserInputService")
 -- 🧠 Trạng thái toggle
 getgenv().UIVisible = true
 
--- 🪟 Cài đặt UI
-ScreenGui.Parent = game.CoreGui
+-- 🪟 UI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-ImageButton.Parent = ScreenGui
+local ImageButton = Instance.new("ImageButton", ScreenGui)
 ImageButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 ImageButton.BorderSizePixel = 0
 ImageButton.Position = UDim2.new(0.218742043, 0, -0.155235752, 0)
@@ -31,47 +27,174 @@ ImageButton.Draggable = true
 ImageButton.Active = true
 ImageButton.Image = "http://www.roblox.com/asset/?id=81787064714217"
 
+local UICorner = Instance.new("UICorner", ImageButton)
 UICorner.CornerRadius = UDim.new(1, 0)
-UICorner.Parent = ImageButton
 
--- 🎵 Âm thanh click
-ClickSound.Name = "ClickSound"
+-- 🎵 Âm thanh
+local ClickSound = Instance.new("Sound", ImageButton)
 ClickSound.SoundId = "rbxassetid://535716488"
 ClickSound.Volume = 5
-ClickSound.Parent = ImageButton
 
--- 🔄 Animation xoay + bounce
+local HoverSound = Instance.new("Sound", ImageButton)
+HoverSound.SoundId = "rbxassetid://408524543"
+HoverSound.Volume = 1
+
+----------------------------------------------------------------
+-- 🌈 Viền Gradient
+----------------------------------------------------------------
+local Gradient = Instance.new("UIGradient", ImageButton)
+Gradient.Rotation = 45
+
+task.spawn(function()
+	while task.wait(0.03) do
+		Gradient.Rotation += 1
+	end
+end)
+
+----------------------------------------------------------------
+-- 💫 Glow
+----------------------------------------------------------------
+local Glow = Instance.new("UIStroke", ImageButton)
+Glow.Thickness = 2
+Glow.Transparency = 0.4
+
+----------------------------------------------------------------
+-- 🌪️ Halo
+----------------------------------------------------------------
+local Halo = Instance.new("ImageLabel", ImageButton)
+Halo.Size = UDim2.new(1.8, 0, 1.8, 0)
+Halo.Position = UDim2.new(-0.4, 0, -0.4, 0)
+Halo.BackgroundTransparency = 1
+Halo.Image = "rbxassetid://11698243546"
+Halo.ImageTransparency = 0.65
+Halo.ZIndex = 0
+
+task.spawn(function()
+	while task.wait() do
+		Halo.Rotation += 1
+	end
+end)
+
+----------------------------------------------------------------
+-- 💖 Pulse
+----------------------------------------------------------------
+local Pulse = Instance.new("ImageLabel", ImageButton)
+Pulse.Size = UDim2.new(1.5, 0, 1.5, 0)
+Pulse.Position = UDim2.new(-0.25, 0, -0.25, 0)
+Pulse.BackgroundTransparency = 1
+Pulse.Image = "rbxassetid://6980520016"
+Pulse.ImageTransparency = 0.8
+Pulse.ZIndex = 0
+
+task.spawn(function()
+	while task.wait(1.5) do
+		if getgenv().UIVisible then
+			Pulse.ImageTransparency = 0.8
+			local tween1 = TweenService:Create(Pulse, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {
+				Size = UDim2.new(2.2, 0, 2.2, 0),
+				ImageTransparency = 1
+			})
+			tween1:Play()
+			tween1.Completed:Wait()
+			Pulse.Size = UDim2.new(1.5, 0, 1.5, 0)
+			Pulse.ImageTransparency = 0.8
+		end
+	end
+end)
+
+----------------------------------------------------------------
+-- ✨ Particle
+----------------------------------------------------------------
+local particleFolder = Instance.new("Folder", ImageButton)
+particleFolder.Name = "ChirikuParticles"
+for i = 1, 8 do
+	local p = Instance.new("Frame", particleFolder)
+	p.Size = UDim2.new(0, 4, 0, 4)
+	p.BackgroundTransparency = 0.2
+	p.BorderSizePixel = 0
+end
+
+task.spawn(function()
+	local t = 0
+	while task.wait() do
+		t += 0.03
+		for i, p in ipairs(particleFolder:GetChildren()) do
+			local angle = (i / #particleFolder:GetChildren()) * math.pi * 2 + t
+			local radius = 32 + math.sin(t * 2) * 5
+			local x, y = math.cos(angle) * radius, math.sin(angle) * radius
+			p.Position = UDim2.new(0.5, x, 0.5, y)
+			p.BackgroundTransparency = 0.3 + math.abs(math.sin(t + i)) * 0.5
+		end
+	end
+end)
+
+----------------------------------------------------------------
+-- 🌈 RGB động liên tục cho tất cả hiệu ứng
+----------------------------------------------------------------
+local function RGB(t, offset)
+	return Color3.fromHSV((t + offset) % 1, 1, 1)
+end
+
+task.spawn(function()
+	while task.wait(0.05) do
+		local t = tick() / 3
+		local c1, c2, c3 = RGB(t, 0), RGB(t, 0.2), RGB(t, 0.4)
+
+		Gradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, c1),
+			ColorSequenceKeypoint.new(1, c3)
+		})
+
+		Glow.Color = c1
+		Halo.ImageColor3 = c2
+		Pulse.ImageColor3 = c3
+
+		for i, p in ipairs(particleFolder:GetChildren()) do
+			p.BackgroundColor3 = RGB(t, i / 8)
+		end
+	end
+end)
+
+----------------------------------------------------------------
+-- 💫 Hover hiệu ứng sáng
+----------------------------------------------------------------
+ImageButton.MouseEnter:Connect(function()
+	HoverSound:Play()
+	TweenService:Create(ImageButton, TweenInfo.new(0.2), {
+		ImageColor3 = Color3.fromRGB(0, 255, 200)
+	}):Play()
+end)
+
+ImageButton.MouseLeave:Connect(function()
+	TweenService:Create(ImageButton, TweenInfo.new(0.2), {
+		ImageColor3 = Color3.fromRGB(255, 255, 255)
+	}):Play()
+end)
+
+----------------------------------------------------------------
+-- 🔄 Bounce + xoay
+----------------------------------------------------------------
 local isRotating = false
 local function rotateAndBounce(clockwise)
 	if isRotating then return end
 	isRotating = true
-
-	local bounceOut = TweenService:Create(ImageButton, TweenInfo.new(0.07, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 42, 0, 42)})
-	local bounceIn = TweenService:Create(ImageButton, TweenInfo.new(0.07, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 50, 0, 50)})
-	bounceOut:Play()
-	bounceOut.Completed:Wait()
-	bounceIn:Play()
-
-	local total = 0
-	local step = clockwise and -30 or 30
+	local out = TweenService:Create(ImageButton, TweenInfo.new(0.07), {Size = UDim2.new(0, 42, 0, 42)})
+	local back = TweenService:Create(ImageButton, TweenInfo.new(0.07), {Size = UDim2.new(0, 50, 0, 50)})
+	out:Play() out.Completed:Wait() back:Play()
+	local total, step = 0, clockwise and -30 or 30
 	local conn
 	conn = RunService.RenderStepped:Connect(function()
 		ImageButton.Rotation += step
 		total += math.abs(step)
-		if total >= 360 then
-			conn:Disconnect()
-			isRotating = false
-		end
+		if total >= 360 then conn:Disconnect() isRotating = false end
 	end)
 end
 
--- 📱 Kiểm tra thiết bị
-local isMobile = UserInputService.TouchEnabled
-
--- 🧩 Load Fluent UI trước
+----------------------------------------------------------------
+-- 🧩 Fluent UI
+----------------------------------------------------------------
 repeat task.wait() until game:IsLoaded()
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
 local Window = Fluent:CreateWindow({
     Title = "Chiriku Roblox Hub-Evade [Freemium]",
     SubTitle = "by Chiriku Roblox",
@@ -81,7 +204,6 @@ local Window = Fluent:CreateWindow({
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.End
 })
-
 local Tabs = {
     Main0 = Window:AddTab({ Title = "Info", Icon = "info" }),
     Main1 = Window:AddTab({ Title = "Main", Icon = "home" }),
@@ -91,25 +213,23 @@ local Tabs = {
     Main5 = Window:AddTab({ Title = "Misc", Icon = "heart" }),
 }
 
--- 🎛️ Khi nhấn nút toggle
+----------------------------------------------------------------
+-- 🎛️ Toggle Fluent UI bằng nút RGB
+----------------------------------------------------------------
 ImageButton.MouseButton1Click:Connect(function()
 	ClickSound:Play()
 	rotateAndBounce(getgenv().UIVisible)
-
-	if isMobile then
-		-- Mobile: bật/tắt trực tiếp
+	if UserInputService.TouchEnabled then
 		if getgenv().UIVisible then
 			Window:Minimize(true)
 		else
 			Window:Minimize(false)
 		end
 	else
-		-- PC: gửi phím End
 		VirtualInput:SendKeyEvent(true, Enum.KeyCode.End, false, game)
 		task.wait()
 		VirtualInput:SendKeyEvent(false, Enum.KeyCode.End, false, game)
 	end
-
 	getgenv().UIVisible = not getgenv().UIVisible
 end)
 
@@ -205,44 +325,58 @@ Tabs.Main1:AddToggle("AntiLag_Toggle", {
     end
 end)
 
--- 🤖 Anti Bot (Evade - Optimized)
+-- 🤖 Anti Bot + Random SpawnLocation (SpawnLocation có icon)
 Tabs.Main1:AddToggle("AntiBot_Toggle", {
     Title = "Anti Bot",
-    Description = "Phát hiện NextBot thật và dịch chuyển tránh xa (chuẩn Evade)",
+    Description = "Phát hiện NextBot và dịch chuyển tránh xa (≤50m, Random SpawnLocation)",
     Default = false
 }):OnChanged(function(state)
     getgenv().AntiBot = state
     if state then
         task.spawn(function()
             local player = Players.LocalPlayer
+            local lastSpawn = nil -- lưu SpawnLocation vừa dùng
+
             while getgenv().AntiBot do
                 pcall(function()
                     local char = player.Character
                     local hrp = char and char:FindFirstChild("HumanoidRootPart")
-                    if not hrp then
-                        task.wait(0.5)
-                        return
-                    end
+                    if not hrp then task.wait(0.5) return end
 
                     local botsFolder = workspace:FindFirstChild("Game") and workspace.Game:FindFirstChild("Players")
-                    if botsFolder then
-                        for _, bot in ipairs(botsFolder:GetChildren()) do
-                            if bot:IsA("Model") and bot:FindFirstChild("Hitbox") then
-                                local botHRP = bot:FindFirstChild("HumanoidRootPart") or bot:FindFirstChild("Hitbox")
-                                if botHRP then
-                                    local dist = (hrp.Position - botHRP.Position).Magnitude
-                                    if dist < 250 then
-                                        -- 🌀 Teleport tránh xa
-                                        local direction = (hrp.Position - botHRP.Position).Unit
-                                        local safePos = hrp.Position + direction * 350
-                                        hrp.CFrame = CFrame.new(safePos)
-                                        Fluent:Notify({
-                                            Title = "⚠️ Anti Bot",
-                                            Content = "Tránh khỏi bot: " .. bot.Name .. " (" .. math.floor(dist) .. "m)",
-                                            Duration = 2
-                                        })
-                                        task.wait(1.5)
+                    if not botsFolder then return end
+
+                    for _, bot in ipairs(botsFolder:GetChildren()) do
+                        if bot:IsA("Model") and bot:FindFirstChild("Hitbox") then
+                            local botHRP = bot:FindFirstChild("HumanoidRootPart") or bot:FindFirstChild("Hitbox")
+                            if botHRP then
+                                local dist = (hrp.Position - botHRP.Position).Magnitude
+                                if dist <= 50 then
+                                    -- Lấy tất cả SpawnLocation
+                                    local spawnFolder = workspace:FindFirstChild("Game")
+                                        and workspace.Game:FindFirstChild("Map")
+                                        and workspace.Game.Map:FindFirstChild("Parts")
+                                        and workspace.Game.Map.Parts:FindFirstChild("Spawns")
+                                    if spawnFolder then
+                                        local spawnLocations = {}
+                                        for _, loc in ipairs(spawnFolder:GetChildren()) do
+                                            if loc:IsA("SpawnLocation") and loc ~= lastSpawn then
+                                                table.insert(spawnLocations, loc)
+                                            end
+                                        end
+
+                                        if #spawnLocations > 0 then
+                                            local chosen = spawnLocations[math.random(1, #spawnLocations)]
+                                            hrp.CFrame = CFrame.new(chosen.Position + Vector3.new(0,3,0))
+                                            lastSpawn = chosen
+                                            Fluent:Notify({
+                                                Title = "⚠️ Anti Bot",
+                                                Content = "Đã TP tránh Bot: " .. bot.Name,
+                                                Duration = 2
+                                            })
+                                        end
                                     end
+                                    task.wait(1.5)
                                 end
                             end
                         end
@@ -430,74 +564,38 @@ Tabs.Main2:AddToggle("AutoFarmTickets_Toggle", {
 	end
 })
 
--- 💨 Real Speed Boost (chuẩn Draconic Hub, CFrame-based)
-local speedBoost = 16 -- mặc định của Draconic Hub
-local checkInterval = 0.01
-getgenv().SpeedBypassEnabled = true
-local autoReviveEnabled = false
+-- 💨 Real Speed Boost (CFrame-based, task.wait, Smooth Evade)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
--- ⚡ Hàm di chuyển thực sự bằng CFrame (Evade nhận đúng thanh speed)
+-- ⚙️ Config
+getgenv().SpeedBypassEnabled = true
+local speedBoost = 16 -- mặc định speed
+local accelRate = 25 -- tốc độ tăng giảm mượt
+local currentSpeed = 0
+local moveLoop
+
+-- ❤️ Auto Revive Toggle
+local autoReviveEnabled = false
+local checkInterval = 0.01
+
+-- 🌀 Hàm di chuyển mượt bằng CFrame (Evade chuẩn)
 local function moveWithSpeed(dt)
-    local player = game.Players.LocalPlayer
-    local char = player.Character
+    local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    if not (player and hrp and hum) then return end
-    if hum:GetState() == Enum.HumanoidStateType.Dead then return end
+    if not (char and hrp and hum) or hum.Health <= 0 then return end
 
     local moveDir = hum.MoveDirection
     if moveDir.Magnitude > 0 then
-        hrp.CFrame += moveDir * ((speedBoost / 50) * dt)
+        currentSpeed = math.clamp(currentSpeed + (accelRate * dt), 0, speedBoost)
+        hrp.CFrame += moveDir.Unit * currentSpeed * dt
+    else
+        currentSpeed = math.max(currentSpeed - (accelRate * 2 * dt), 0)
     end
 end
 
--- ⚡ Speed Input (CFrame-Based)
-Tabs.Main3:AddInput("SpeedBoost_Input", {
-    Title = "Speed Boost",
-    Default = tostring(speedBoost),
-    Placeholder = "Input Speed (1–10000)...",
-    Callback = function(text)
-        local num = tonumber(text)
-        if num and num >= 1 and num <= 10000 then
-            speedBoost = num
-            Fluent:Notify({
-                Title = "✅ Speed Updated",
-                Content = "New speed set to " .. num,
-                Duration = 3
-            })
-        else
-            Fluent:Notify({
-                Title = "⚠️ Warning",
-                Content = "Speed must be between 1 and 10000!",
-                Duration = 4
-            })
-        end
-    end
-})
-
--- ❤️ Auto Revive Toggle
-Tabs.Main3:AddToggle("AutoRevive_Toggle", {
-    Title = "Auto Revive My Self",
-    Default = false,
-    Callback = function(state)
-        autoReviveEnabled = state
-    end
-})
-
--- ♻️ Auto Revive Loop (rất nhẹ, không spam)
-task.spawn(function()
-    while task.wait(checkInterval) do
-        if autoReviveEnabled then
-            local player = game.Players.LocalPlayer
-            local char = player.Character
-            if char and char:GetAttribute("Downed") then
-                game.ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
-            end
-        end
-    end
-end)
-
--- 🏃‍♂️ CFrame Speed Loop (chuẩn, nhẹ, không giật)
+-- ♻️ Loop di chuyển (task.wait, mượt)
 task.spawn(function()
     local last = tick()
     while task.wait(checkInterval) do
@@ -510,13 +608,65 @@ task.spawn(function()
     end
 end)
 
--- Khi respawn thì giữ tốc độ CFrame luôn
-game.Players.LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(1)
-    if getgenv().SpeedBypassEnabled then
-        -- Reset timer để tránh lỗi di chuyển sau khi respawn
-        last = tick()
+-- ♻️ Auto Revive Loop
+task.spawn(function()
+    while task.wait(checkInterval) do
+        if autoReviveEnabled then
+            local char = LocalPlayer.Character
+            if char and char:GetAttribute("Downed") then
+                game.ReplicatedStorage.Events.Player.ChangePlayerMode:FireServer(true)
+            end
+        end
     end
+end)
+
+-- ⚡ Input Speed (1 ô duy nhất)
+Tabs.Main3:AddInput("SpeedInput", {
+    Title = "Speed Boost",
+    Default = tostring(speedBoost),
+    Placeholder = "Input speed (1-10000)",
+    Callback = function(value)
+        local num = tonumber(value)
+        if not num then return end
+
+        speedBoost = num
+        if speedBoost <= 0 then
+            currentSpeed = 0
+            getgenv().SpeedBypassEnabled = false
+            Fluent:Notify({
+                Title = "⛔ Speed Off",
+                Content = "CFrame move disabled.",
+                Duration = 3
+            })
+        else
+            getgenv().SpeedBypassEnabled = true
+            Fluent:Notify({
+                Title = "✅ Speed On",
+                Content = "Set to " .. speedBoost .. " speed",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- ⚡ Auto Revive Toggle
+Tabs.Main3:AddToggle("AutoRevive_Toggle", {
+    Title = "Auto Revive My Self",
+    Default = false,
+    Callback = function(state)
+        autoReviveEnabled = state
+        Fluent:Notify({
+            Title = state and "✅ Auto Revive On" or "⛔ Auto Revive Off",
+            Content = "Auto revive " .. (state and "enabled" or "disabled"),
+            Duration = 3
+        })
+    end
+})
+
+-- ⚡ Giữ tốc độ khi respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    currentSpeed = 0
 end)
 
 -- 🧠 ESP System (Stable, Respawn-Proof)
