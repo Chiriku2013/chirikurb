@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Chiriku Script Manager</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .no-select { user-select: none; }
+  .fade { transition: all 0.3s ease; }
+  .hidden-toolbar { transform: translateX(-100%); opacity: 0; }
+  .script-card { min-width: 320px; }
+</style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center">
+
+<!-- 🔹 Nút mở Toolbar -->
+<button id="toolbarToggle" class="fixed top-4 left-4 bg-blue-600 p-3 rounded-full shadow-lg hover:bg-blue-500 fade">
+  ☰
+</button>
+
+<!-- 🔹 Toolbar chính -->
+<div id="toolbar" class="fixed top-0 left-0 h-full w-60 bg-gray-800 p-4 space-y-4 hidden-toolbar fade">
+  <h2 class="text-xl font-bold mb-2">Công cụ</h2>
+  <button id="addScriptBtn" class="w-full bg-green-600 py-2 rounded-lg hover:bg-green-500">Thêm Script</button>
+  <button id="updateScriptBtn" class="w-full bg-yellow-600 py-2 rounded-lg hover:bg-yellow-500 hidden">Cập nhật Script</button>
+  <button id="removeScriptBtn" class="w-full bg-red-600 py-2 rounded-lg hover:bg-red-500 hidden">Xóa Script</button>
+</div>
+
+<!-- 🔹 Hộp thoại thêm Script -->
+<div id="addDialog" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
+  <div class="bg-gray-800 p-6 rounded-2xl w-96 space-y-4">
+    <h2 class="text-xl font-bold text-center">Thêm Script</h2>
+    <input id="scriptName" class="w-full p-2 rounded-lg text-black" placeholder="Tên hiển thị...">
+    <textarea id="scriptCode" class="w-full p-2 rounded-lg text-black" placeholder="Dán code script Roblox..." rows="5"></textarea>
+    <div class="flex justify-end gap-2">
+      <button id="cancelAdd" class="bg-gray-600 px-3 py-1 rounded-lg hover:bg-gray-500">Hủy</button>
+      <button id="confirmAdd" class="bg-green-600 px-3 py-1 rounded-lg hover:bg-green-500">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Hộp thoại cập nhật Script -->
+<div id="updateDialog" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
+  <div class="bg-gray-800 p-6 rounded-2xl w-96 space-y-4">
+    <h2 class="text-xl font-bold text-center">Cập nhật Script</h2>
+    <input id="updateName" class="w-full p-2 rounded-lg text-black" placeholder="Tên script đã có...">
+    <textarea id="updateCode" class="w-full p-2 rounded-lg text-black" placeholder="Code mới..." rows="5"></textarea>
+    <div class="flex justify-end gap-2">
+      <button id="cancelUpdate" class="bg-gray-600 px-3 py-1 rounded-lg hover:bg-gray-500">Hủy</button>
+      <button id="confirmUpdate" class="bg-yellow-600 px-3 py-1 rounded-lg hover:bg-yellow-500">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Danh sách script -->
+<div id="scriptContainer" class="flex flex-wrap justify-center gap-4 mt-20 max-w-6xl px-4 overflow-x-auto"></div>
+
+<script>
+// === 🔐 Token bảo mật (bạn giữ riêng, đã mã hóa an toàn) ===
+function getToken() {
+  const junk = ["!!","xyz","@@","###","%%%$","123","😈","()",">>>"];
+  const scrambled = [
+    "Z2",junk[0],"hwX",junk[2],"1ly",junk[5],"OG","NKV",junk[3],
+    "3FGM","ERt",junk[1],"dWV1","QTc","1cT","lEVm",junk[7],"Q0U",
+    "U1R","aVh",junk[4],"pdD","QzW","jVE","eQ==",junk[6]
+  ];
+  const filtered = scrambled.filter(s => !junk.includes(s)).join("");
+  return atob(filtered);
+}
+
+// === ⚙️ Cấu hình repo chính xác ===
+const repoOwner = "Chiriku2013";
+const repoName = "chirikurb";
+const filePath = "script/file.json";
+
+let isAdmin = false;
+let consoleInputBuffer = [];
+
+// === 🔘 Mở / Ẩn Toolbar ===
+const toolbar = document.getElementById('toolbar');
+document.getElementById('toolbarToggle').onclick = () => {
+  toolbar.classList.toggle('hidden-toolbar');
+};
+
+// === 📦 Đọc file script từ GitHub ===
+async function fetchScripts() {
+  const res = await fetch(`https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${filePath}?t=${Date.now()}`);
+  if (!res.ok) return [];
+  try { return await res.json(); } catch { return []; }
+}
+
+// === 🧱 Hiển thị script ===
+async function renderScripts() {
+  const scripts = await fetchScripts();
+  const container = document.getElementById('scriptContainer');
+  container.innerHTML = '';
+
+  scripts.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'script-card bg-gray-800 rounded-2xl p-4 shadow-lg relative';
+    card.innerHTML = `
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-lg no-select">${s.name}</h3>
+        <button class="bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded text-sm copyBtn">Sao chép</button>
+      </div>
+      <pre class="bg-gray-900 p-2 mt-2 rounded-lg text-sm overflow-x-auto no-select">${s.code}</pre>
+    `;
+    if (isAdmin) {
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'absolute top-3 left-3';
+      card.prepend(checkbox);
+    }
+    container.appendChild(card);
+  });
+
+  // === Nút copy ===
+  document.querySelectorAll('.copyBtn').forEach((btn, i) => {
+    btn.onclick = () => {
+      navigator.clipboard.writeText(scripts[i].code);
+      btn.textContent = 'Đã sao chép!';
+      setTimeout(() => (btn.textContent = 'Sao chép'), 1000);
+    };
+  });
+}
+
+// === ✏️ Ghi file JSON vào GitHub ===
+async function updateRepo(newData, message) {
+  const token = getToken();
+  const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+  const current = await fetch(url).then(r => r.json());
+  const sha = current.sha;
+
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(newData, null, 2))));
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Authorization": `token ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message,
+      content: encoded,
+      sha
+    })
+  });
+  return res.ok;
+}
+
+// === ➕ Thêm Script ===
+const addDialog = document.getElementById('addDialog');
+document.getElementById('addScriptBtn').onclick = () => {
+  if (!isAdmin) return alert('Bạn không có quyền thêm script!');
+  addDialog.style.display = 'flex';
+};
+document.getElementById('cancelAdd').onclick = () => addDialog.style.display = 'none';
+document.getElementById('confirmAdd').onclick = async () => {
+  const name = document.getElementById('scriptName').value.trim();
+  const code = document.getElementById('scriptCode').value.trim();
+  if (!name || !code) return alert('Điền đầy đủ thông tin!');
+  if (!/loadstring|game:GetService/.test(code)) return alert('Không phát hiện script Roblox hợp lệ!');
+  const scripts = await fetchScripts();
+  scripts.push({ name, code });
+  const ok = await updateRepo(scripts, `Add script: ${name}`);
+  addDialog.style.display = 'none';
+  if (ok) alert('✅ Thêm thành công!');
+  renderScripts();
+};
+
+// === 🗑️ Xóa Script ===
+document.getElementById('removeScriptBtn').onclick = async () => {
+  const scripts = await fetchScripts();
+  const checkboxes = document.querySelectorAll('#scriptContainer input[type="checkbox"]');
+  const remain = scripts.filter((_, i) => !checkboxes[i].checked);
+  const ok = await updateRepo(remain, "Remove selected scripts");
+  if (ok) alert('🗑️ Xóa thành công!');
+  renderScripts();
+};
+
+// === 🔁 Cập nhật Script ===
+const updateDialog = document.getElementById('updateDialog');
+document.getElementById('updateScriptBtn').onclick = () => {
+  if (!isAdmin) return alert('Bạn không có quyền cập nhật!');
+  updateDialog.style.display = 'flex';
+};
+document.getElementById('cancelUpdate').onclick = () => updateDialog.style.display = 'none';
+document.getElementById('confirmUpdate').onclick = async () => {
+  const name = document.getElementById('updateName').value.trim();
+  const code = document.getElementById('updateCode').value.trim();
+  if (!name || !code) return alert('Điền đầy đủ thông tin!');
+  const scripts = await fetchScripts();
+  const target = scripts.find(s => s.name === name);
+  if (!target) return alert('Không tìm thấy script này!');
+  target.code = code;
+  const ok = await updateRepo(scripts, `Update script: ${name}`);
+  updateDialog.style.display = 'none';
+  if (ok) alert('✅ Cập nhật thành công!');
+  renderScripts();
+};
+
+// === 🔓 Mở khóa quyền Admin ===
+console.log('%cGõ "chirikuadmindzreal" trong console để mở quyền Admin.', 'color: #00ff99; font-size: 14px;');
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const input = consoleInputBuffer.join('').trim();
+    if (input === 'chirikuadmindzreal') {
+      alert('🔓 Admin mode activated!');
+      isAdmin = true;
+      document.getElementById('removeScriptBtn').classList.remove('hidden');
+      document.getElementById('updateScriptBtn').classList.remove('hidden');
+      renderScripts();
+    }
+    consoleInputBuffer = [];
+  } else if (e.key.length === 1) consoleInputBuffer.push(e.key);
+});
+
+// === 🚀 Khởi chạy ===
+renderScripts();
+</script>
+</body>
+  </html>
