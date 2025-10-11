@@ -8,14 +8,37 @@
 <style>
   .no-select { user-select: none; }
   .script-card { min-width: 300px; max-width: 400px; width: 100%; }
-  #toolbar { transform: translateX(-100%); opacity: 0; transition: all 0.3s ease; }
-  #toolbar.show { transform: translateX(0); opacity: 1; }
+  /* Toolbar nổi trên tất cả */
+  #toolbar { 
+    transform: translateX(-100%);
+    opacity: 0; 
+    transition: all 0.3s ease;
+    z-index: 50;
+    position: fixed;
+  }
+  #toolbar.show { 
+    transform: translateX(0); 
+    opacity: 1;
+  }
+  /* Container script thấp hơn toolbar */
+  #scriptContainer {
+    position: relative;
+    z-index: 10;
+  }
+  /* Modals hiển thị đúng */
+  .modal {
+    display: none;
+    z-index: 100;
+  }
+  .modal.flex {
+    display: flex;
+  }
 </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
 
 <!-- Toolbar Toggle -->
-<button id="toolbarToggle" class="fixed top-4 left-4 bg-blue-600 p-3 rounded-full shadow-lg hover:bg-blue-500">☰</button>
+<button id="toolbarToggle" class="fixed top-4 left-4 bg-blue-600 p-3 rounded-full shadow-lg hover:bg-blue-500 z-60">☰</button>
 
 <!-- Toolbar -->
 <div id="toolbar" class="fixed top-0 left-0 h-full w-60 bg-gray-800 p-4 space-y-4 flex flex-col">
@@ -26,7 +49,7 @@
 </div>
 
 <!-- Password Modal -->
-<div id="passwordModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
+<div id="passwordModal" class="modal fixed inset-0 bg-black/70 items-center justify-center">
   <div class="bg-gray-800 p-6 rounded-2xl w-80 space-y-4">
     <h2 class="text-xl font-bold text-center">Xác minh Admin</h2>
     <input id="adminPassword" class="w-full p-2 rounded-lg text-black" type="password" placeholder="Nhập mật khẩu...">
@@ -38,7 +61,7 @@
 </div>
 
 <!-- Add Script Modal -->
-<div id="addDialog" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
+<div id="addDialog" class="modal fixed inset-0 bg-black/70 items-center justify-center">
   <div class="bg-gray-800 p-6 rounded-2xl w-96 space-y-4">
     <h2 class="text-xl font-bold text-center">Thêm Script</h2>
     <input id="scriptName" class="w-full p-2 rounded-lg text-black" placeholder="Tên hiển thị...">
@@ -51,7 +74,7 @@
 </div>
 
 <!-- Update Script Modal -->
-<div id="updateDialog" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
+<div id="updateDialog" class="modal fixed inset-0 bg-black/70 items-center justify-center">
   <div class="bg-gray-800 p-6 rounded-2xl w-96 space-y-4">
     <h2 class="text-xl font-bold text-center">Cập nhật Script</h2>
     <input id="updateName" class="w-full p-2 rounded-lg text-black" placeholder="Tên script đã có...">
@@ -154,10 +177,10 @@ async function writeRepo(newData, message){
 
 // ===== PASSWORD MODAL =====
 const passModal=document.getElementById('passwordModal');
-document.getElementById('cancelPass').onclick=()=>passModal.style.display='none';
+document.getElementById('cancelPass').onclick=()=>passModal.classList.remove('flex');
 document.getElementById('confirmPass').onclick=()=>{
   const input=document.getElementById('adminPassword').value.trim();
-  passModal.style.display='none';
+  passModal.classList.remove('flex');
   if(input===getAdminPass()){
     alert('🔓 Admin mode activated!');
     isAdmin=true;
@@ -166,7 +189,7 @@ document.getElementById('confirmPass').onclick=()=>{
     renderScripts();
   } else alert('❌ Sai mật khẩu!');
 };
-function showPasswordModal(){ passModal.style.display='flex'; }
+function showPasswordModal(){ passModal.classList.add('flex'); }
 
 // ===== HOLD 3s ADD =====
 const addBtn=document.getElementById('addScriptBtn');
@@ -190,12 +213,12 @@ confirmAdd.onclick=async()=>{
   const scripts=await fetchScripts();
   scripts.push({name, code});
   await writeRepo(scripts,'Add script '+name);
-  addDialog.style.display='none';
+  addDialog.classList.remove('flex');
   scriptNameInput.value=''; scriptCodeInput.value='';
   renderScripts();
 };
-cancelAdd.onclick=()=>addDialog.style.display='none';
-document.getElementById('addScriptBtn').onclick=()=>{ if(isAdmin) addDialog.style.display='flex'; };
+cancelAdd.onclick=()=>addDialog.classList.remove('flex');
+document.getElementById('addScriptBtn').onclick=()=>{ if(isAdmin) addDialog.classList.add('flex'); };
 
 // ===== UPDATE SCRIPT =====
 const updateDialog=document.getElementById('updateDialog');
@@ -204,7 +227,7 @@ const cancelUpdate=document.getElementById('cancelUpdate');
 const updateNameInput=document.getElementById('updateName');
 const updateCodeInput=document.getElementById('updateCode');
 
-document.getElementById('updateScriptBtn').onclick=()=>{ if(isAdmin) updateDialog.style.display='flex'; };
+document.getElementById('updateScriptBtn').onclick=()=>{ if(isAdmin) updateDialog.classList.add('flex'); };
 
 confirmUpdate.onclick=async()=>{
   const name=updateNameInput.value.trim(), code=updateCodeInput.value.trim();
@@ -214,11 +237,11 @@ confirmUpdate.onclick=async()=>{
   if(idx===-1)return alert('❌ Không tìm thấy script!');
   scripts[idx].code=code;
   await writeRepo(scripts,'Update script '+name);
-  updateDialog.style.display='none';
+  updateDialog.classList.remove('flex');
   updateNameInput.value=''; updateCodeInput.value='';
   renderScripts();
 };
-cancelUpdate.onclick=()=>updateDialog.style.display='none';
+cancelUpdate.onclick=()=>updateDialog.classList.remove('flex');
 
 // ===== REMOVE SCRIPT =====
 document.getElementById('removeScriptBtn').onclick=async()=>{
