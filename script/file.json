@@ -1,1 +1,7 @@
-[{}]
+[
+  {},
+  {
+    "name": "Chiriku Roblox Hub - Evade",
+    "code": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/Chiriku2013/ChirikuRB-Evade/refs/heads/main/ChirikuRB-Evade.lua\"))()"
+  }
+]
