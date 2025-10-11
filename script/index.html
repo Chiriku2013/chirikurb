@@ -7,27 +7,25 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   .no-select { user-select: none; }
-  .fade { transition: all 0.3s ease; }
-  .hidden-toolbar { transform: translateX(-100%); opacity: 0; }
   .script-card { min-width: 300px; max-width: 400px; width: 100%; }
+  #toolbar { transform: translateX(-100%); opacity: 0; transition: all 0.3s ease; }
+  #toolbar.show { transform: translateX(0); opacity: 1; }
 </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
 
-<!-- 🔹 Nút mở Toolbar -->
-<button id="toolbarToggle" class="fixed top-4 left-4 bg-blue-600 p-3 rounded-full shadow-lg hover:bg-blue-500 fade">
-  ☰
-</button>
+<!-- Toolbar Toggle -->
+<button id="toolbarToggle" class="fixed top-4 left-4 bg-blue-600 p-3 rounded-full shadow-lg hover:bg-blue-500">☰</button>
 
-<!-- 🔹 Toolbar -->
-<div id="toolbar" class="fixed top-0 left-0 h-full w-60 bg-gray-800 p-4 space-y-4 hidden-toolbar fade">
+<!-- Toolbar -->
+<div id="toolbar" class="fixed top-0 left-0 h-full w-60 bg-gray-800 p-4 space-y-4 flex flex-col">
   <h2 class="text-xl font-bold mb-2">Công cụ</h2>
   <button id="addScriptBtn" class="w-full bg-green-600 py-2 rounded-lg hover:bg-green-500">Thêm Script</button>
   <button id="updateScriptBtn" class="w-full bg-yellow-600 py-2 rounded-lg hover:bg-yellow-500 hidden">Cập nhật Script</button>
   <button id="removeScriptBtn" class="w-full bg-red-600 py-2 rounded-lg hover:bg-red-500 hidden">Xóa Script</button>
 </div>
 
-<!-- 🔹 Hộp thoại nhập mật khẩu -->
+<!-- Password Modal -->
 <div id="passwordModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
   <div class="bg-gray-800 p-6 rounded-2xl w-80 space-y-4">
     <h2 class="text-xl font-bold text-center">Xác minh Admin</h2>
@@ -39,7 +37,7 @@
   </div>
 </div>
 
-<!-- 🔹 Hộp thoại thêm Script -->
+<!-- Add Script Modal -->
 <div id="addDialog" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
   <div class="bg-gray-800 p-6 rounded-2xl w-96 space-y-4">
     <h2 class="text-xl font-bold text-center">Thêm Script</h2>
@@ -52,7 +50,7 @@
   </div>
 </div>
 
-<!-- 🔹 Hộp thoại cập nhật Script -->
+<!-- Update Script Modal -->
 <div id="updateDialog" class="fixed inset-0 bg-black/70 hidden items-center justify-center">
   <div class="bg-gray-800 p-6 rounded-2xl w-96 space-y-4">
     <h2 class="text-xl font-bold text-center">Cập nhật Script</h2>
@@ -65,128 +63,112 @@
   </div>
 </div>
 
-<!-- 🔹 Danh sách script -->
+<!-- Script Container -->
 <div id="scriptContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-24 w-full px-4 max-w-7xl"></div>
 
 <script>
 
-function getToken() {
-  const junk = ["!!","xyz","@@","###","%%%$","123","😈","()",">>>"];
-  const scrambled = [
-    "Z2",junk[0],"hwX",junk[2],"1ly",junk[5],"OG","NKV",junk[3],
-    "3FGM","ERt",junk[1],"dWV1","QTc","1cT","lEVm",junk[7],"Q0U",
-    "U1R","aVh",junk[4],"pdD","QzW","jVE","eQ==",junk[6]
-  ];
+function getToken(){
+  const junk=["!!","xyz","@@","###","%%%$","123","😈","()",">>>"];
+  const scrambled=["Z2",junk[0],"hwX",junk[2],"1ly",junk[5],"OG","NKV",junk[3],"3FGM","ERt",junk[1],"dWV1","QTc","1cT","lEVm",junk[7],"Q0U","U1R","aVh",junk[4],"pdD","QzW","jVE","eQ==",junk[6]];
+  return atob(scrambled.filter(s=>!junk.includes(s)).join(""));
+}
+function getAdminPass(){
+  const junk=["~~","@@@","**","111","::","(x)",":-)",">>","!!"];
+  const scrambled=["Y2",junk[0],"hp","c",junk[1],"ml","rdW","Fkb",junk[2],"Wl","uZ","Hpy","ZWFs",junk[3]];
   return atob(scrambled.filter(s=>!junk.includes(s)).join(""));
 }
 
-function getAdminPass() {
-  const junk = ["~~","@@@","**","111","::","(x)",":-)",">>","!!"];
-  const scrambled = [
-    "Y2",junk[0],"hp","c",junk[1],"ml","rdW","Fkb",junk[2],"Wl","uZ","Hpy","ZWFs",junk[3]
-  ];
-  return atob(scrambled.filter(s=>!junk.includes(s)).join(""));
-}
+// ===== CONFIG =====
+const repoOwner="Chiriku2013", repoName="chirikurb", filePath="script/file.json";
+let isAdmin=false;
 
-// ====== CONFIG ======
-const repoOwner = "Chiriku2013";
-const repoName = "chirikurb";
-const filePath = "script/file.json";
-let isAdmin = false;
+// ===== TOGGLE TOOLBAR =====
+const toolbar=document.getElementById('toolbar');
+document.getElementById('toolbarToggle').onclick=()=>toolbar.classList.toggle('show');
 
-// ====== TOGGLE TOOLBAR ======
-const toolbar = document.getElementById('toolbar');
-document.getElementById('toolbarToggle').onclick = () => toolbar.classList.toggle('show');
-
-// ====== FETCH & RENDER ======
-async function fetchScripts() {
-  try {
-    const res = await fetch(`https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${filePath}?t=${Date.now()}`);
+// ===== FETCH SCRIPTS =====
+async function fetchScripts(){
+  try{
+    const res=await fetch(`https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${filePath}?t=${Date.now()}`);
     if(!res.ok) return [];
     return await res.json();
-  } catch { return []; }
+  }catch{return [];}
 }
 
-async function renderScripts() {
-  const scripts = await fetchScripts();
-  const container = document.getElementById('scriptContainer');
-  container.innerHTML = '';
+// ===== RENDER SCRIPTS =====
+async function renderScripts(){
+  const scripts=await fetchScripts();
+  const container=document.getElementById('scriptContainer');
+  container.innerHTML='';
+  if(scripts.length===0){
+    container.innerHTML='<p class="col-span-full text-center text-gray-400">Chưa có script nào</p>';
+    return;
+  }
   scripts.forEach((s,i)=>{
-    const card = document.createElement('div');
+    const card=document.createElement('div');
     card.className='script-card bg-gray-800 rounded-2xl p-4 shadow-lg relative';
     card.innerHTML=`
       <div class="flex justify-between items-center">
-        <h3 class="font-bold text-lg">${s.name}</h3>
+        <h3 class="font-bold text-lg">${s.name||"Unnamed"}</h3>
         <button class="bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded text-sm copyBtn">Sao chép</button>
       </div>
-      <pre class="bg-gray-900 p-2 mt-2 rounded-lg text-sm overflow-x-auto no-select">${s.code}</pre>
+      <pre class="bg-gray-900 p-2 mt-2 rounded-lg text-sm overflow-x-auto no-select">${s.code||"undefined"}</pre>
     `;
     if(isAdmin){
-      const checkbox = document.createElement('input');
+      const checkbox=document.createElement('input');
       checkbox.type='checkbox';
       checkbox.className='absolute top-3 left-3';
       card.prepend(checkbox);
     }
     container.appendChild(card);
   });
-
   document.querySelectorAll('.copyBtn').forEach((btn,i)=>{
     btn.onclick=()=>{
-      navigator.clipboard.writeText(scripts[i].code);
+      navigator.clipboard.writeText(scripts[i].code||"");
       btn.textContent='Đã sao chép!';
       setTimeout(()=>btn.textContent='Sao chép',1000);
-    }
+    };
   });
 }
 
-// ====== GITHUB WRITE ======
+// ===== WRITE TO GITHUB =====
 async function writeRepo(newData, message){
-  const token = getToken();
-  const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+  const token=getToken();
+  const apiUrl=`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
   try{
-    // get current sha
-    const res = await fetch(apiUrl,{
-      headers:{ Authorization:`token ${token}` }
-    });
-    const data = await res.json();
-    const sha = data.sha;
-    // put new file
+    const res=await fetch(apiUrl,{ headers:{ Authorization:`token ${token}` }});
+    const data=await res.json();
+    const sha=data.sha;
     await fetch(apiUrl,{
       method:'PUT',
       headers:{
         Authorization:`token ${token}`,
         'Content-Type':'application/json'
       },
-      body: JSON.stringify({
-        message:message,
-        content:btoa(JSON.stringify(newData,null,2)),
-        sha:sha
-      })
+      body: JSON.stringify({ message, content:btoa(JSON.stringify(newData,null,2)), sha })
     });
     alert('✅ Thao tác thành công!');
-  }catch(e){
-    console.error(e);
-    alert('❌ Lỗi khi ghi file!');
-  }
+  }catch(e){ console.error(e); alert('❌ Lỗi khi ghi file!'); }
 }
 
-// ====== PASSWORD MODAL ======
+// ===== PASSWORD MODAL =====
 const passModal=document.getElementById('passwordModal');
 document.getElementById('cancelPass').onclick=()=>passModal.style.display='none';
-document.getElementById('confirmPass').onclick=async()=>{
+document.getElementById('confirmPass').onclick=()=>{
   const input=document.getElementById('adminPassword').value.trim();
+  passModal.style.display='none';
   if(input===getAdminPass()){
     alert('🔓 Admin mode activated!');
     isAdmin=true;
     document.getElementById('removeScriptBtn').classList.remove('hidden');
     document.getElementById('updateScriptBtn').classList.remove('hidden');
-    document.getElementById('addScriptBtn').classList.remove('hidden');
     renderScripts();
   } else alert('❌ Sai mật khẩu!');
 };
 function showPasswordModal(){ passModal.style.display='flex'; }
 
-// ====== HOLD 3s ======
+// ===== HOLD 3s ADD =====
 const addBtn=document.getElementById('addScriptBtn');
 let holdTimer=null;
 addBtn.addEventListener('touchstart',()=>holdTimer=setTimeout(showPasswordModal,3000));
@@ -195,7 +177,7 @@ addBtn.addEventListener('mouseup',()=>clearTimeout(holdTimer));
 addBtn.addEventListener('mouseleave',()=>clearTimeout(holdTimer));
 addBtn.addEventListener('touchend',()=>clearTimeout(holdTimer));
 
-// ====== ADD / UPDATE / REMOVE ======
+// ===== ADD SCRIPT =====
 const addDialog=document.getElementById('addDialog');
 const confirmAdd=document.getElementById('confirmAdd');
 const cancelAdd=document.getElementById('cancelAdd');
@@ -203,31 +185,55 @@ const scriptNameInput=document.getElementById('scriptName');
 const scriptCodeInput=document.getElementById('scriptCode');
 
 confirmAdd.onclick=async()=>{
-  const name=scriptNameInput.value.trim();
-  const code=scriptCodeInput.value.trim();
+  const name=scriptNameInput.value.trim(), code=scriptCodeInput.value.trim();
   if(!name||!code)return alert('❌ Vui lòng điền đầy đủ!');
   const scripts=await fetchScripts();
-  scripts.push({name:name,code:code});
+  scripts.push({name, code});
   await writeRepo(scripts,'Add script '+name);
   addDialog.style.display='none';
   scriptNameInput.value=''; scriptCodeInput.value='';
   renderScripts();
 };
 cancelAdd.onclick=()=>addDialog.style.display='none';
-
 document.getElementById('addScriptBtn').onclick=()=>{ if(isAdmin) addDialog.style.display='flex'; };
 
-// ====== UPDATE ======
+// ===== UPDATE SCRIPT =====
 const updateDialog=document.getElementById('updateDialog');
 const confirmUpdate=document.getElementById('confirmUpdate');
 const cancelUpdate=document.getElementById('cancelUpdate');
 const updateNameInput=document.getElementById('updateName');
 const updateCodeInput=document.getElementById('updateCode');
 
+document.getElementById('updateScriptBtn').onclick=()=>{ if(isAdmin) updateDialog.style.display='flex'; };
+
 confirmUpdate.onclick=async()=>{
-  const name=updateNameInput.value.trim();
-  const code=updateCodeInput.value.trim();
+  const name=updateNameInput.value.trim(), code=updateCodeInput.value.trim();
   if(!name||!code)return alert('❌ Vui lòng điền đầy đủ!');
   const scripts=await fetchScripts();
-  const index=scripts.findIndex(s=>s.name===name);
-  if
+  const idx=scripts.findIndex(s=>s.name===name);
+  if(idx===-1)return alert('❌ Không tìm thấy script!');
+  scripts[idx].code=code;
+  await writeRepo(scripts,'Update script '+name);
+  updateDialog.style.display='none';
+  updateNameInput.value=''; updateCodeInput.value='';
+  renderScripts();
+};
+cancelUpdate.onclick=()=>updateDialog.style.display='none';
+
+// ===== REMOVE SCRIPT =====
+document.getElementById('removeScriptBtn').onclick=async()=>{
+  if(!isAdmin) return;
+  const checkboxes=document.querySelectorAll('#scriptContainer input[type=checkbox]:checked');
+  if(checkboxes.length===0) return alert('❌ Chọn script để xóa!');
+  if(!confirm(`Xóa ${checkboxes.length} script?`)) return;
+  const scripts=await fetchScripts();
+  const remaining=scripts.filter((s,i)=>!checkboxes[i].checked);
+  await writeRepo(remaining,'Remove '+checkboxes.length+' script(s)');
+  renderScripts();
+};
+
+// ===== INIT =====
+renderScripts();
+</script>
+</body>
+</html>
