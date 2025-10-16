@@ -1,0 +1,516 @@
+local Players = game:GetService("Players")
+local InsertService = game:GetService("InsertService")
+local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+-- 🧠 Trạng thái toggle
+getgenv().UIVisible = true
+
+-- 🔹 INTRO "Chiriku Roblox" Fullscreen, 2 dòng, từng ký tự, RGB + Shine
+
+local IntroGui = Instance.new("ScreenGui", game.CoreGui)
+IntroGui.Name = "ChirikuIntro"
+IntroGui.ResetOnSpawn = false
+IntroGui.IgnoreGuiInset = true -- để full màn
+
+local Background = Instance.new("Frame", IntroGui)
+Background.Size = UDim2.new(1,0,1,0)
+Background.Position = UDim2.new(0,0,0,0)
+Background.BackgroundColor3 = Color3.new(0,0,0)
+Background.BackgroundTransparency = 0.7
+Background.ZIndex = 9999
+
+-- RGB helper
+local function RGB(t, offset)
+return Color3.fromHSV((t + offset) % 1, 1, 1)
+end
+
+-- TextLabel cho chữ Chiriku
+local ChirikuLabel = Instance.new("TextLabel", Background)
+ChirikuLabel.Size = UDim2.new(1,0,0.5,0)
+ChirikuLabel.Position = UDim2.new(0,0,0.15,0)
+ChirikuLabel.BackgroundTransparency = 1
+ChirikuLabel.Font = Enum.Font.GothamBlack
+ChirikuLabel.TextSize = 10000000
+ChirikuLabel.Text = ""
+ChirikuLabel.TextStrokeTransparency = 0
+ChirikuLabel.TextScaled = true
+ChirikuLabel.TextWrapped = true
+ChirikuLabel.TextXAlignment = Enum.TextXAlignment.Center
+ChirikuLabel.TextYAlignment = Enum.TextYAlignment.Center
+ChirikuLabel.ZIndex = 10000
+
+-- TextLabel cho chữ Roblox
+local RobloxLabel = Instance.new("TextLabel", Background)
+RobloxLabel.Size = UDim2.new(1,0,0.5,0)
+RobloxLabel.Position = UDim2.new(0,0,0.35,0)
+RobloxLabel.BackgroundTransparency = 1
+RobloxLabel.Font = Enum.Font.GothamBlack
+RobloxLabel.TextSize = 10000000
+RobloxLabel.Text = ""
+RobloxLabel.TextStrokeTransparency = 0
+RobloxLabel.TextScaled = true
+RobloxLabel.TextWrapped = true
+RobloxLabel.TextXAlignment = Enum.TextXAlignment.Center
+RobloxLabel.TextYAlignment = Enum.TextYAlignment.Center
+RobloxLabel.ZIndex = 10000
+
+-- RGB mượt
+local stopRGB = false
+task.spawn(function()
+while not stopRGB do
+local t = tick()/2
+ChirikuLabel.TextColor3 = RGB(t,0)
+RobloxLabel.TextColor3 = RGB(t,0.2)
+task.wait(0.03)
+end
+end)
+
+-- Từng ký tự xuất hiện
+local function showText(label, text, delay)
+label.Text = ""
+for i = 1, #text do
+label.Text = label.Text .. text:sub(i,i)
+label.TextTransparency = 1
+local tween = game:GetService("TweenService"):Create(label, TweenInfo.new(0.2), {
+TextTransparency = 0
+})
+tween:Play()
+tween.Completed:Wait()
+wait(delay)
+end
+end
+
+-- Chạy intro: từng ký tự xuất hiện
+showText(ChirikuLabel, "CHIRIKU", 0.05)
+showText(RobloxLabel, "ROBLOX", 0.05)
+wait(0.5)
+stopRGB = true
+IntroGui:Destroy()
+
+-- 🌱🧠 Chiriku Auto Buyer v2 | Final Fixed + AFK Restore R6/R15
+
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+local path = "chiriku_roblox_pvbr_config.json"
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- ⚙️ CONFIG
+local function SaveConfig(cfg)
+	writefile(path, HttpService:JSONEncode(cfg))
+end
+
+local function LoadConfig()
+	if isfile(path) then
+		local ok, data = pcall(function()
+			return HttpService:JSONDecode(readfile(path))
+		end)
+		if ok and type(data) == "table" then return data end
+	end
+	return {Seeds={}, Gears={}, AutoSeed=false, AutoGear=false, AutoBrainrot=false, AFKMode=false, DelayToEquip=5}
+end
+
+local Config = LoadConfig()
+
+-- 🌿 GUI
+local Gui = Instance.new("ScreenGui", game.CoreGui)
+Gui.Name = "ChirikuRBPVBR"
+Gui.ResetOnSpawn = false
+
+-- 🔘 Toggle Button
+local Toggle = Instance.new("TextButton", Gui)
+Toggle.Size = UDim2.new(0,45,0,45)
+Toggle.Position = UDim2.new(0,10,0.5,-25)
+Toggle.Text = "🌱"
+Toggle.TextScaled = true
+Toggle.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Toggle.TextColor3 = Color3.fromRGB(0,255,0)
+Toggle.Font = Enum.Font.GothamBold
+Toggle.BorderSizePixel = 0
+Toggle.Draggable = true
+
+-- 🧭 Main UI
+local Main = Instance.new("ScrollingFrame", Gui)
+Main.Size = UDim2.new(0,270,0,380)
+Main.Position = UDim2.new(0,65,0.5,-190)
+Main.BackgroundColor3 = Color3.fromRGB(15,15,15)
+Main.BorderSizePixel = 0
+Main.ScrollBarThickness = 5
+Main.Visible = false
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
+
+local Content = Instance.new("Frame", Main)
+Content.Size = UDim2.new(1,0,0,0)
+Content.BackgroundTransparency = 1
+
+local UIList = Instance.new("UIListLayout", Content)
+UIList.Padding = UDim.new(0,8)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- 🪄 Scroll mượt
+UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	local s = UIList.AbsoluteContentSize.Y
+	Content.Size = UDim2.new(1,0,0,s)
+	Main.CanvasSize = UDim2.new(0,0,0,s+60)
+end)
+
+-- 🌿 Title
+local Title = Instance.new("TextLabel", Content)
+Title.Text = "🌱🧠 Chiriku RB PVBR"
+Title.Size = UDim2.new(1,0,0,35)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(0,255,0)
+Title.Font = Enum.Font.GothamBold
+Title.TextScaled = true
+
+-- 🔹 Dropdown creator
+local function CreateDropdown(parent, title)
+	local box = Instance.new("Frame", parent)
+	box.Size = UDim2.new(1,0,0,60)
+	box.BackgroundColor3 = Color3.fromRGB(25,25,25)
+	box.BorderSizePixel = 0
+	Instance.new("UICorner", box).CornerRadius = UDim.new(0,6)
+
+	local label = Instance.new("TextButton", box)
+	label.Text = title.." ▼"
+	label.Size = UDim2.new(1,0,0,25)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.new(1,1,1)
+	label.Font = Enum.Font.GothamBold
+	label.TextScaled = true
+
+	local list = Instance.new("ScrollingFrame", box)
+	list.Size = UDim2.new(1,-10,0,75)
+	list.Position = UDim2.new(0,5,0,25)
+	list.ScrollBarThickness = 5
+	list.BackgroundTransparency = 1
+	list.Visible = false
+
+	local layout = Instance.new("UIListLayout", list)
+	layout.Padding = UDim.new(0,4)
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		list.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 50)
+	end)
+
+	label.MouseButton1Click:Connect(function()
+		list.Visible = not list.Visible
+		label.Text = title..(list.Visible and " ▲" or " ▼")
+	end)
+
+	return list
+end
+
+-- 🌾 Seeds & ⚙️ Gears
+local SeedsListDefault = {"Cactus Seed","Strawberry Seed","Pumpkin Seed","Sunflower Seed","Dragon Fruit Seed","Eggplant Seed","Watermelon Seed","Grape Seed","Cocotank Seed","Carnivorous Plant Seed","Mr Carrot Seed","Tomatrio Seed","Shroombino Seed","Mango Seed","King Limone Seed"}
+local GearsListDefault = {"Water Bucket","Frost Grenade","Banana Gun","Frost Blower","Carrot Launcher"}
+
+local SeedsList = CreateDropdown(Content, "🌾 Select Seeds")
+local GearsList = CreateDropdown(Content, "⚙️ Select Gears")
+
+local function CreateSelectable(list, name, ref)
+	local btn = Instance.new("TextButton", list)
+	btn.Size = UDim2.new(1,-5,0,25)
+	btn.Text = name
+	btn.Font = Enum.Font.Gotham
+	btn.TextScaled = true
+	btn.BackgroundColor3 = table.find(ref,name) and Color3.fromRGB(0,120,0) or Color3.fromRGB(40,40,40)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.BorderSizePixel = 0
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
+
+	btn.MouseButton1Click:Connect(function()
+		local i = table.find(ref,name)
+		if i then table.remove(ref,i) btn.BackgroundColor3=Color3.fromRGB(40,40,40)
+		else table.insert(ref,name) btn.BackgroundColor3=Color3.fromRGB(0,120,0) end
+		SaveConfig(Config)
+	end)
+end
+
+for _,s in pairs(SeedsListDefault) do CreateSelectable(SeedsList,s,Config.Seeds) end
+for _,g in pairs(GearsListDefault) do CreateSelectable(GearsList,g,Config.Gears) end
+
+-- 🔘 Buttons creator
+local function CreateButton(parent, text)
+	local btn = Instance.new("TextButton", parent)
+	btn.Size = UDim2.new(1,0,0,35)
+	btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextScaled = true
+	btn.BorderSizePixel = 0
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+	btn.Text = text
+	return btn
+end
+
+-- 🧩 Hàm gắn toggle có lưu config và đổi chữ động
+local function BindToggleButton(btn, key, prefix)
+	btn.Text = prefix .. (Config[key] and "ON" or "OFF")
+	btn.MouseButton1Click:Connect(function()
+		Config[key] = not Config[key]
+		btn.Text = prefix .. (Config[key] and "ON" or "OFF")
+		SaveConfig(Config)
+	end)
+end
+
+-- 🔘 Nút chức năng chính
+local BtnSeed = CreateButton(Content,"Auto Buy Seed Selected: ")
+local BtnGear = CreateButton(Content,"Auto Buy Gear Selected: ")
+local BtnBrainrot = CreateButton(Content,"Auto Equip Best Brainrot: ")
+local BtnAFK = CreateButton(Content,"AFK Mode: ")
+
+-- Gắn toggle logic cho 3 nút đầu
+BindToggleButton(BtnSeed, "AutoSeed", "Auto Buy Seed Selected: ")
+BindToggleButton(BtnGear, "AutoGear", "Auto Buy Gear Selected: ")
+BindToggleButton(BtnBrainrot, "AutoBrainrot", "Auto Equip Best Brainrot: ")
+
+-- 🧭 Slider Delay
+local SliderFrame = Instance.new("Frame",Content)
+SliderFrame.Size = UDim2.new(1,0,0,50)
+SliderFrame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+SliderFrame.BorderSizePixel = 0
+Instance.new("UICorner",SliderFrame).CornerRadius=UDim.new(0,6)
+
+local SliderLabel = Instance.new("TextLabel",SliderFrame)
+SliderLabel.Text="Delay To Equip: "..Config.DelayToEquip.."s"
+SliderLabel.Size=UDim2.new(1,0,0,25)
+SliderLabel.BackgroundTransparency=1
+SliderLabel.TextColor3=Color3.fromRGB(255,255,255)
+SliderLabel.Font=Enum.Font.GothamBold
+SliderLabel.TextScaled=true
+
+local Slider = Instance.new("TextButton",SliderFrame)
+Slider.Size=UDim2.new(1,-10,0,10)
+Slider.Position=UDim2.new(0,5,0,35)
+Slider.BackgroundColor3=Color3.fromRGB(60,60,60)
+Slider.Text=""
+Slider.BorderSizePixel=0
+Instance.new("UICorner",Slider).CornerRadius=UDim.new(0,5)
+
+local Knob = Instance.new("Frame",Slider)
+Knob.Size=UDim2.new(math.clamp(Config.DelayToEquip/300,0,1),0,1,0)
+Knob.BackgroundColor3=Color3.fromRGB(0,255,0)
+Knob.BorderSizePixel=0
+Instance.new("UICorner",Knob).CornerRadius=UDim.new(0,5)
+
+-- Toggle UI
+Toggle.MouseButton1Click:Connect(function()
+	Main.Visible = not Main.Visible
+end)
+
+-- 🧭 Slider handler
+local dragging=false
+Slider.InputBegan:Connect(function(i)
+	if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true end
+end)
+Slider.InputEnded:Connect(function(i)
+	if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end
+end)
+UserInputService.InputChanged:Connect(function(i)
+	if dragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then
+		local pos=math.clamp((i.Position.X - Slider.AbsolutePosition.X)/Slider.AbsoluteSize.X,0,1)
+		Config.DelayToEquip=math.floor(5+pos*295)
+		Knob.Size=UDim2.new(pos,0,1,0)
+		SliderLabel.Text="Delay To Equip: "..Config.DelayToEquip.."s"
+		SaveConfig(Config)
+		_G.ResetEquipTimer=true
+	end
+end)
+
+-- 🔁 Auto logic
+task.spawn(function()
+	local t=0
+	while task.wait(1) do
+		if _G.ResetEquipTimer then t=0 _G.ResetEquipTimer=false end
+		if Config.AutoBrainrot then
+			t+=1
+			if t>=Config.DelayToEquip then
+				t=0
+				pcall(function() ReplicatedStorage.Remotes.EquipBestBrainrots:FireServer() end)
+			end
+		end
+	end
+end)
+
+task.spawn(function()
+	while task.wait(0.2) do
+		if Config.AutoSeed then
+			for _,s in pairs(Config.Seeds) do
+				pcall(function() ReplicatedStorage.Remotes.BuyItem:FireServer(s,true) end)
+				task.wait(0.1)
+			end
+		end
+		if Config.AutoGear then
+			for _,g in pairs(Config.Gears) do
+				pcall(function() ReplicatedStorage.Remotes.BuyGear:FireServer(g,true) end)
+				task.wait(0.1)
+			end
+		end
+	end
+end)
+
+-- 💤🌱🧠 Chiriku AFK Mode | Final Reload Edition (Loadstring Link)
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
+local VirtualUser = game:GetService("VirtualUser")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- 🗨️ Chat an toàn
+local function GetChatChannel()
+	for _ = 1, 20 do
+		local ch = TextChatService:FindFirstChild("TextChannels") and TextChatService.TextChannels:FindFirstChild("RBXGeneral")
+		if ch then return ch end
+		task.wait(0.05)
+	end
+	return nil
+end
+
+local function SafeChat(msg)
+	local ch = GetChatChannel()
+	if ch then
+		pcall(function() ch:SendAsync(msg) end)
+	else
+		pcall(function() game.Players:Chat(msg) end)
+	end
+end
+
+-- 💃 Random Dance 3 kiểu
+local function RandomDance()
+	local dances = {"/e dance", "/e dance2", "/e dance3"}
+	SafeChat(dances[math.random(1, #dances)])
+end
+
+-- 📍 Tìm plot của người chơi
+local function GetPlayerOrigin()
+	local plots = workspace:FindFirstChild("Plots")
+	if not plots then return nil end
+	for i = 1, 6 do
+		local plot = plots:FindFirstChild(tostring(i))
+		if plot and plot:FindFirstChild("PlayerSign") then
+			local gui = plot.PlayerSign:FindFirstChild("BillboardGui")
+			if gui then
+				local label = gui:FindFirstChild("TextLabel")
+				if label and typeof(label.Text) == "string" then
+					local text = label.Text
+					if text == player.Name or text == player.DisplayName then
+						return plot:FindFirstChild("Origin")
+					end
+				end
+			end
+		end
+	end
+	return nil
+end
+
+-- 📌 Z cố định để không lệch
+local TargetZ = 604.222717
+
+-- 💤 Bật/Tắt AFK
+BtnAFK.MouseButton1Click:Connect(function()
+	Config.AFKMode = not Config.AFKMode
+	BtnAFK.Text = "AFK Mode: " .. (Config.AFKMode and "ON" or "OFF")
+	SaveConfig(Config)
+
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	if Config.AFKMode then
+		local origin = GetPlayerOrigin()
+		if origin then
+			local pos = origin.Position
+			hrp.CFrame = CFrame.new(pos.X, pos.Y, TargetZ)
+			humanoid.WalkSpeed = 0
+			humanoid.JumpPower = 0
+			humanoid.AutoRotate = false
+			RandomDance()
+		else
+			warn("[AFK Mode] Không tìm thấy plot của người chơi!")
+		end
+	else
+		humanoid.WalkSpeed = 30
+		humanoid.JumpPower = 50
+		humanoid.AutoRotate = true
+	end
+end)
+
+-- ♻️ Khôi phục lại nếu AFK trước đó
+task.defer(function()
+	task.wait(1)
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if Config.AFKMode and hrp then
+		local origin = GetPlayerOrigin()
+		if origin then
+			local pos = origin.Position
+			hrp.CFrame = CFrame.new(pos.X, pos.Y, TargetZ)
+			humanoid.WalkSpeed = 0
+			humanoid.JumpPower = 0
+			humanoid.AutoRotate = false
+			RandomDance()
+			BtnAFK.Text = "AFK Mode: ON"
+		end
+	end
+end)
+
+-- 🧠 Anti Kick / Anti Idle
+player.Idled:Connect(function()
+	VirtualUser:CaptureController()
+	VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-- 🔁 Auto Click ngầm mỗi 45s (chống timeout)
+task.spawn(function()
+	while task.wait(45) do
+		pcall(function()
+			VirtualUser:CaptureController()
+			VirtualUser:ClickButton1(Vector2.new())
+		end)
+	end
+end)
+
+-- 🌀 QueueOnTeleport: Reload bằng link (bạn thay LINK ở đây 👇)
+if queue_on_teleport then
+	queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/chirikurb/note-raw/save/ChirikuRBPVBR"))()')
+	warn("[Chiriku AFK] QueueOnTeleport Ready ✅ | Waiting Teleport")
+end
+
+-- 🔌 Auto Rejoin nếu bị kick hoặc disconnect
+local function AutoRejoin()
+	task.wait(3)
+	local ok, err = pcall(function()
+		TeleportService:Teleport(game.PlaceId, player)
+	end)
+	if not ok then
+		warn("[Chiriku AFK] Rejoin thất bại, thử lại sau 10s:", err)
+		task.wait(10)
+		AutoRejoin()
+	end
+end
+
+CoreGui.DescendantAdded:Connect(function(obj)
+	if obj:IsA("TextLabel") and (obj.Text:find("Disconnected") or obj.Text:find("Kicked")) then
+		task.spawn(AutoRejoin)
+	end
+end)
+
+-- 🔍 Tự kiểm tra kết nối mỗi 10s
+task.spawn(function()
+	while task.wait(10) do
+		if not game:IsLoaded() or not player.Parent then
+			task.spawn(AutoRejoin)
+		end
+	end
+end)
+
+warn("[✅ Chiriku AFK System] Reload (Link Mode) + Anti Kick + Rejoin + Restore Ready!")
