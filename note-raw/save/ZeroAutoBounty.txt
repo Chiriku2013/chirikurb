@@ -67,7 +67,7 @@ getgenv().Config = {
         }
     },
     ["Skip"] = {
-        ["Avoid V4"] = false,
+        ["Avoid V4"] = true,
         ["Fruit"] = {
             ["Enabled"] = true,
             ["Avoid Fruit"] = {
