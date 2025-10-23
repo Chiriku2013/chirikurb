@@ -1,0 +1,171 @@
+-- 🍭 Chiriku Auto Collector | Dual Slap Model Support Edition
+-- ✅ TP được cả workspace.Slap và workspace.Model.Slap
+-- ✅ Delay 1s, TP tức thì, toggle UI, không trùng
+-- ✅ Dùng được trên Delta & Solara (PC/Mobile)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+
+-- 🧠 Hàm TP tức thì (Model hoặc Part)
+local function TeleportTo(target)
+	if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+	local root = LocalPlayer.Character.HumanoidRootPart
+	local pos
+	if target:IsA("Model") then
+		if target.PrimaryPart then
+			pos = target.PrimaryPart.Position
+		else
+			for _, p in ipairs(target:GetDescendants()) do
+				if p:IsA("BasePart") then
+					pos = p.Position
+					break
+				end
+			end
+		end
+	elseif target:IsA("BasePart") then
+		pos = target.Position
+	end
+	if pos then
+		root.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+	end
+end
+
+-- 🧍 Reconnect khi respawn
+LocalPlayer.CharacterAdded:Connect(function(char)
+	repeat task.wait() until char:FindFirstChild("HumanoidRootPart")
+end)
+
+-- 🌙 UI
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "ChirikuCollectorUI"
+
+-- 🍭 Toggle nút mở UI
+local ToggleButton = Instance.new("TextButton", ScreenGui)
+ToggleButton.Size = UDim2.new(0, 45, 0, 45)
+ToggleButton.Position = UDim2.new(0, 10, 0.4, 0)
+ToggleButton.Text = "🍭"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ToggleButton.TextSize = 24
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 0)
+ToggleButton.Font = Enum.Font.GothamBold
+local UICornerT = Instance.new("UICorner", ToggleButton)
+UICornerT.CornerRadius = UDim.new(0, 12)
+
+-- 🧩 Khung chính
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 250, 0, 120)
+Frame.Position = UDim2.new(0.03, 0, 0.35, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BackgroundTransparency = 0.2
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Visible = true
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "🍬 Chiriku Auto Collector"
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 0)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+local CandyButton = Instance.new("TextButton", Frame)
+CandyButton.Size = UDim2.new(1, -20, 0, 30)
+CandyButton.Position = UDim2.new(0, 10, 0, 40)
+CandyButton.Text = "Auto Collect Candy: OFF"
+CandyButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+CandyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CandyButton.Font = Enum.Font.GothamBold
+CandyButton.TextSize = 14
+
+local SlapButton = Instance.new("TextButton", Frame)
+SlapButton.Size = UDim2.new(1, -20, 0, 30)
+SlapButton.Position = UDim2.new(0, 10, 0, 80)
+SlapButton.Text = "Auto Collect Slap: OFF"
+SlapButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+SlapButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SlapButton.Font = Enum.Font.GothamBold
+SlapButton.TextSize = 14
+
+-- 🧩 Trạng thái
+getgenv().AutoCandy = false
+getgenv().AutoSlap = false
+
+-- 🍬 Candy Collect (BasePart)
+task.spawn(function()
+	while task.wait() do
+		if getgenv().AutoCandy then
+			local blacklist = {}
+			local lastSuper = 0
+			for _, v in pairs(workspace:GetChildren()) do
+				if not getgenv().AutoCandy then break end
+				if (v.Name == "CandyCorn" or v.Name == "SuperCandyCorn") and v:IsA("BasePart") then
+					if not table.find(blacklist, v) then
+						table.insert(blacklist, v)
+						if v.Name == "SuperCandyCorn" then
+							if tick() - lastSuper >= 30 then
+								lastSuper = tick()
+								TeleportTo(v)
+								task.wait(1)
+							end
+						else
+							TeleportTo(v)
+							task.wait(1)
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+
+-- 🖐️ Slap Collect (Model hoặc Model.Slap)
+task.spawn(function()
+	while task.wait() do
+		if getgenv().AutoSlap then
+			local blacklist = {}
+			
+			-- Tìm Slap ở mọi cấp
+			local function findSlaps(parent)
+				for _, v in pairs(parent:GetChildren()) do
+					if not getgenv().AutoSlap then break end
+					if v.Name == "Slap" and v:IsA("Model") then
+						if not table.find(blacklist, v) then
+							table.insert(blacklist, v)
+							TeleportTo(v)
+							task.wait(1)
+						end
+					elseif v:IsA("Model") or v:IsA("Folder") then
+						findSlaps(v) -- đệ quy tìm trong Model/Folder
+					end
+				end
+			end
+
+			findSlaps(workspace)
+		end
+	end
+end)
+
+-- ⚡ Nút Candy
+CandyButton.MouseButton1Click:Connect(function()
+	getgenv().AutoCandy = not getgenv().AutoCandy
+	CandyButton.Text = "Auto Collect Candy: " .. (getgenv().AutoCandy and "ON" or "OFF")
+	CandyButton.BackgroundColor3 = getgenv().AutoCandy and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(45, 45, 45)
+end)
+
+-- ⚡ Nút Slap
+SlapButton.MouseButton1Click:Connect(function()
+	getgenv().AutoSlap = not getgenv().AutoSlap
+	SlapButton.Text = "Auto Collect Slap: " .. (getgenv().AutoSlap and "ON" or "OFF")
+	SlapButton.BackgroundColor3 = getgenv().AutoSlap and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(45, 45, 45)
+end)
+
+-- 🎛️ Toggle UI
+ToggleButton.MouseButton1Click:Connect(function()
+	Frame.Visible = not Frame.Visible
+end)
+
+print("✅ Chiriku Auto Collector (Dual Slap Model) Loaded!")
