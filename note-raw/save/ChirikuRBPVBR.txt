@@ -208,7 +208,7 @@ local function CreateDropdown(parent, title)
 end
 
 -- 🌾 Seeds & ⚙️ Gears
-local SeedsListDefault = {"Cactus Seed","Strawberry Seed","Pumpkin Seed","Sunflower Seed","Dragon Fruit Seed","Eggplant Seed","Watermelon Seed","Grape Seed","Cocotank Seed","Carnivorous Plant Seed","Mr Carrot Seed","Tomatrio Seed","Shroombino Seed","Mango Seed","King Limone Seed"}
+local SeedsListDefault = {"Cactus Seed","Strawberry Seed","Pumpkin Seed","Sunflower Seed","Dragon Fruit Seed","Eggplant Seed","Watermelon Seed","Grape Seed","Cocotank Seed","Carnivorous Plant Seed","Mr Carrot Seed","Tomatrio Seed","Shroombino Seed","Mango Seed","King Limone Seed","Starfruit Seed"}
 local GearsListDefault = {"Water Bucket","Frost Grenade","Banana Gun","Frost Blower","Carrot Launcher"}
 
 local SeedsList = CreateDropdown(Content, "🌾 Select Seeds")
