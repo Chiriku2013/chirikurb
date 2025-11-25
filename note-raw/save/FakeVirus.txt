@@ -1,0 +1,142 @@
+@echo off
+title Windows Security Alert
+color 0C
+mode con: cols=140 lines=40
+
+:: Lấy đường dẫn Desktop
+set "DESK=%USERPROFILE%\Desktop"
+set "FILE=%DESK%\Cách Tắt.txt"
+
+:: Chỉ tạo file nếu chưa tồn tại
+if not exist "%FILE%" (
+    echo =============================== > "%FILE%"
+    echo  CÁCH TẮT FAKE VIRUS (Vô hại)   >> "%FILE%"
+    echo =============================== >> "%FILE%"
+    echo.                                >> "%FILE%"
+    echo 1. Nhấn Ctrl + Shift + Esc      >> "%FILE%"
+    echo 2. Mở Task Manager               >> "%FILE%"
+    echo 3. Chọn cmd.exe / Windows CMD    >> "%FILE%"
+    echo 4. Chọn "End Task"               >> "%FILE%"
+    echo.                                >> "%FILE%"
+    echo HOẶC đơn giản restart máy.       >> "%FILE%"
+)
+
+:: Mở file hướng dẫn
+start "" "%FILE%"
+
+echo ĐANG CHỜ NGƯỜI DÙNG ĐỌC HƯỚNG DẪN...
+echo ĐỪNG ĐÓNG HOẶC THU NHỎ FILE TXT NÀY...
+timeout /t 2 >nul
+
+:wait_loop
+tasklist /fi "imagename eq notepad.exe" | find /i "notepad.exe" >nul
+if %errorlevel%==0 goto wait_loop
+
+
+:: =====================================================
+:: ============== BẮT ĐẦU GIẢ LẬP VIRUS =================
+:: =====================================================
+
+
+:: ================= (1) POPUP HÙ MẠNH HƠN =================
+for /l %%p in (1,1,8) do (
+    powershell -command "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('CẢNH BÁO: Quyền truy cập trái phép!','Windows Security',0,16)" >nul
+)
+
+
+:: ================= Cảnh báo nhấp nháy mạnh hơn =================
+for /l %%i in (1,1,8) do (
+    color 0C
+    cls
+    echo *************** CẢNH BÁO NGHIÊM TRỌNG ***************
+    echo      HỆ THỐNG BỊ XÂM NHẬP!! MÃ ĐỘC ĐANG HOẠT ĐỘNG!!
+    echo ******************************************************
+    ping localhost -n 1 >nul
+    color 0F
+    cls
+    ping localhost -n 1 >nul
+)
+
+
+:: ================= Lỗi tiến trình =================
+cls
+echo [!] Lỗi tiến trình hệ thống: CRITICAL_PROCESS_DIED
+echo ĐANG KIỂM TRA TỔN THẤT...
+ping localhost -n 2 >nul
+
+
+:: =====================================================
+:: ================= (4) FAKE MÃ HÓA NGẦU HƠN =================
+:: =====================================================
+cls
+echo Đang mã hóa dữ liệu người dùng...
+echo.
+
+for /l %%i in (1,1,120) do (
+    set /a r=%random% %% 99999
+    echo [ENCRYPT] File_%%i.sys  →  Key:0x%%r
+    ping localhost -n 1 >nul
+)
+
+echo.
+echo XÁC NHẬN: 120 tệp đã bị mã hóa.
+ping localhost -n 2 >nul
+
+
+:: =====================================================
+:: ================= (5) FAKE UPLOAD NGẦU HƠN =================
+:: =====================================================
+cls
+echo Đã phát hiện rò rỉ dữ liệu nguy hiểm!
+echo Đang tải dữ liệu lên máy chủ UNKNOWN_NODE...
+echo.
+
+for /l %%j in (1,1,80) do (
+    set /a s=%random% %% 255
+    echo [UPLOAD] Chunk %%j/80  | Speed: %%s KB/s
+    ping localhost -n 1 >nul
+)
+
+echo.
+echo TẢI LÊN HOÀN TẤT! DỮ LIỆU ĐÃ RỜI KHỎI THIẾT BỊ.
+ping localhost -n 2 >nul
+
+
+:: =====================================================
+:: ================= (6) FAKE CHIẾM QUYỀN =================
+:: =====================================================
+cls
+echo Đang chiếm quyền điều khiển Windows Security...
+echo.
+
+for /l %%k in (1,1,35) do (
+    echo [OVERRIDE] Security Layer %%k/35  →  Status: Injected
+    ping localhost -n 1 >nul
+)
+
+echo.
+echo ** HỆ THỐNG AN NINH ĐÃ BỊ TÊ LIỆT **
+ping localhost -n 2 >nul
+
+
+:: ================= Màn hình lỗi đỏ =================
+color 4F
+cls
+echo ===============================================
+echo    LỖI NGHIÊM TRỌNG: WINDOWS ĐÃ BỊ KIỂM SOÁT
+echo    TẤT CẢ DỮ LIỆU ĐÃ BỊ XÁC NHẬN ĐÁNH CẮP
+echo    KHÔNG THỂ KHÔI PHỤC - TRẠNG THÁI MÃ ĐỘC
+echo ===============================================
+ping localhost -n 5 >nul
+
+
+:: ================= KHÓA MÀN HÌNH =================
+:loop
+color 4F
+cls
+echo ************* CRITICAL ERROR *************
+echo Hệ thống đang trong trạng thái nguy hiểm!
+echo Không thể thoát! Không thể dừng quy trình!
+echo ******************************************
+ping localhost -n 1 >nul
+goto loop
