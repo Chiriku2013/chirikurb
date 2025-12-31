@@ -6,5 +6,9 @@
   {
     "name": "Zero Hub Auto Bounty - BF",
     "code": "loadstring(game:HttpGet(\"https://chiriku2013.github.io/chirikurb/note-raw/save/ZeroAutoBounty.txt\"))()"
+  },
+  {
+    "name": "Auto CDK",
+    "code": "getgenv().Team = \"Pirates\" \nloadstring(game:HttpGet(\"https://raw.githubusercontent.com/Teddyseetink/Haidepzai/refs/heads/main/TeddyHub-CDK.lua\"))()"
   }
 ]
