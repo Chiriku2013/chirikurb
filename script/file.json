@@ -10,5 +10,9 @@
   {
     "name": "Auto CDK",
     "code": "getgenv().Team = \"Pirates\" \nloadstring(game:HttpGet(\"https://raw.githubusercontent.com/Teddyseetink/Haidepzai/refs/heads/main/TeddyHub-CDK.lua\"))()"
+  },
+  {
+    "name": "Auto Shark Anchor",
+    "code": "loadstring(game:HttpGet(\"https://pandadevelopment.net/virtual/file/9a4a8490d0bef302\"))()"
   }
 ]
