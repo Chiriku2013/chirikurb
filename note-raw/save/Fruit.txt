@@ -168,7 +168,3 @@ while task.wait(5) do
         SmartHop()
     end
 end
-
-else
-    game.Players.LocalPlayer:Kick("This script is not supported in this game, please try again with Blox Fruits!")
-end
