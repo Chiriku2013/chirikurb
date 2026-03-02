@@ -1,18 +1,11 @@
---[[
-    Aura UI Library - Version 2.5.0 (Full API Edition)
-    "The Aesthetic Alternative to Fluent UI"
-    Author: Gemini AI
-]]
-
 local Aura = {
-    Version = "2.5.0",
+    Version = "2.8.0",
     Options = {},
+    CurrentTheme = nil,
     Themes = {
         Dark = { Main = Color3.fromRGB(15, 15, 15), Tab = Color3.fromRGB(22, 22, 22), Accent = Color3.fromRGB(0, 170, 255), Text = Color3.fromRGB(255, 255, 255), Secondary = Color3.fromRGB(150, 150, 150) },
         Aqua = { Main = Color3.fromRGB(10, 22, 28), Tab = Color3.fromRGB(18, 32, 40), Accent = Color3.fromRGB(0, 255, 220), Text = Color3.fromRGB(240, 255, 255), Secondary = Color3.fromRGB(120, 180, 180) },
-        Rose = { Main = Color3.fromRGB(25, 10, 15), Tab = Color3.fromRGB(35, 18, 25), Accent = Color3.fromRGB(255, 80, 150), Text = Color3.fromRGB(255, 240, 245), Secondary = Color3.fromRGB(180, 120, 140) },
-        Amethyst = { Main = Color3.fromRGB(15, 10, 25), Tab = Color3.fromRGB(25, 18, 38), Accent = Color3.fromRGB(180, 100, 255), Text = Color3.fromRGB(245, 240, 255), Secondary = Color3.fromRGB(150, 130, 180) },
-        Emerald = { Main = Color3.fromRGB(8, 20, 12), Tab = Color3.fromRGB(15, 32, 22), Accent = Color3.fromRGB(80, 255, 120), Text = Color3.fromRGB(235, 255, 240), Secondary = Color3.fromRGB(120, 180, 140) }
+        Rose = { Main = Color3.fromRGB(25, 10, 15), Tab = Color3.fromRGB(35, 18, 25), Accent = Color3.fromRGB(255, 80, 150), Text = Color3.fromRGB(255, 240, 245), Secondary = Color3.fromRGB(180, 120, 140) }
     }
 }
 
@@ -27,16 +20,16 @@ end
 -- [ Notification System ] --
 local NotifyGui = Instance.new("ScreenGui", CoreGui)
 local NotifyHolder = Instance.new("Frame", NotifyGui)
-NotifyHolder.Size = UDim2.new(0, 280, 1, 0); NotifyHolder.Position = UDim2.new(1, -290, 0, 0); NotifyHolder.BackgroundTransparency = 1
-Instance.new("UIListLayout", NotifyHolder).VerticalAlignment = "Bottom"
+NotifyHolder.Size = UDim2.new(0, 300, 1, -20); NotifyHolder.Position = UDim2.new(1, -310, 0, 10); NotifyHolder.BackgroundTransparency = 1
+Instance.new("UIListLayout", NotifyHolder).Padding = UDim.new(0, 10)
 
 function Aura:Notify(Config)
     local Box = Instance.new("Frame", NotifyHolder)
-    Box.Size = UDim2.new(1, 0, 0, 55); Box.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    Instance.new("UICorner", Box); local S = Instance.new("UIStroke", Box); S.Color = Color3.fromRGB(0, 170, 255)
-    local T = Instance.new("TextLabel", Box); T.Text = Config.Content; T.Size = UDim2.new(1, -20, 1, 0); T.TextColor3 = Color3.fromRGB(255, 255, 255); T.BackgroundTransparency = 1; T.Font = "GothamBold"; T.TextSize = 12; T.Position = UDim2.fromOffset(10, 0)
-    Box.Position = UDim2.new(1.5, 0, 0, 0); Tween(Box, 0.4, {Position = UDim2.new(0,0,0,0)})
-    task.delay(Config.Duration or 3, function() Tween(Box, 0.4, {Position = UDim2.new(1.5,0,0,0)}); task.wait(0.4); Box:Destroy() end)
+    Box.Size = UDim2.new(1, 0, 0, 60); Box.BackgroundColor3 = Color3.fromRGB(25, 25, 25); Box.Position = UDim2.new(1.2, 0, 0, 0)
+    Instance.new("UICorner", Box); local S = Instance.new("UIStroke", Box); S.Color = Aura.CurrentTheme.Accent
+    local T = Instance.new("TextLabel", Box); T.Text = Config.Content; T.Size = UDim2.new(1, -20, 1, 0); T.TextColor3 = Color3.fromRGB(255, 255, 255); T.BackgroundTransparency = 1; T.Font = "GothamBold"; T.TextSize = 12; T.Position = UDim2.fromOffset(10, 0); T.TextWrapped = true
+    Tween(Box, 0.4, {Position = UDim2.new(0,0,0,0)})
+    task.delay(Config.Duration or 3, function() Tween(Box, 0.4, {Position = UDim2.new(1.2,0,0,0)}); task.wait(0.4); Box:Destroy() end)
 end
 
 -- [ Draggable ] --
@@ -51,92 +44,120 @@ end
 
 function Aura:CreateWindow(Config)
     local Window = { Tabs = {}, Theme = Aura.Themes[Config.Theme] or Aura.Themes.Dark }
-    local ScreenGui = Instance.new("ScreenGui", CoreGui); Window.ScreenGui = ScreenGui
+    Aura.CurrentTheme = Window.Theme
+    local ScreenGui = Instance.new("ScreenGui", CoreGui); ScreenGui.Name = "AuraUI_"..Config.Title; ScreenGui.ZIndexBehavior = "Sibling"; Window.ScreenGui = ScreenGui
     
-    local Main = Instance.new("Frame", ScreenGui); Main.Size = UDim2.fromOffset(580, 460); Main.Position = UDim2.fromScale(0.5, 0.5); Main.AnchorPoint = Vector2.new(0.5, 0.5); Main.BackgroundColor3 = Window.Theme.Main; Instance.new("UICorner", Main)
-    local Stroke = Instance.new("UIStroke", Main); Stroke.Color = Window.Theme.Accent; Stroke.Thickness = 1.5
+    local Main = Instance.new("Frame", ScreenGui); Main.Name = "MainFrame"; Main.Size = UDim2.fromOffset(600, 480); Main.Position = UDim2.fromScale(0.5, 0.5); Main.AnchorPoint = Vector2.new(0.5, 0.5); Main.BackgroundColor3 = Window.Theme.Main; Instance.new("UICorner", Main)
+    local MainStroke = Instance.new("UIStroke", Main); MainStroke.Color = Window.Theme.Accent
 
-    -- Toggle UI Button
-    local TBtn = Instance.new("TextButton", ScreenGui); TBtn.Size = UDim2.fromOffset(45, 45); TBtn.Position = UDim2.new(0, 20, 0.5, -22); TBtn.BackgroundColor3 = Window.Theme.Main; TBtn.Text = "A"; TBtn.TextColor3 = Window.Theme.Accent; TBtn.Font = "GothamBold"; TBtn.TextSize = 20; Instance.new("UICorner", TBtn, {CornerRadius = UDim.new(1,0)}); MakeDraggable(TBtn, TBtn)
-    TBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+    local TopBar = Instance.new("Frame", Main); TopBar.Size = UDim2.new(1, 0, 0, 55); TopBar.BackgroundTransparency = 1; MakeDraggable(Main, TopBar)
+    local Title = Instance.new("TextLabel", TopBar); Title.Text = Config.Title; Title.Size = UDim2.new(0.5, 0, 0.6, 0); Title.Position = UDim2.fromOffset(15, 8); Title.TextColor3 = Window.Theme.Text; Title.Font = "GothamBold"; Title.TextSize = 18; Title.TextXAlignment = "Left"; Title.BackgroundTransparency = 1
+    local Sub = Instance.new("TextLabel", TopBar); Sub.Text = Config.SubTitle or ""; Sub.Size = UDim2.new(0.5, 0, 0.4, 0); Sub.Position = UDim2.fromOffset(15, 28); Sub.TextColor3 = Window.Theme.Secondary; Sub.Font = "Gotham"; Sub.TextSize = 12; Sub.TextXAlignment = "Left"; Sub.BackgroundTransparency = 1
 
-    local Nav = Instance.new("ScrollingFrame", Main); Nav.Position = UDim2.fromOffset(10, 50); Nav.Size = UDim2.new(0, 160, 1, -60); Nav.BackgroundTransparency = 1; Nav.ScrollBarThickness = 0; Instance.new("UIListLayout", Nav).Padding = UDim.new(0, 5)
-    local Container = Instance.new("Frame", Main); Container.Position = UDim2.fromOffset(180, 50); Container.Size = UDim2.new(1, -190, 1, -60); Container.BackgroundTransparency = 1
+    local Nav = Instance.new("ScrollingFrame", Main); Nav.Position = UDim2.fromOffset(10, 65); Nav.Size = UDim2.new(0, 165, 1, -85); Nav.BackgroundTransparency = 1; Nav.ScrollBarThickness = 0; local NavL = Instance.new("UIListLayout", Nav); NavL.Padding = UDim.new(0, 5)
+    local Container = Instance.new("Frame", Main); Container.Position = UDim2.fromOffset(185, 65); Container.Size = UDim2.new(1, -200, 1, -85); Container.BackgroundTransparency = 1
+
+    function Window:SetTheme(ThemeName)
+        local NewTheme = Aura.Themes[ThemeName]
+        if NewTheme then
+            Window.Theme = NewTheme; Aura.CurrentTheme = NewTheme
+            Main.BackgroundColor3 = NewTheme.Main; MainStroke.Color = NewTheme.Accent
+            for _, t in pairs(Window.Tabs) do t.Button.BackgroundColor3 = NewTheme.Tab end
+        end
+    end
 
     function Window:AddTab(TabConfig)
         local Tab = { Page = nil, Button = nil }
-        local Page = Instance.new("ScrollingFrame", Container); Page.Size = UDim2.fromScale(1, 1); Page.Visible = false; Page.BackgroundTransparency = 1; Page.ScrollBarThickness = 0; Page.AutomaticCanvasSize = "Y"; Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
-        Tab.Page = Page
-
-        local TabBtn = Instance.new("TextButton", Nav); TabBtn.Size = UDim2.new(1, -10, 0, 35); TabBtn.BackgroundColor3 = Window.Theme.Tab; TabBtn.Text = TabConfig.Title; TabBtn.TextColor3 = Window.Theme.Secondary; TabBtn.Font = "GothamMedium"; Instance.new("UICorner", TabBtn)
-        Tab.Button = TabBtn
-
+        local Page = Instance.new("ScrollingFrame", Container); Page.Size = UDim2.fromScale(1, 1); Page.Visible = false; Page.BackgroundTransparency = 1; Page.ScrollBarThickness = 2; Page.AutomaticCanvasSize = "Y"; Instance.new("UIListLayout", Page).Padding = UDim.new(0, 10)
+        
+        local TabBtn = Instance.new("TextButton", Nav); TabBtn.Size = UDim2.new(1, -10, 0, 38); TabBtn.BackgroundColor3 = Window.Theme.Tab; TabBtn.Text = "  "..TabConfig.Title; TabBtn.TextColor3 = Window.Theme.Secondary; TabBtn.Font = "GothamMedium"; TabBtn.TextXAlignment = "Left"; Instance.new("UICorner", TabBtn)
+        
         TabBtn.MouseButton1Click:Connect(function()
-            for _, t in pairs(Window.Tabs) do t.Page.Visible = false; Tween(t.Button, 0.2, {TextColor3 = Window.Theme.Secondary}) end
-            Page.Visible = true; Tween(TabBtn, 0.2, {TextColor3 = Window.Theme.Accent})
+            for _, t in pairs(Window.Tabs) do t.Page.Visible = false; Tween(t.Button, 0.2, {TextColor3 = Window.Theme.Secondary, BackgroundTransparency = 0.5}) end
+            Page.Visible = true; Tween(TabBtn, 0.2, {TextColor3 = Window.Theme.Accent, BackgroundTransparency = 0})
         end)
 
-        -- [ FULL API COMPONENTS ] --
-        function Tab:AddButton(C)
-            local B = Instance.new("TextButton", Page); B.Size = UDim2.new(1, -10, 0, 38); B.BackgroundColor3 = Window.Theme.Tab; B.Text = "  "..C.Title; B.TextColor3 = Window.Theme.Text; B.TextXAlignment = "Left"; B.Font = "Gotham"; Instance.new("UICorner", B); B.MouseButton1Click:Connect(C.Callback)
-        end
-
+        -- [[ FULL API LOGIC ]] --
         function Tab:AddToggle(ID, C)
-            local T = { Value = C.Default or false, Callback = function() end }
-            Aura.Options[ID] = T
-            local F = Instance.new("Frame", Page); F.Size = UDim2.new(1, -10, 0, 38); F.BackgroundColor3 = Window.Theme.Tab; Instance.new("UICorner", F)
-            local L = Instance.new("TextLabel", F); L.Text = "  "..C.Title; L.Size = UDim2.fromScale(1, 1); L.TextColor3 = Window.Theme.Text; L.BackgroundTransparency = 1; L.TextXAlignment = "Left"
-            local Ind = Instance.new("Frame", F); Ind.Size = UDim2.fromOffset(24, 12); Ind.Position = UDim2.new(1, -35, 0.5, -6); Ind.BackgroundColor3 = T.Value and Window.Theme.Accent or Color3.fromRGB(60,60,60); Instance.new("UICorner", Ind).CornerRadius = UDim.new(1, 0)
-            function T:OnChanged(fn) T.Callback = fn end
-            function T:SetValue(v) T.Value = v; Tween(Ind, 0.3, {BackgroundColor3 = v and Window.Theme.Accent or Color3.fromRGB(60,60,60)}); T.Callback(v) end
-            F.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then T:SetValue(not T.Value) end end)
+            local T = { Value = C.Default or false }
+            local F = Instance.new("TextButton", Page); F.Size = UDim2.new(1, -10, 0, 45); F.BackgroundColor3 = Window.Theme.Tab; F.Text = ""; Instance.new("UICorner", F)
+            local L = Instance.new("TextLabel", F); L.Text = "  "..C.Title; L.Size = UDim2.fromScale(1, 1); L.TextColor3 = Window.Theme.Text; L.BackgroundTransparency = 1; L.TextXAlignment = "Left"; L.Font = "Gotham"
+            
+            local Bg = Instance.new("Frame", F); Bg.Size = UDim2.fromOffset(36, 18); Bg.Position = UDim2.new(1, -45, 0.5, -9); Bg.BackgroundColor3 = T.Value and Window.Theme.Accent or Color3.fromRGB(50,50,50); Instance.new("UICorner", Bg).CornerRadius = UDim.new(1,0)
+            local Dot = Instance.new("Frame", Bg); Dot.Size = UDim2.fromOffset(14, 14); Dot.Position = T.Value and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7); Dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255); Instance.new("UICorner", Dot).CornerRadius = UDim.new(1,0)
+            
+            F.MouseButton1Click:Connect(function()
+                T.Value = not T.Value
+                Tween(Bg, 0.2, {BackgroundColor3 = T.Value and Window.Theme.Accent or Color3.fromRGB(50,50,50)})
+                Tween(Dot, 0.2, {Position = T.Value and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)})
+                if C.Callback then C.Callback(T.Value) end
+            end)
             return T
         end
 
         function Tab:AddSlider(ID, C)
-            local S = { Value = C.Default, Callback = function() end }
-            Aura.Options[ID] = S
-            local F = Instance.new("Frame", Page); F.Size = UDim2.new(1, -10, 0, 45); F.BackgroundColor3 = Window.Theme.Tab; Instance.new("UICorner", F)
-            local L = Instance.new("TextLabel", F); L.Text = "  "..C.Title.." ["..S.Value.."]"; L.Size = UDim2.new(1,0,0,20); L.TextColor3 = Window.Theme.Text; L.BackgroundTransparency = 1; L.TextXAlignment = "Left"
-            local Bar = Instance.new("Frame", F); Bar.Size = UDim2.new(1, -40, 0, 4); Bar.Position = UDim2.new(0, 20, 0, 32); Bar.BackgroundColor3 = Color3.fromRGB(60,60,60)
-            local Fill = Instance.new("Frame", Bar); Fill.Size = UDim2.fromScale((C.Default-C.Min)/(C.Max-C.Min), 1); Fill.BackgroundColor3 = Window.Theme.Accent; Instance.new("UICorner", Fill)
-            function S:OnChanged(fn) S.Callback = fn end
-            function S:SetValue(v) S.Value = math.clamp(math.round(v * (10^C.Rounding)) / (10^C.Rounding), C.Min, C.Max); L.Text = "  "..C.Title.." ["..S.Value.."]"; Tween(Fill, 0.2, {Size = UDim2.fromScale((S.Value-C.Min)/(C.Max-C.Min), 1)}); S.Callback(S.Value) end
-            Bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then S:SetValue(C.Min + ((i.Position.X - Bar.AbsolutePosition.X)/Bar.AbsoluteSize.X)*(C.Max-C.Min)) end end)
+            local S = { Value = C.Default }
+            local F = Instance.new("Frame", Page); F.Size = UDim2.new(1, -10, 0, 55); F.BackgroundColor3 = Window.Theme.Tab; Instance.new("UICorner", F)
+            local L = Instance.new("TextLabel", F); L.Text = "  "..C.Title.." : "..S.Value; L.Size = UDim2.new(1,0,0,25); L.TextColor3 = Window.Theme.Text; L.BackgroundTransparency = 1; L.TextXAlignment = "Left"; L.Font = "Gotham"
+            
+            local Bar = Instance.new("TextButton", F); Bar.Size = UDim2.new(1, -40, 0, 6); Bar.Position = UDim2.new(0, 20, 0.75, 0); Bar.BackgroundColor3 = Color3.fromRGB(45,45,45); Bar.AutoButtonColor = false; Bar.Text = ""; Instance.new("UICorner", Bar)
+            local Fill = Instance.new("Frame", Bar); Fill.Size = UDim2.fromScale((S.Value-C.Min)/(C.Max-C.Min), 1); Fill.BackgroundColor3 = Window.Theme.Accent; Instance.new("UICorner", Fill)
+            
+            local function Update(input)
+                local size = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                local val = math.floor(C.Min + (C.Max - C.Min) * size)
+                S.Value = val; L.Text = "  "..C.Title.." : "..val
+                Fill.Size = UDim2.fromScale(size, 1)
+                if C.Callback then C.Callback(val) end
+            end
+            local dragging = false
+            Bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = true Update(i) end end)
+            UserInputService.InputChanged:Connect(function(i) if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then Update(i) end end)
+            UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end end)
             return S
         end
 
-        function Tab:AddDropdown(ID, C)
-            local D = { Value = C.Default, Callback = function() end }
-            Aura.Options[ID] = D
-            local F = Instance.new("TextButton", Page); F.Size = UDim2.new(1, -10, 0, 38); F.BackgroundColor3 = Window.Theme.Tab; F.Text = "  "..C.Title.." : "..tostring(D.Value); F.TextColor3 = Window.Theme.Text; F.TextXAlignment = "Left"; F.Font = "Gotham"; Instance.new("UICorner", F)
-            function D:OnChanged(fn) D.Callback = fn end
-            F.MouseButton1Click:Connect(function() local idx = table.find(C.Values, D.Value) or 0; D.Value = C.Values[(idx % #C.Values) + 1]; F.Text = "  "..C.Title.." : "..tostring(D.Value); D.Callback(D.Value) end)
-            return D
+        function Tab:AddInput(ID, C)
+            local F = Instance.new("Frame", Page); F.Size = UDim2.new(1, -10, 0, 45); F.BackgroundColor3 = Window.Theme.Tab; Instance.new("UICorner", F)
+            local L = Instance.new("TextLabel", F); L.Text = "  "..C.Title; L.Size = UDim2.new(0.6, 0, 1, 0); L.TextColor3 = Window.Theme.Text; L.BackgroundTransparency = 1; L.TextXAlignment = "Left"; L.Font = "Gotham"
+            local Box = Instance.new("TextBox", F); Box.Size = UDim2.new(0.35, 0, 0.65, 0); Box.Position = UDim2.new(0.6, 0, 0.175, 0); Box.BackgroundColor3 = Color3.fromRGB(35, 35, 35); Box.TextColor3 = Color3.fromRGB(255, 255, 255); Box.PlaceholderText = C.Placeholder or "Type..."; Box.Text = ""; Box.Font = "Gotham"; Box.TextSize = 12; Instance.new("UICorner", Box)
+            Box.FocusLost:Connect(function() if C.Callback then C.Callback(Box.Text) end end)
         end
 
-        function Tab:AddKeybind(ID, C)
-            local K = { Value = C.Default, Callback = function() end, Binding = false }
-            Aura.Options[ID] = K
-            local F = Instance.new("TextButton", Page); F.Size = UDim2.new(1, -10, 0, 38); F.BackgroundColor3 = Window.Theme.Tab; F.Text = "  "..C.Title.." : ["..K.Value.Name.."]"; F.TextColor3 = Window.Theme.Text; F.TextXAlignment = "Left"; Instance.new("UICorner", F)
-            F.MouseButton1Click:Connect(function() K.Binding = true; F.Text = "  "..C.Title.." : [...]" end)
-            UserInputService.InputBegan:Connect(function(i) if K.Binding and i.UserInputType == Enum.UserInputType.Keyboard then K.Value = i.KeyCode; K.Binding = false; F.Text = "  "..C.Title.." : ["..i.KeyCode.Name.."]"; K.Callback(i.KeyCode) elseif not K.Binding and i.KeyCode == K.Value then K.Callback(i.KeyCode) end end)
-            function K:OnPressed(fn) K.Callback = fn end
-            return K
+        function Tab:AddDropdown(ID, C)
+            local D = { Value = C.Default, Open = false }
+            local F = Instance.new("TextButton", Page); F.Size = UDim2.new(1, -10, 0, 45); F.BackgroundColor3 = Window.Theme.Tab; F.Text = "  "..C.Title.." : "..tostring(D.Value); F.TextColor3 = Window.Theme.Text; F.TextXAlignment = "Left"; F.Font = "Gotham"; Instance.new("UICorner", F)
+            local Drop = Instance.new("Frame", Page); Drop.Size = UDim2.new(1, -10, 0, 0); Drop.BackgroundColor3 = Color3.fromRGB(30, 30, 30); Drop.Visible = false; Drop.ClipsDescendants = true; Instance.new("UICorner", Drop); local DL = Instance.new("UIListLayout", Drop)
+            F.MouseButton1Click:Connect(function()
+                D.Open = not D.Open; Drop.Visible = D.Open
+                Tween(Drop, 0.3, {Size = D.Open and UDim2.new(1, -10, 0, #C.Values * 32) or UDim2.new(1, -10, 0, 0)})
+            end)
+            for _, v in pairs(C.Values) do
+                local O = Instance.new("TextButton", Drop); O.Size = UDim2.new(1, 0, 0, 32); O.BackgroundTransparency = 1; O.Text = v; O.TextColor3 = Color3.fromRGB(200, 200, 200); O.Font = "Gotham"
+                O.MouseButton1Click:Connect(function()
+                    D.Value = v; F.Text = "  "..C.Title.." : "..v; D.Open = false; Tween(Drop, 0.3, {Size = UDim2.new(1, -10, 0, 0)}); task.wait(0.3); Drop.Visible = false
+                    if C.Callback then C.Callback(v) end
+                end)
+            end
         end
 
         function Tab:AddColorpicker(ID, C)
-            local CP = { Value = C.Default, Callback = function() end }
-            Aura.Options[ID] = CP
-            local F = Instance.new("Frame", Page); F.Size = UDim2.new(1, -10, 0, 38); F.BackgroundColor3 = Window.Theme.Tab; Instance.new("UICorner", F)
-            local L = Instance.new("TextLabel", F); L.Text = "  "..C.Title; L.Size = UDim2.fromScale(1, 1); L.TextColor3 = Window.Theme.Text; L.BackgroundTransparency = 1; L.TextXAlignment = "Left"
-            local Box = Instance.new("TextButton", F); Box.Size = UDim2.fromOffset(35, 18); Box.Position = UDim2.new(1, -45, 0.5, -9); Box.BackgroundColor3 = CP.Value; Box.Text = ""; Instance.new("UICorner", Box)
-            Box.MouseButton1Click:Connect(function() local newCol = Color3.fromHSV(tick()%5/5, 1, 1); CP.Value = newCol; Box.BackgroundColor3 = newCol; CP.Callback(newCol) end)
-            function CP:OnChanged(fn) CP.Callback = fn end
-            return CP
+            local CP = { Value = C.Default }
+            local F = Instance.new("Frame", Page); F.Size = UDim2.new(1, -10, 0, 45); F.BackgroundColor3 = Window.Theme.Tab; Instance.new("UICorner", F)
+            local L = Instance.new("TextLabel", F); L.Text = "  "..C.Title; L.Size = UDim2.fromScale(1,1); L.BackgroundTransparency = 1; L.TextColor3 = Window.Theme.Text; L.TextXAlignment = "Left"; L.Font = "Gotham"
+            local Box = Instance.new("TextButton", F); Box.Size = UDim2.fromOffset(40, 22); Box.Position = UDim2.new(1, -50, 0.5, -11); Box.BackgroundColor3 = CP.Value; Box.Text = ""; Instance.new("UICorner", Box)
+            Box.MouseButton1Click:Connect(function()
+                local newCol = Color3.fromHSV(tick()%5/5, 1, 1); CP.Value = newCol; Box.BackgroundColor3 = newCol; if C.Callback then C.Callback(newCol) end
+            end)
         end
 
-        table.insert(Window.Tabs, Tab); if #Window.Tabs == 1 then Page.Visible = true; TabBtn.TextColor3 = Window.Theme.Accent end
+        function Tab:AddButton(C)
+            local B = Instance.new("TextButton", Page); B.Size = UDim2.new(1, -10, 0, 40); B.BackgroundColor3 = Window.Theme.Tab; B.Text = "  "..C.Title; B.TextColor3 = Window.Theme.Text; B.TextXAlignment = "Left"; B.Font = "GothamMedium"; Instance.new("UICorner", B)
+            B.MouseButton1Click:Connect(C.Callback)
+        end
+
+        table.insert(Window.Tabs, {Page = Page, Button = TabBtn})
+        if #Window.Tabs == 1 then Page.Visible = true; TabBtn.TextColor3 = Window.Theme.Accent end
         return Tab
     end
     return Window
