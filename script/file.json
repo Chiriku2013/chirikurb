@@ -24,7 +24,7 @@
     "code": "getgenv().Config = {\n    [\"Setting\"] = {\n        [\"UiCheckItem\"] = false,\n        [\"White Screen\"] = false\n    },       \n    [\"MainItem\"] = {\n        [\"Saber\"] = true,         \n        [\"Hallow Scythe\"] = false,\n        [\"GodHuman\"] = true,\n        [\"Skull Guitar\"] = true,\n        [\"Cursed Dual Katana\"] = true\n    },\n    [\"MiscItem\"] = {\n        [\"Midnight Blade\"] = true,\n        [\"Pole1st\"] = true,\n        [\"Dragon Trident\"] = true,\n        [\"Spikey Trident\"] = true,\n        [\"Buddy\"] = true,\n        [\"Kabucha\"] = false,\n        [\"Rengoku\"] = true,\n        [\"Gravity Blade\"] = true,\n        [\"Venom Bow\"] = true\n    },\n    [\"Fruits\"] = {\n        [\"Fruits Eat\"] = {\"Gravity-Gravity\",\"Pain-Pain\"},\n        [\"Auto Eat Fruits\"] = false,\n        [\"Farm Mastery Fruits\"] = true\n    },\n    [\"Quest\"] = {\n        [\"Race V2-V3\"] = true,\n        [\"Haki Rainbow\"] = true\n    },\n    [\"Webhook\"] = {\n        [\"Enable\"] = false,\n        [\"UrlWebhook\"] = \"\"\n    }\n}\nloadstring(game:HttpGet(\"https://raw.githubusercontent.com/Dev-BlueX/BlueX-Hub/refs/heads/main/KaitunBloxFruits.lua\"))()"
   },
   {
-    "name": "Blue X Hub",
-    "code": "_G.AutoTranslate = false\n\n_G.SaveConfig = true\n\nloadstring(game:HttpGet(\"https://raw.githubusercontent.com/Dev-BlueX/BlueX-Hub/refs/heads/main/Main.lua\"))()"
+    "name": "Lumin Hub",
+    "code": "loadstring(game:HttpGet(\"https://api.luarmor.net/files/v4/loaders/795c7accd08487171484e54a92e75c77.lua\"))()"
   }
 ]
