@@ -1,0 +1,165 @@
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- Xóa UI cũ nếu tồn tại
+if CoreGui:FindFirstChild("BOFBR_UI") then
+    CoreGui.BOFBR_UI:Destroy()
+end
+
+-- Danh sách Area và Tọa độ tương ứng từ Console
+local teleLocations = {
+    { name = "Started Area", pos = Vector3.new(-3394.07, 1450.39, -2882.71) }, -- Position 11
+    { name = "Common Area", pos = Vector3.new(-3396.9, 1450.38, -2749.67) },  -- Position 1
+    { name = "Uncommon Area", pos = Vector3.new(-3393.39, 1450.38, -2339.79) },-- Position 2
+    { name = "Rare Area", pos = Vector3.new(-3396.97, 1450.38, -1462.87) },  -- Position 3
+    { name = "Epic Area", pos = Vector3.new(-3398.53, 1450.38, -578.11) },   -- Position 4
+    { name = "Legendary Area", pos = Vector3.new(-3389.18, 1450.38, 371.91) }, -- Position 5
+    { name = "Mythic Area", pos = Vector3.new(-3391.38, 1450.38, 1301.87) },  -- Position 6
+    { name = "Brainrot God Area", pos = Vector3.new(-3389.93, 1450.38, 2999.54) }, -- Position 7
+    { name = "Secret Area", pos = Vector3.new(-3399.28, 1450.38, 4680.24) }, -- Position 8
+    { name = "Celestial Area", pos = Vector3.new(-3398.32, 1450.38, 6221.03) },-- Position 9
+    { name = "Divine Area (End)", pos = Vector3.new(-3398.22, 1450.38, 7850.83) } -- Position 10
+}
+
+-- ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "BOFBR_UI"
+screenGui.ResetOnSpawn = false
+
+local success = pcall(function()
+    screenGui.Parent = CoreGui
+end)
+if not success then
+    screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- Frame chính
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 180, 0, 155) -- Kích thước đủ hiện khoảng 3 nút
+mainFrame.Position = UDim2.new(0, 20, 0, 60) -- Góc trên bên trái, lệch ra từ mép
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.ClipsDescendants = true
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 8)
+mainCorner.Parent = mainFrame
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 8)
+titleCorner.Parent = titleBar
+
+local titleText = Instance.new("TextLabel")
+titleText.Size = UDim2.new(1, -35, 1, 0)
+titleText.Position = UDim2.new(0, 10, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "TDN BOFBR Script"
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleText.TextSize = 13
+titleText.Font = Enum.Font.GothamBold
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.Parent = titleBar
+
+-- Nút Thu gọn / Mở rộng (- / +)
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 24, 0, 24)
+toggleBtn.Position = UDim2.new(1, -27, 0, 3)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+toggleBtn.Text = "-"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.TextSize = 14
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.Parent = titleBar
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 5)
+toggleCorner.Parent = toggleBtn
+
+-- ScrollingFrame
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(1, -10, 1, -38)
+scrollFrame.Position = UDim2.new(0, 5, 0, 33)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.BorderSizePixel = 0
+scrollFrame.ScrollBarThickness = 4
+scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+scrollFrame.ElasticBehavior = Enum.ElasticBehavior.Never -- Chống bị kéo nảy ngược lại khi dừng
+scrollFrame.Parent = mainFrame
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.Parent = scrollFrame
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Padding = UDim.new(0, 5)
+
+-- Cập nhật tự động CanvasSize chuẩn theo số lượng nút
+uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 5)
+end)
+
+-- Tạo các nút Teleport
+local function teleportTo(position)
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame = CFrame.new(position + Vector3.new(0, 3, 0)) -- Cộng nhẹ Y để không bị kẹt dưới đất
+    end
+end
+
+for i, loc in ipairs(teleLocations) do
+    local btn = Instance.new("TextButton")
+    btn.Name = "TeleBtn_" .. i
+    btn.Size = UDim2.new(1, -6, 0, 32)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 42, 52)
+    btn.Text = loc.name
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.TextSize = 11
+    btn.Font = Enum.Font.GothamMedium
+    btn.Parent = scrollFrame
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = btn
+
+    btn.MouseButton1Click:Connect(function()
+        teleportTo(loc.pos)
+    end)
+end
+
+-- Logic Toggle (- / +) với animation mượt
+local isMinimized = false
+local expandedSize = UDim2.new(0, 180, 0, 155)
+local minimizedSize = UDim2.new(0, 180, 0, 30)
+local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+toggleBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        toggleBtn.Text = "+"
+        scrollFrame.Visible = false
+        TweenService:Create(mainFrame, tweenInfo, {Size = minimizedSize}):Play()
+    else
+        toggleBtn.Text = "-"
+        local tween = TweenService:Create(mainFrame, tweenInfo, {Size = expandedSize})
+        tween:Play()
+        tween.Completed:Connect(function()
+            if not isMinimized then
+                scrollFrame.Visible = true
+            end
+        end)
+    end
+end)
