@@ -39,24 +39,33 @@ local teleLocations = {
     { name = "Divine Area (End)", pos = Vector3.new(-3398.22, 1450.38, 7850.83) }
 }
 
--- Hàm hỗ trợ Instant Trigger ProximityPrompt không dùng VIM
-local function interactPrompt(parentObject)
-    if not parentObject then return end
-    local prompt = parentObject:FindFirstChildOfClass("ProximityPrompt") or parentObject:FindFirstChildWhichIsA("ProximityPrompt", true)
-    if prompt then
-        prompt.HoldDuration = 0
-        if fireproximityprompt then
-            fireproximityprompt(prompt)
-        end
-    end
-end
-
--- Hàm dịch chuyển
+-- Hàm dịch chuyển (đặt vị trí đứng vừa tầm với NPC / Item)
 local function teleportTo(targetPos)
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if hrp then
-        hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+        hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
+    end
+end
+
+-- Hàm kích hoạt Instant Prompt tối ưu hóa
+local function interactPrompt(parentObject)
+    if not parentObject then return end
+    local prompt = parentObject:FindFirstChildOfClass("ProximityPrompt") or parentObject:FindFirstChildWhichIsA("ProximityPrompt", true)
+    if prompt then
+        local originalDuration = prompt.HoldDuration
+        prompt.HoldDuration = 0
+        
+        if fireproximityprompt then
+            fireproximityprompt(prompt)
+        else
+            prompt:InputHoldBegin()
+            task.wait(0.05)
+            prompt:InputHoldEnd()
+        end
+        
+        task.wait(0.05)
+        prompt.HoldDuration = originalDuration
     end
 end
 
@@ -92,7 +101,7 @@ titleBar.BorderSizePixel = 0
 titleBar.Parent = mainFrame
 
 local titleText = Instance.new("TextLabel")
-titleText.Size = UDim2.new(1, -35, 1, 0)
+titleText.Size = UDim2.new(1, -62, 1, 0)
 titleText.Position = UDim2.new(0, 10, 0, 0)
 titleText.BackgroundTransparency = 1
 titleText.Text = "TDN BOFBR Script"
@@ -102,10 +111,10 @@ titleText.Font = Enum.Font.GothamBold
 titleText.TextXAlignment = Enum.TextXAlignment.Left
 titleText.Parent = titleBar
 
--- Nút Thu gọn (- / +)
+-- Nút Thu gọn (-) nằm ngay cạnh nút X
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 24, 0, 24)
-toggleBtn.Position = UDim2.new(1, -27, 0, 3)
+toggleBtn.Position = UDim2.new(1, -54, 0, 3)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 toggleBtn.Text = "-"
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -116,6 +125,25 @@ toggleBtn.Parent = titleBar
 local toggleCorner = Instance.new("UICorner")
 toggleCorner.CornerRadius = UDim.new(0, 5)
 toggleCorner.Parent = toggleBtn
+
+-- Nút Xóa UI (X) nằm góc trên bên phải
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 24, 0, 24)
+closeBtn.Position = UDim2.new(1, -27, 0, 3)
+closeBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.TextSize = 12
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 5)
+closeCorner.Parent = closeBtn
+
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
 
 -- ScrollingFrame
 local scrollFrame = Instance.new("ScrollingFrame")
@@ -190,7 +218,7 @@ local function getNotificationInfo()
         local text = notificationLabel.Text
         for key, folderNum in pairs(rarityToFolder) do
             if string.find(text, key) then
-                return key, folderNum -- Trả về tên Rarity và Số Folder
+                return key, folderNum
             end
         end
     end
@@ -213,7 +241,6 @@ local function getNearestMatchingItem(targetRarity, folderNum)
         if obj.Name == "SpawnedItem" or obj:FindFirstChild("SpawnedItem") then
             local item = obj.Name == "SpawnedItem" and obj or obj:FindFirstChild("SpawnedItem")
             
-            -- Kiểm tra Attribute Rarity
             local itemRarity = item:GetAttribute("Rarity")
             local isMatch = false
             
@@ -222,7 +249,6 @@ local function getNearestMatchingItem(targetRarity, folderNum)
                     isMatch = true
                 end
             else
-                -- Nếu không set Attribute Rarity thì mặc định coi như đúng folder
                 isMatch = true
             end
 
@@ -264,6 +290,8 @@ local function runQuestLoop()
         
         if targetRarity and targetFolderNum then
             for step = 1, 3 do
+                if not autoQuestEnabled then break end
+                
                 local spawnedItem = getNearestMatchingItem(targetRarity, targetFolderNum)
                 
                 if spawnedItem then
