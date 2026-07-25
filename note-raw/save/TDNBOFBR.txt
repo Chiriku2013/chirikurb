@@ -12,17 +12,9 @@ end
 ---------------------------------------------------------
 -- HOOK INSTANT PROMPT (Bấm tức thì, giữ nguyên UI Mobile)
 ---------------------------------------------------------
-local function setupPrompt(prompt)
-    if prompt:IsA("ProximityPrompt") then
-        prompt.HoldDuration = 0
-    end
-end
-
--- Hook các prompt hiện có và prompt mới xuất hiện sau này
-for _, v in ipairs(workspace:GetDescendants()) do
-    setupPrompt(v)
-end
-workspace.DescendantAdded:Connect(setupPrompt)
+game:GetService("ProximityPromptService").PromptButtonHoldBegan:Connect(function(prompt)
+fireproximityprompt(prompt)
+end)
 
 ---------------------------------------------------------
 -- TỌA ĐỘ TELEPORT
