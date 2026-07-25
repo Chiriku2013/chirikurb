@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -10,15 +11,29 @@ if CoreGui:FindFirstChild("BOFBR_UI") then
 end
 
 ---------------------------------------------------------
--- HOOK INSTANT PROMPT (Bấm tức thì, giữ nguyên UI Mobile)
+-- HOOK INSTANT PROMPT (Tối ưu giữ nút trên Mobile/PC)
 ---------------------------------------------------------
 game:GetService("ProximityPromptService").PromptButtonHoldBegan:Connect(function(prompt)
-fireproximityprompt(prompt)
+    fireproximityprompt(prompt)
 end)
 
 ---------------------------------------------------------
--- TỌA ĐỘ TELEPORT
+-- CONFIG & TỌA ĐỘ
 ---------------------------------------------------------
+local rarityToFolder = {
+    ["Common"] = "1", ["Uncommon"] = "2", ["Rare"] = "3", ["Epic"] = "4",
+    ["Legendary"] = "5", ["Mythic"] = "6", ["Brainrot God"] = "7",
+    ["Secret"] = "8", ["Celestial"] = "9", ["Divine"] = "10"
+}
+
+local mutationRanks = {
+    ["Galaxy"] = 5,
+    ["Rainbow"] = 4,
+    ["Diamond"] = 3,
+    ["Golden"] = 2,
+    ["Normal"] = 1
+}
+
 local teleLocations = {
     { name = "Started Area", pos = Vector3.new(-3394.07, 1450.39, -2882.71) },
     { name = "Common Area", pos = Vector3.new(-3396.9, 1450.38, -2749.67) },
@@ -33,15 +48,8 @@ local teleLocations = {
     { name = "Divine Area (End)", pos = Vector3.new(-3398.22, 1450.38, 7850.83) }
 }
 
-local function tp(pos)
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = CFrame.new(pos)
-    end
-end
-
 ---------------------------------------------------------
--- UI SETUP (Chỉ giữ nút Teleport)
+-- UI SETUP
 ---------------------------------------------------------
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BOFBR_UI"
@@ -51,7 +59,7 @@ if not success then screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 180, 0, 155)
+mainFrame.Size = UDim2.new(0, 180, 0, 220) 
 mainFrame.Position = UDim2.new(0, 20, 0, 60)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 mainFrame.BorderSizePixel = 0
@@ -101,7 +109,10 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = titleBar
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 5)
 
-closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+closeBtn.MouseButton1Click:Connect(function() 
+    _G.autoQuestEnabled = false 
+    screenGui:Destroy() 
+end)
 
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, -10, 1, -38)
@@ -121,6 +132,18 @@ uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     scrollFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 5)
 end)
 
+local autoQuestBtn = Instance.new("TextButton")
+autoQuestBtn.Name = "AutoQuestBtn"
+autoQuestBtn.Size = UDim2.new(1, -6, 0, 32)
+autoQuestBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+autoQuestBtn.Text = "Auto Quest: OFF"
+autoQuestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoQuestBtn.TextSize = 11
+autoQuestBtn.Font = Enum.Font.GothamBold
+autoQuestBtn.LayoutOrder = 0
+autoQuestBtn.Parent = scrollFrame
+Instance.new("UICorner", autoQuestBtn).CornerRadius = UDim.new(0, 6)
+
 for i, loc in ipairs(teleLocations) do
     local btn = Instance.new("TextButton")
     btn.Name = "TeleBtn_" .. i
@@ -133,11 +156,16 @@ for i, loc in ipairs(teleLocations) do
     btn.LayoutOrder = i
     btn.Parent = scrollFrame
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    btn.MouseButton1Click:Connect(function() tp(loc.pos) end)
+    btn.MouseButton1Click:Connect(function() 
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(loc.pos)
+        end
+    end)
 end
 
 local isMinimized = false
-local expandedSize = UDim2.new(0, 180, 0, 155)
+local expandedSize = UDim2.new(0, 180, 0, 220)
 local minimizedSize = UDim2.new(0, 180, 0, 30)
 local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
@@ -146,4 +174,189 @@ toggleBtn.MouseButton1Click:Connect(function()
     toggleBtn.Text = isMinimized and "+" or "-"
     scrollFrame.Visible = not isMinimized
     TweenService:Create(mainFrame, tweenInfo, {Size = isMinimized and minimizedSize or expandedSize}):Play()
+end)
+
+---------------------------------------------------------
+-- LOGIC XỬ LÝ CHÍNH
+---------------------------------------------------------
+_G.autoQuestEnabled = false
+local isFirstTimeLoad = true 
+local currentNotiInstance = nil
+
+local function tpInFront(targetObj)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") or not targetObj then return end
+    local pivot = targetObj:GetPivot()
+    -- Giữ khoảng cách 3.5 studs phía trước để bấm Prompt dễ dàng
+    char.HumanoidRootPart.CFrame = pivot * CFrame.new(0, 0, -3.5) * CFrame.Angles(0, math.pi, 0)
+end
+
+-- Đọc Notification Quest hiện tại
+local function getActiveQuestNoti()
+    local guiFolder = LocalPlayer:FindFirstChild("PlayerGui")
+        and LocalPlayer.PlayerGui:FindFirstChild("GUI")
+        and LocalPlayer.PlayerGui.GUI:FindFirstChild("Frames")
+        and LocalPlayer.PlayerGui.GUI.Frames:FindFirstChild("Notifications")
+
+    if guiFolder then
+        local children = guiFolder:GetChildren()
+        for i = #children, 1, -1 do
+            local child = children[i]
+            if (child.Name == "PersistentNotification" or child.Name == "ActiveNotification") and child:IsA("TextLabel") then
+                local cleanText = string.gsub(child.Text or "", "<[^>]->", "")
+                local lowerText = string.lower(cleanText)
+                
+                local rarityStr = string.match(lowerText, "bring me a (.-) brainrot!")
+                               or string.match(lowerText, "i need a (.-) brainrot!")
+                
+                if rarityStr then
+                    for exactName, folderID in pairs(rarityToFolder) do
+                        if string.lower(exactName) == rarityStr then
+                            return exactName, folderID, child
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return nil, nil, nil
+end
+
+-- Tìm Item có Mutation cao nhất
+local function getBestItem(folderNum, targetRarity)
+    local specificFolder = workspace:FindFirstChild("ItemSpawns") and workspace.ItemSpawns:FindFirstChild(tostring(folderNum))
+    if not specificFolder then return nil end
+
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+
+    local bestItem = nil
+    local bestRank = -1
+    local shortestDist = math.huge
+
+    for _, obj in ipairs(specificFolder:GetChildren()) do
+        if obj.Name == "SpawnedItem" then
+            local rarity = obj:GetAttribute("Rarity")
+            if rarity == targetRarity then
+                local mutation = obj:GetAttribute("Mutation") or "Normal"
+                local rank = mutationRanks[mutation] or 1
+                local dist = (obj:GetPivot().Position - hrp.Position).Magnitude
+
+                if rank > bestRank then
+                    bestRank = rank
+                    shortestDist = dist
+                    bestItem = obj
+                elseif rank == bestRank and dist < shortestDist then
+                    shortestDist = dist
+                    bestItem = obj
+                end
+            end
+        end
+    end
+    return bestItem
+end
+
+---------------------------------------------------------
+-- VÒNG LẶP AUTO QUEST CHUẨN XÁC
+---------------------------------------------------------
+local function startAutoQuestLoop()
+    task.spawn(function()
+        local npc = workspace:FindFirstChild("Quest") and workspace.Quest:FindFirstChild("NPC")
+        if not npc then return end
+
+        while _G.autoQuestEnabled do
+            -----------------------------------------------------
+            -- BƯỚC 1: TELEPORT TỚI NPC VÀ ĐỜI NHẬN QUEST MỚI
+            -----------------------------------------------------
+            local targetRarity, targetFolder, notiObj = nil, nil, nil
+            
+            while _G.autoQuestEnabled do
+                tpInFront(npc)
+                targetRarity, targetFolder, notiObj = getActiveQuestNoti()
+                
+                -- Nếu phát hiện Notification MỚI xuất hiện -> Nhận Quest thành công!
+                if targetRarity and notiObj ~= currentNotiInstance then
+                    currentNotiInstance = notiObj
+                    break
+                end
+                task.wait(0.2)
+            end
+            
+            if not _G.autoQuestEnabled then break end
+
+            -----------------------------------------------------
+            -- BƯỚC 2: ĐI ĐẾN ITEM VÀ ĐỜI NGƯỜI CHƠI NHẶT
+            -----------------------------------------------------
+            local targetItem = nil
+            
+            -- Đợi tới khi tìm thấy Item trong map
+            while _G.autoQuestEnabled do
+                targetItem = getBestItem(targetFolder, targetRarity)
+                if targetItem then break end
+                
+                -- Nếu chưa có Item thì Teleport đợi ở khu vực đó
+                task.wait(0.3)
+            end
+
+            -- Giữ vị trí tại Item cho tới khi Item bị biến mất (Người chơi đã nhặt xong)
+            while _G.autoQuestEnabled and targetItem and targetItem.Parent do
+                tpInFront(targetItem)
+                task.wait(0.1)
+            end
+
+            if not _G.autoQuestEnabled then break end
+
+            -----------------------------------------------------
+            -- BƯỚC 3: TELEPORT VỀ NPC ĐỂ TRẢ QUEST
+            -----------------------------------------------------
+            -- Teleport tới NPC và đợi Notification Quest cũ biến mất (Xác nhận đã trả Quest)
+            while _G.autoQuestEnabled do
+                tpInFront(npc)
+                
+                local activeRarity, _, activeNoti = getActiveQuestNoti()
+                -- Nếu Notification cũ đã mất hoặc chuyển sang Noti mới -> Trả thành công!
+                if activeNoti ~= currentNotiInstance then
+                    break
+                end
+                task.wait(0.2)
+            end
+            
+            task.wait(0.3) -- Delay nhỏ để ổn định luồng trước khi sang quest tiếp theo
+        end
+    end)
+end
+
+---------------------------------------------------------
+-- NÚT BẬT / TẮT 
+---------------------------------------------------------
+autoQuestBtn.MouseButton1Click:Connect(function()
+    _G.autoQuestEnabled = not _G.autoQuestEnabled
+    
+    if _G.autoQuestEnabled then
+        autoQuestBtn.Text = "Auto Quest: ON"
+        autoQuestBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        currentNotiInstance = nil 
+
+        task.spawn(function()
+            -- Chạy Tour Map lần đầu (Load Chunks)
+            if isFirstTimeLoad then
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    for i = 2, #teleLocations do
+                        if not _G.autoQuestEnabled then break end
+                        char.HumanoidRootPart.CFrame = CFrame.new(teleLocations[i].pos)
+                        task.wait(0.35)
+                    end
+                end
+                isFirstTimeLoad = false
+            end
+            
+            if _G.autoQuestEnabled then
+                startAutoQuestLoop()
+            end
+        end)
+    else
+        autoQuestBtn.Text = "Auto Quest: OFF"
+        autoQuestBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+    end
 end)
