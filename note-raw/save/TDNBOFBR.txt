@@ -15,8 +15,6 @@ end
 local function setupPrompt(prompt)
     if prompt:IsA("ProximityPrompt") then
         prompt.HoldDuration = 0
-        prompt.MaxActivationDistance = math.huge
-        prompt.RequiresLineOfSight = false
     end
 end
 
