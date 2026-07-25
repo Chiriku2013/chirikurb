@@ -1,6 +1,5 @@
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
@@ -10,21 +9,26 @@ if CoreGui:FindFirstChild("BOFBR_UI") then
     CoreGui.BOFBR_UI:Destroy()
 end
 
--- Bảng ánh số Folder từ 1 - 10 tương ứng với danh xưng
-local rarityToFolder = {
-    ["Common"] = "1",
-    ["Uncommon"] = "2",
-    ["Rare"] = "3",
-    ["Epic"] = "4",
-    ["Legendary"] = "5",
-    ["Mythic"] = "6",
-    ["Brainrot God"] = "7",
-    ["Secret"] = "8",
-    ["Celestial"] = "9",
-    ["Divine"] = "10"
-}
+---------------------------------------------------------
+-- HOOK INSTANT PROMPT (Bấm tức thì, giữ nguyên UI Mobile)
+---------------------------------------------------------
+local function setupPrompt(prompt)
+    if prompt:IsA("ProximityPrompt") then
+        prompt.HoldDuration = 0
+        prompt.MaxActivationDistance = math.huge
+        prompt.RequiresLineOfSight = false
+    end
+end
 
--- Tọa độ 11 Vị trí cũ
+-- Hook các prompt hiện có và prompt mới xuất hiện sau này
+for _, v in ipairs(workspace:GetDescendants()) do
+    setupPrompt(v)
+end
+workspace.DescendantAdded:Connect(setupPrompt)
+
+---------------------------------------------------------
+-- TỌA ĐỘ TELEPORT
+---------------------------------------------------------
 local teleLocations = {
     { name = "Started Area", pos = Vector3.new(-3394.07, 1450.39, -2882.71) },
     { name = "Common Area", pos = Vector3.new(-3396.9, 1450.38, -2749.67) },
@@ -39,45 +43,22 @@ local teleLocations = {
     { name = "Divine Area (End)", pos = Vector3.new(-3398.22, 1450.38, 7850.83) }
 }
 
--- Hàm dịch chuyển (đặt vị trí đứng vừa tầm với NPC / Item)
-local function teleportTo(targetPos)
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        hrp.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
+local function tp(pos)
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(pos)
     end
 end
 
--- Hàm kích hoạt Instant Prompt tối ưu hóa
-local function interactPrompt(parentObject)
-    if not parentObject then return end
-    local prompt = parentObject:FindFirstChildOfClass("ProximityPrompt") or parentObject:FindFirstChildWhichIsA("ProximityPrompt", true)
-    if prompt then
-        local originalDuration = prompt.HoldDuration
-        prompt.HoldDuration = 0
-        
-        if fireproximityprompt then
-            fireproximityprompt(prompt)
-        else
-            prompt:InputHoldBegin()
-            task.wait(0.05)
-            prompt:InputHoldEnd()
-        end
-        
-        task.wait(0.05)
-        prompt.HoldDuration = originalDuration
-    end
-end
-
--- ScreenGui
+---------------------------------------------------------
+-- UI SETUP (Chỉ giữ nút Teleport)
+---------------------------------------------------------
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BOFBR_UI"
 screenGui.ResetOnSpawn = false
-
 local success = pcall(function() screenGui.Parent = CoreGui end)
 if not success then screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Frame chính
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 180, 0, 155)
@@ -89,11 +70,8 @@ mainFrame.Draggable = true
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = screenGui
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 8)
-mainCorner.Parent = mainFrame
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 
--- Title Bar
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 30)
 titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
@@ -111,7 +89,6 @@ titleText.Font = Enum.Font.GothamBold
 titleText.TextXAlignment = Enum.TextXAlignment.Left
 titleText.Parent = titleBar
 
--- Nút Thu gọn (-) nằm ngay cạnh nút X
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 24, 0, 24)
 toggleBtn.Position = UDim2.new(1, -54, 0, 3)
@@ -121,12 +98,8 @@ toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleBtn.TextSize = 14
 toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.Parent = titleBar
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 5)
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 5)
-toggleCorner.Parent = toggleBtn
-
--- Nút Xóa UI (X) nằm góc trên bên phải
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 24, 0, 24)
 closeBtn.Position = UDim2.new(1, -27, 0, 3)
@@ -136,16 +109,10 @@ closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.TextSize = 12
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = titleBar
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 5)
 
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 5)
-closeCorner.Parent = closeBtn
+closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
 
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-end)
-
--- ScrollingFrame
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, -10, 1, -38)
 scrollFrame.Position = UDim2.new(0, 5, 0, 33)
@@ -160,28 +127,10 @@ local uiListLayout = Instance.new("UIListLayout")
 uiListLayout.Parent = scrollFrame
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 uiListLayout.Padding = UDim.new(0, 5)
-
 uiListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     scrollFrame.CanvasSize = UDim2.new(0, 0, 0, uiListLayout.AbsoluteContentSize.Y + 5)
 end)
 
--- Nút Auto Quest Toggle
-local autoQuestBtn = Instance.new("TextButton")
-autoQuestBtn.Name = "AutoQuestBtn"
-autoQuestBtn.Size = UDim2.new(1, -6, 0, 32)
-autoQuestBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-autoQuestBtn.Text = "Auto Quest: OFF"
-autoQuestBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoQuestBtn.TextSize = 11
-autoQuestBtn.Font = Enum.Font.GothamBold
-autoQuestBtn.LayoutOrder = 0
-autoQuestBtn.Parent = scrollFrame
-
-local autoCorner = Instance.new("UICorner")
-autoCorner.CornerRadius = UDim.new(0, 6)
-autoCorner.Parent = autoQuestBtn
-
--- Tạo các nút Teleport Vị Trí
 for i, loc in ipairs(teleLocations) do
     local btn = Instance.new("TextButton")
     btn.Name = "TeleBtn_" .. i
@@ -193,170 +142,18 @@ for i, loc in ipairs(teleLocations) do
     btn.Font = Enum.Font.GothamMedium
     btn.LayoutOrder = i
     btn.Parent = scrollFrame
-
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = btn
-
-    btn.MouseButton1Click:Connect(function()
-        teleportTo(loc.pos)
-    end)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    btn.MouseButton1Click:Connect(function() tp(loc.pos) end)
 end
 
--- Logic Auto Quest Core
-local autoQuestEnabled = false
-local isQuestRunning = false
-
--- Lấy tên Rarity và Số Folder tương ứng từ Notification
-local function getNotificationInfo()
-    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-    local notificationLabel = playerGui:FindFirstChild("GUI") 
-        and playerGui.GUI:FindFirstChild("Notifications") 
-        and playerGui.GUI.Notifications:FindFirstChild("PersistentNotification")
-        
-    if notificationLabel and notificationLabel.Text ~= "" then
-        local text = notificationLabel.Text
-        for key, folderNum in pairs(rarityToFolder) do
-            if string.find(text, key) then
-                return key, folderNum
-            end
-        end
-    end
-    return nil, nil
-end
-
--- Tìm SpawnedItem gần nhất khớp với Attribute Rarity
-local function getNearestMatchingItem(targetRarity, folderNum)
-    local itemFolder = workspace:FindFirstChild("ItemSpawns") and workspace.ItemSpawns:FindFirstChild(folderNum)
-    if not itemFolder then return nil end
-
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
-
-    local closestItem = nil
-    local shortestDistance = math.huge
-
-    for _, obj in ipairs(itemFolder:GetChildren()) do
-        if obj.Name == "SpawnedItem" or obj:FindFirstChild("SpawnedItem") then
-            local item = obj.Name == "SpawnedItem" and obj or obj:FindFirstChild("SpawnedItem")
-            
-            local itemRarity = item:GetAttribute("Rarity")
-            local isMatch = false
-            
-            if itemRarity then
-                if tostring(itemRarity) == targetRarity or string.find(tostring(itemRarity), targetRarity) then
-                    isMatch = true
-                end
-            else
-                isMatch = true
-            end
-
-            if isMatch then
-                local itemPos = item:GetPivot().Position
-                local dist = (hrp.Position - itemPos).Magnitude
-                if dist < shortestDistance then
-                    shortestDistance = dist
-                    closestItem = item
-                end
-            end
-        end
-    end
-
-    return closestItem
-end
-
-local function runQuestLoop()
-    if isQuestRunning then return end
-    isQuestRunning = true
-    
-    while autoQuestEnabled do
-        -- Bước 1: TP tới NPC Quest
-        local npc = workspace:FindFirstChild("Quest") and workspace.Quest:FindFirstChild("NPC")
-        if npc then
-            teleportTo(npc:GetPivot().Position)
-            task.wait(0.3)
-            interactPrompt(npc)
-            
-            -- Confirm Start
-            pcall(function()
-                ReplicatedStorage.Events.Quest.QuestConfirmStart:FireServer()
-            end)
-            task.wait(0.5)
-        end
-        
-        -- Bước 2: Nhận diện Rarity và tìm Item gần nhất (3 lượt)
-        local targetRarity, targetFolderNum = getNotificationInfo()
-        
-        if targetRarity and targetFolderNum then
-            for step = 1, 3 do
-                if not autoQuestEnabled then break end
-                
-                local spawnedItem = getNearestMatchingItem(targetRarity, targetFolderNum)
-                
-                if spawnedItem then
-                    -- TP đến Item gần nhất & Interact
-                    teleportTo(spawnedItem:GetPivot().Position)
-                    task.wait(0.3)
-                    interactPrompt(spawnedItem)
-                    task.wait(0.3)
-                    
-                    -- TP về NPC & Interact
-                    if npc then
-                        teleportTo(npc:GetPivot().Position)
-                        task.wait(0.3)
-                        interactPrompt(npc)
-                        task.wait(0.3)
-                    end
-                end
-            end
-            
-            -- Kết thúc 3 lượt: Decline Reward Event
-            pcall(function()
-                ReplicatedStorage.Events.Quest.QuestDeclineReward:FireServer()
-            end)
-            task.wait(0.5)
-        else
-            task.wait(1)
-        end
-    end
-    
-    isQuestRunning = false
-end
-
--- Nút Bật / Tắt Auto Quest
-autoQuestBtn.MouseButton1Click:Connect(function()
-    autoQuestEnabled = not autoQuestEnabled
-    if autoQuestEnabled then
-        autoQuestBtn.Text = "Auto Quest: ON"
-        autoQuestBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
-        task.spawn(runQuestLoop)
-    else
-        autoQuestBtn.Text = "Auto Quest: OFF"
-        autoQuestBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-    end
-end)
-
--- Animation Thu gọn / Mở rộng UI (- / +)
 local isMinimized = false
 local expandedSize = UDim2.new(0, 180, 0, 155)
 local minimizedSize = UDim2.new(0, 180, 0, 30)
-local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
 toggleBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
-    if isMinimized then
-        toggleBtn.Text = "+"
-        scrollFrame.Visible = false
-        TweenService:Create(mainFrame, tweenInfo, {Size = minimizedSize}):Play()
-    else
-        toggleBtn.Text = "-"
-        local tween = TweenService:Create(mainFrame, tweenInfo, {Size = expandedSize})
-        tween:Play()
-        tween.Completed:Connect(function()
-            if not isMinimized then
-                scrollFrame.Visible = true
-            end
-        end)
-    end
+    toggleBtn.Text = isMinimized and "+" or "-"
+    scrollFrame.Visible = not isMinimized
+    TweenService:Create(mainFrame, tweenInfo, {Size = isMinimized and minimizedSize or expandedSize}):Play()
 end)
