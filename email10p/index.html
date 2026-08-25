@@ -3,332 +3,297 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Premium Temp Mail</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <title>Ultra Premium Temp Mail</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --bg: #09090e;
-      --surface: rgba(30, 32, 47, 0.6);
-      --border: rgba(255, 255, 255, 0.08);
-      --text: #f3f4f6;
-      --muted: #9ca3af;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
+      --bg: #030014;
+      --glass: rgba(13, 14, 21, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-highlight: rgba(255, 255, 255, 0.15);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #818cf8;
+      --primary-glow: rgba(129, 140, 248, 0.5);
+      --secondary: #c084fc;
       --accent: #10b981;
-      --danger: #ef4444;
+      --danger: #f43f5e;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      font-family: 'Inter', sans-serif;
-      background: radial-gradient(circle at 15% 50%, #1e1b4b, var(--bg) 60%);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 20px;
+      padding: 2vh 2vw;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    /* Scrollbar */
+    /* Animated Background Orbs */
+    .bg-orbs {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(90px); animation: float 20s infinite alternate ease-in-out;
+    }
+    .orb-1 { width: 50vw; height: 50vw; background: rgba(79, 70, 229, 0.25); top: -20%; left: -10%; animation-duration: 25s; }
+    .orb-2 { width: 40vw; height: 40vw; background: rgba(168, 85, 247, 0.2); bottom: -10%; right: -10%; animation-duration: 20s; animation-delay: -5s; }
+    .orb-3 { width: 30vw; height: 30vw; background: rgba(16, 185, 129, 0.15); top: 40%; left: 40%; animation-duration: 30s; animation-delay: -10s; }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(5%, 10%) scale(1.1); }
+      100% { transform: translate(-5%, -5%) scale(0.95); }
+    }
+
+    /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; transition: 0.3s; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
+    .container { width: 100%; max-width: 1400px; display: flex; flex-direction: column; gap: 24px; z-index: 1; }
 
-    .header {
-      text-align: center;
-      animation: fadeInDown 0.8s ease;
-    }
-
+    /* Header */
+    .header { text-align: center; animation: slideDown 1s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 10px; }
     .header h1 {
-      font-size: clamp(28px, 4vw, 42px);
-      font-weight: 800;
-      background: linear-gradient(to right, #a855f7, #6366f1, #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(32px, 5vw, 48px); font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(to right, #fff, #c084fc, #818cf8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(192, 132, 252, 0.3));
     }
+    .header p { color: var(--muted); font-size: 1.1rem; margin-top: 8px; font-weight: 500; }
 
-    .glass-panel {
-      background: var(--surface);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      padding: 24px;
-      transition: transform 0.3s ease;
-    }
-
+    /* Layout Grid */
     .layout-grid {
-      display: grid;
-      grid-template-columns: 350px 1fr;
-      gap: 24px;
-      animation: fadeInUp 0.8s ease;
+      display: grid; grid-template-columns: 380px 1fr; gap: 24px;
+      animation: fadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0;
     }
+    @media (max-width: 992px) { .layout-grid { grid-template-columns: 1fr; } }
 
-    @media (max-width: 900px) {
-      .layout-grid { grid-template-columns: 1fr; }
+    /* Glass Panels */
+    .glass-panel {
+      background: var(--glass);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border); border-top: 1px solid var(--glass-highlight);
+      border-radius: 24px; padding: 24px;
+      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
-    /* Controls & Inputs */
-    .control-group {
-      margin-bottom: 20px;
-    }
-    
-    .label {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      display: block;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .input-wrapper {
-      display: flex;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      transition: all 0.3s;
-    }
-    .input-wrapper:hover { border-color: var(--primary); }
-
-    .input-wrapper input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      padding: 14px 16px;
-      font-family: monospace;
-      font-size: 15px;
-      outline: none;
-    }
-
-    .btn-icon {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      padding: 0 16px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn-icon:hover { color: var(--text); background: rgba(255,255,255,0.1); }
-
-    .actions-row {
-      display: flex;
-      gap: 10px;
-      justify-content: space-between;
-      margin-top: 20px;
-    }
-
-    .btn {
-      padding: 12px 20px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.3s;
-      font-family: 'Inter', sans-serif;
-    }
-    
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
-    
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { background: rgba(255,255,255,0.05); transform: translateY(-2px); }
+    .glass-panel:hover { box-shadow: 0 30px 60px -12px rgba(0,0,0,0.6), 0 0 30px rgba(129, 140, 248, 0.1); border-color: rgba(255,255,255,0.15); }
 
     /* Timer */
     .timer-badge {
-      display: inline-block;
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--accent);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-weight: 800;
-      font-size: 14px;
-      margin-bottom: 20px;
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(16, 185, 129, 0.1); color: var(--accent);
+      border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px;
+      border-radius: 100px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 16px;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); transition: 0.3s;
     }
+    .timer-badge.urgent {
+      background: rgba(244, 63, 94, 0.1); color: var(--danger); border-color: rgba(244, 63, 94, 0.3);
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.3); animation: pulse 1s infinite;
+    }
+
+    /* Inputs */
+    .input-group { margin-bottom: 24px; position: relative; }
+    .label { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+    .input-wrapper {
+      display: flex; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border);
+      border-radius: 16px; overflow: hidden; transition: all 0.3s; position: relative;
+    }
+    .input-wrapper::after {
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 0; height: 2px; background: var(--primary); transition: width 0.3s ease;
+    }
+    .input-wrapper:hover::after { width: 100%; }
+    .input-wrapper input {
+      flex: 1; background: transparent; border: none; color: #fff; padding: 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 600; outline: none; letter-spacing: 0.5px;
+    }
+    .btn-icon {
+      background: transparent; border: none; color: var(--muted); padding: 0 18px;
+      cursor: pointer; transition: 0.2s; font-size: 16px;
+    }
+    .btn-icon:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+    /* Buttons */
+    .actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .btn {
+      padding: 14px 20px; border-radius: 14px; border: none; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); font-family: 'Outfit', sans-serif; font-size: 15px;
+      position: relative; overflow: hidden; z-index: 1;
+    }
+    .btn::before {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s; z-index: -1;
+    }
+    .btn:hover::before { left: 100%; }
+    
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 10px 25px var(--primary-glow); }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px var(--primary-glow); }
+    .btn-outline { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); color: var(--text); }
+    .btn-outline:hover { background: rgba(255,255,255,0.08); transform: translateY(-3px); border-color: rgba(255,255,255,0.2); }
 
     /* Inbox List */
-    .inbox-list {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
+    .inbox-header { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border); }
+    .inbox-header h3 { font-family: 'Outfit', sans-serif; font-size: 18px; margin: 0; }
+    .badge-count { background: var(--primary); color: white; padding: 2px 8px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+    
+    .inbox-list { display: flex; flex-direction: column; gap: 12px; max-height: 50vh; overflow-y: auto; padding-right: 4px; }
+    
     .mail-item {
-      padding: 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
+      padding: 18px; background: rgba(255,255,255,0.02); border: 1px solid transparent;
+      border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative; animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
     }
+    .mail-item.unread::after {
+      content: ''; position: absolute; top: 18px; right: 18px; width: 10px; height: 10px;
+      background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent);
+    }
+    .mail-item:hover { background: rgba(255,255,255,0.05); transform: translateX(6px); border-color: var(--glass-border); }
+    .mail-item.active {
+      background: linear-gradient(to right, rgba(129, 140, 248, 0.1), transparent);
+      border-left: 4px solid var(--primary); border-radius: 4px 16px 16px 4px;
+    }
+
+    .mail-sender { font-weight: 700; font-size: 15px; margin-bottom: 6px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px;}
+    .mail-subj { font-size: 14px; color: var(--muted); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mail-time { font-size: 12px; color: #64748b; font-weight: 600; }
+
+    /* Mail Viewer */
+    .viewer-container { display: flex; flex-direction: column; height: 100%; min-height: 600px; }
+    .viewer-header { padding-bottom: 20px; border-bottom: 1px solid var(--glass-border); margin-bottom: 20px; }
+    .viewer-title { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 12px; color: #fff; line-height: 1.3; }
+    .viewer-meta { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--muted); }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; }
     
-    .mail-item::before {
-      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-      background: var(--primary); transform: scaleY(0); transition: 0.3s;
-    }
-
-    .mail-item:hover, .mail-item.active { background: rgba(255,255,255,0.08); transform: translateX(4px); }
-    .mail-item:hover::before, .mail-item.active::before { transform: scaleY(1); }
-
-    .mail-sender { font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mail-subj { font-size: 15px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mail-time { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
-
-    /* Email Viewer (Web view) */
-    .viewer-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 500px;
-    }
-
-    .viewer-header {
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 16px;
-    }
-
-    .viewer-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
-    .viewer-meta { font-size: 14px; color: var(--muted); }
+    .viewer-body { flex: 1; border-radius: 16px; overflow: hidden; position: relative; background: #fff; box-shadow: inset 0 0 20px rgba(0,0,0,0.1); transition: 0.5s; }
     
-    .viewer-body {
-      flex: 1;
-      background: #ffffff; /* Thư web cần nền trắng để hiện đúng màu sắc */
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
+    .viewer-iframe { width: 100%; height: 100%; border: none; background: #ffffff; opacity: 0; transition: opacity 0.5s ease; }
+    .viewer-iframe.loaded { opacity: 1; }
+
+    .empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); background: transparent; z-index: 10; }
+    .empty-state .icon-wrapper {
+      width: 100px; height: 100px; background: rgba(255,255,255,0.03); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+      font-size: 40px; color: var(--primary); box-shadow: 0 0 30px rgba(129, 140, 248, 0.1); animation: float 6s infinite ease-in-out;
     }
 
-    .viewer-iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      background: #ffffff;
-    }
-
-    .empty-state {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #94a3b8;
-      background: var(--surface);
-    }
-    
-    .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-
-    /* Toast Notification */
-    #toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 999; }
+    /* Toasts */
+    #toast-container { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 12px; z-index: 9999; }
     .toast {
-      background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px);
-      color: white; padding: 14px 24px; border-radius: 12px;
-      border-left: 4px solid var(--primary);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      animation: slideInRight 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-      display: flex; align-items: center; gap: 12px;
+      background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
+      color: white; padding: 16px 24px; border-radius: 16px; border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 16px; font-weight: 600;
+      animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .toast.success { border-color: var(--accent); }
-    .toast.error { border-color: var(--danger); }
-
-    /* Loader */
-    .loader {
-      animation: spin 1s linear infinite;
-    }
+    .toast i { font-size: 20px; }
+    .toast.success i { color: var(--accent); text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+    .toast.error i { color: var(--danger); text-shadow: 0 0 10px rgba(244, 63, 94, 0.5); }
+    .toast.out { animation: fadeOutRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
     /* Animations */
-    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(100%) scale(0.9); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes fadeOutRight { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(100%) scale(0.9); } }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    .spin { animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* Skeleton Loading */
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 400% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+    @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
   </style>
 </head>
 <body>
 
+  <!-- Animated Background -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
   <div class="container">
     <div class="header">
-      <h1><i class="fa-solid fa-bolt"></i> Premium Temp Mail</h1>
-      <p style="color: var(--muted)">Email tạm thời 10 phút. Hỗ trợ hiển thị chuẩn Web HTML & Mật khẩu.</p>
+      <h1><i class="fa-solid fa-bolt-lightning" style="color: var(--primary);"></i> Premium Mail</h1>
+      <p>Trải nghiệm hòm thư tạm thời đẳng cấp, an toàn và bảo mật.</p>
     </div>
 
     <div class="layout-grid">
-      <!-- Left Sidebar: Controls & Inbox -->
+      <!-- Left Panel -->
       <div class="glass-panel">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="timer-badge" id="countdown"><i class="fa-regular fa-clock"></i> 10:00</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <div class="timer-badge" id="countdown"><i class="fa-solid fa-hourglass-half"></i> 10:00</div>
+          <span style="font-size: 12px; color: var(--muted); font-weight: 600;"><i class="fa-solid fa-shield-halved"></i> Bảo mật SSL</span>
         </div>
 
-        <div class="control-group">
+        <div class="input-group">
           <span class="label">Địa chỉ Email của bạn</span>
           <div class="input-wrapper">
-            <input type="text" id="email" readonly value="Đang tạo..." />
-            <button class="btn-icon" onclick="copyText('email', 'Email')" title="Copy Email"><i class="fa-regular fa-copy"></i></button>
+            <input type="text" id="email" readonly value="Đang khởi tạo hệ thống..." />
+            <button class="btn-icon" onclick="copyText('email', 'Email')" title="Copy Email"><i class="fa-regular fa-clone"></i></button>
           </div>
         </div>
 
-        <div class="control-group">
-          <span class="label">Mật khẩu (Dùng để đăng nhập nếu cần)</span>
+        <div class="input-group">
+          <span class="label">Mật khẩu truy cập</span>
           <div class="input-wrapper">
-            <input type="password" id="password" readonly value="Đang tạo..." />
+            <input type="password" id="password" readonly value="**********" />
             <button class="btn-icon" onclick="togglePass()" id="btn-toggle-pass" title="Hiện mật khẩu"><i class="fa-regular fa-eye"></i></button>
             <button class="btn-icon" onclick="copyText('password', 'Mật khẩu')" title="Copy Pass"><i class="fa-solid fa-key"></i></button>
           </div>
         </div>
 
         <div class="actions-row">
-          <button class="btn btn-primary" style="flex:1; justify-content: center;" onclick="newMailbox()" id="btn-new">
-            <i class="fa-solid fa-plus"></i> Tạo mới
+          <button class="btn btn-primary" onclick="newMailbox()" id="btn-new">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo Email Mới
           </button>
-          <button class="btn btn-outline" style="flex:1; justify-content: center;" onclick="fetchMessages()" id="btn-refresh">
-            <i class="fa-solid fa-rotate-right" id="refresh-icon"></i> Làm mới
+          <button class="btn btn-outline" onclick="fetchMessages()" id="btn-refresh">
+            <i class="fa-solid fa-rotate-right" id="refresh-icon"></i> Tải Lại Thư
           </button>
         </div>
 
-        <h3 style="margin-top: 30px; font-size: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Hộp thư đến</h3>
+        <div class="inbox-header">
+          <h3>Hộp thư đến <span class="badge-count" id="mail-count">0</span></h3>
+        </div>
         <div class="inbox-list" id="inbox">
-          <!-- List items go here -->
+          <!-- Skeletons will go here initially -->
         </div>
       </div>
 
-      <!-- Right Panel: Mail Viewer -->
+      <!-- Right Panel -->
       <div class="glass-panel viewer-container">
-        <div class="viewer-header">
+        <div class="viewer-header" id="v-header" style="opacity: 0.5;">
           <div class="viewer-title" id="v-subject">Chưa có thư nào được chọn</div>
-          <div class="viewer-meta" id="v-meta">Hãy chọn một email ở danh sách bên trái để xem nội dung.</div>
+          <div class="viewer-meta" id="v-meta">
+            <div class="avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+            <div>
+              <div style="color: #fff; font-weight: 600;" id="v-sender">Hệ thống</div>
+              <div style="font-size: 12px;" id="v-date">Chọn một thư bên trái để bắt đầu đọc</div>
+            </div>
+          </div>
         </div>
         
         <div class="viewer-body">
           <div class="empty-state" id="v-empty">
-            <i class="fa-regular fa-envelope-open"></i>
-            <p>Nội dung thư sẽ hiển thị ở đây</p>
+            <div class="icon-wrapper"><i class="fa-brands fa-space-awesome"></i></div>
+            <h3 style="font-family: 'Outfit', sans-serif; color: #fff; margin-bottom: 8px;">Hộp thư trống</h3>
+            <p>Nội dung thư sẽ được hiển thị bảo mật tại đây</p>
           </div>
-          <!-- Sandbox iframe để render HTML an toàn, chặn popup và script độc hại -->
-          <iframe id="viewer-iframe" class="viewer-iframe" style="display: none;" sandbox="allow-same-origin"></iframe>
+          <iframe id="viewer-iframe" class="viewer-iframe" sandbox="allow-same-origin"></iframe>
         </div>
       </div>
     </div>
@@ -337,13 +302,99 @@
   <div id="toast-container"></div>
 
 <script>
-// Sử dụng API mail.gw (cùng lõi với mail.tm nhưng ít bị chặn CORS hơn)
 const API = 'https://api.mail.gw';
-const LS_KEY = 'premium_tempmail_v2';
+const LS_KEY = 'ultra_premium_mail_v3';
 const TEN_MIN_MS = 10 * 60 * 1000;
 const $ = (id) => document.getElementById(id);
 
-// --- Tiện ích ---
+// --- UI / Animations ---
+function showToast(msg, type = 'success') {
+  const container = $('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${msg}`;
+  container.appendChild(toast);
+  
+  // Audio effect
+  try {
+    const audio = new Audio(type === 'success' ? 'https://www.soundjay.com/buttons/sounds/button-09.mp3' : 'https://www.soundjay.com/buttons/sounds/button-10.mp3');
+    audio.volume = 0.2; audio.play().catch(()=>{});
+  } catch(e) {}
+
+  setTimeout(() => {
+    toast.classList.add('out');
+    setTimeout(() => toast.remove(), 400);
+  }, 3500);
+}
+
+function showSkeleton() {
+  const box = $('inbox');
+  box.innerHTML = Array(3).fill().map((_, i) => `
+    <div class="mail-item" style="animation-delay: ${i*0.1}s; pointer-events: none;">
+      <div class="skeleton" style="width: 60%; height: 20px; margin-bottom: 10px;"></div>
+      <div class="skeleton" style="width: 90%; height: 16px; margin-bottom: 10px;"></div>
+      <div class="skeleton" style="width: 40%; height: 12px;"></div>
+    </div>
+  `).join('');
+}
+
+// --- Email Template Generator (PREMIUM HTML) ---
+function generateWelcomeEmail(address) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    </head>
+    <body style="margin:0; padding:0; background-color:#f4f4f5; font-family:'Plus Jakarta Sans', sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:24px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.08); max-width:600px;">
+              <!-- Header Gradient -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #6366f1, #c084fc); padding: 50px 30px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px;">Xin chào! 🎉</h1>
+                  <p style="color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 10px;">Cảm ơn bạn đã sử dụng dịch vụ Premium Temp Mail</p>
+                </td>
+              </tr>
+              <!-- Body -->
+              <tr>
+                <td style="padding: 40px 30px;">
+                  <p style="font-size: 16px; color: #334155; line-height: 1.6; margin-bottom: 24px;">Tài khoản email tạm thời của bạn đã được khởi tạo thành công và sẵn sàng để nhận thư.</p>
+                  
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 30px;">
+                    <p style="font-size: 13px; color: #64748b; text-transform: uppercase; font-weight: 700; margin: 0 0 8px 0; letter-spacing: 1px;">Địa chỉ Email của bạn</p>
+                    <p style="font-size: 22px; color: #0f172a; font-weight: 800; margin: 0; word-break: break-all;">${address}</p>
+                  </div>
+
+                  <h3 style="color: #0f172a; font-size: 18px; margin-bottom: 16px;">💎 Tính năng nổi bật bản Premium:</h3>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                    <tr><td style="padding: 8px 0; color: #475569; font-size: 15px;">✨ Hiển thị giao diện <b>HTML chuẩn 100%</b>.</td></tr>
+                    <tr><td style="padding: 8px 0; color: #475569; font-size: 15px;">✨ Bảo mật qua iFrame Sandbox chống mã độc.</td></tr>
+                    <tr><td style="padding: 8px 0; color: #475569; font-size: 15px;">✨ Trải nghiệm UI/UX mượt mà với Animations.</td></tr>
+                  </table>
+
+                  <a href="#" style="display: block; background: #6366f1; color: #ffffff; text-align: center; padding: 16px 24px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);">Bắt đầu sử dụng ngay</a>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="background: #f8fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+                  <p style="font-size: 13px; color: #94a3b8; margin: 0;">Email này được tạo tự động bởi hệ thống mô phỏng của Premium Temp Mail. Không cần trả lời.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+}
+
+// --- Utils ---
 function now() { return Date.now(); }
 function fmtTime(ms) {
   if (ms < 0) ms = 0;
@@ -351,100 +402,46 @@ function fmtTime(ms) {
   const s = Math.floor((ms % 60000) / 1000);
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
-function randomLocal() { return 'user_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3); }
 function escapeHtml(s) { return String(s || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;'); }
 
-// --- UI Toast Thông báo ---
-function showToast(msg, type = 'success') {
-  const container = $('toast-container');
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-circle-exclamation'}"></i> ${msg}`;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    toast.style.transition = 'all 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
-}
-
-// --- API Calls ---
+// --- API Logic ---
 async function apiReq(path, opts = {}) {
-  try {
-    const res = await fetch(API + path, opts);
-    if (!res.ok) {
-      const errData = await res.json().catch(()=>({}));
-      throw new Error(errData.message || `${res.status} ${res.statusText}`);
-    }
-    return res.json();
-  } catch (error) {
-    console.error("API Error:", error);
-    throw error;
-  }
+  const res = await fetch(API + path, opts);
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
 }
 
-async function getRandomDomain() {
-  const data = await apiReq('/domains?page=1');
-  const arr = data['hydra:member'] || [];
-  if (arr.length === 0) throw new Error('Không lấy được domain, vui lòng thử lại sau.');
-  return arr[Math.floor(Math.random() * arr.length)].domain;
-}
-
-// --- Core Logic ---
 let g = { session: null, timerId: null, messages: [] };
 
-function saveSession(s) { localStorage.setItem(LS_KEY, JSON.stringify(s)); }
-function loadSession() { try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; } }
-
 async function createAccount() {
-  try {
-    const domain = await getRandomDomain();
-    const address = `${randomLocal()}@${domain}`;
-    const password = 'Pass@' + Math.random().toString(36).slice(2,8).toUpperCase() + '!';
-    
-    // Tạo tài khoản
-    await apiReq('/accounts', { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify({ address, password }) 
-    });
-    
-    // Lấy Token
-    const tok = await apiReq('/token', { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify({ address, password }) 
-    });
-    
-    const session = { address, password, token: tok.token, id: tok.id, expiresAt: now() + TEN_MIN_MS };
-    saveSession(session);
-    return session;
-  } catch (err) {
-    showToast("Lỗi tạo email: " + err.message, "error");
-    throw err;
-  }
+  const data = await apiReq('/domains?page=1');
+  const arr = data['hydra:member'] || [];
+  const domain = arr[Math.floor(Math.random() * arr.length)].domain;
+  
+  const address = `hi_${Math.random().toString(36).slice(2, 7)}@${domain}`;
+  const password = 'VIP' + Math.random().toString(36).slice(2,10) + '!';
+  
+  await apiReq('/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address, password }) });
+  const tok = await apiReq('/token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address, password }) });
+  
+  const session = { address, password, token: tok.token, id: tok.id, expiresAt: now() + TEN_MIN_MS };
+  localStorage.setItem(LS_KEY, JSON.stringify(session));
+  return session;
 }
 
 async function ensureSession() {
-  let s = loadSession();
-  if (!s || !s.address || !s.token || !s.expiresAt || s.expiresAt <= now()) {
-    s = await createAccount();
-  } else {
-    try {
-      // Validate token
-      await apiReq('/me', { headers: { Authorization: 'Bearer ' + s.token } });
-    } catch {
-      s = await createAccount();
-    }
-  }
-  return s;
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(LS_KEY)); } catch(e){}
+  if (!s || s.expiresAt <= now()) return await createAccount();
+  try {
+    await apiReq('/me', { headers: { Authorization: 'Bearer ' + s.token } });
+    return s;
+  } catch { return await createAccount(); }
 }
 
 function mountSessionUI() {
   $('email').value = g.session.address;
   $('password').value = g.session.password;
-  
   if (g.timerId) clearInterval(g.timerId);
   updateCountdown();
   g.timerId = setInterval(updateCountdown, 1000);
@@ -452,53 +449,42 @@ function mountSessionUI() {
 
 function updateCountdown() {
   const left = g.session.expiresAt - now();
-  $('countdown').innerHTML = `<i class="fa-regular fa-clock"></i> ${fmtTime(left)}`;
-  if (left <= 0) { 
-    clearInterval(g.timerId); 
-    newMailbox(); 
-  }
+  const el = $('countdown');
+  el.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> ${fmtTime(left)}`;
+  if (left < 60000) el.classList.add('urgent');
+  else el.classList.remove('urgent');
+  if (left <= 0) { clearInterval(g.timerId); newMailbox(); }
 }
 
 function toggleBusy(isBusy) {
-  $('btn-new').disabled = isBusy;
-  $('btn-refresh').disabled = isBusy;
-  const icon = $('refresh-icon');
-  if (isBusy) icon.classList.add('loader');
-  else icon.classList.remove('loader');
+  $('btn-new').disabled = isBusy; $('btn-refresh').disabled = isBusy;
+  if (isBusy) $('refresh-icon').classList.add('spin');
+  else $('refresh-icon').classList.remove('spin');
 }
 
+// --- Main Actions ---
 async function newMailbox() {
   toggleBusy(true);
   try {
     g.session = await createAccount();
     mountSessionUI();
     resetViewer();
-    showToast("Đã tạo địa chỉ Email mới!");
+    showToast("Đã khởi tạo không gian làm việc mới!");
     
-    // Gắn thư chào mừng
-    const welcome = [{
-      id: 'welcome', createdAt: new Date().toISOString(),
-      from: { address: 'system@mail.gw', name: 'Hệ thống' },
-      subject: '🚀 Chào mừng đến với Premium Temp Mail',
-      intro: 'Tài khoản của bạn đã sẵn sàng...',
-      html: [`
-        <div style="font-family:sans-serif; color:#333; padding:20px; line-height:1.6;">
-          <h2 style="color:#6366f1;">Email của bạn đã sẵn sàng!</h2>
-          <p>Email: <b>${g.session.address}</b></p>
-          <p>Password: <b>${g.session.password}</b></p>
-          <hr style="border:0; border-top:1px solid #ddd; margin:20px 0;">
-          <p>✨ <b>Tính năng bản Premium:</b></p>
-          <ul>
-            <li>Hỗ trợ hiển thị giao diện HTML/Web của email gửi đến.</li>
-            <li>Có mật khẩu để đăng nhập trực tiếp trên web chính nếu cần.</li>
-            <li>Tự động gia hạn khi hết 10 phút.</li>
-          </ul>
-        </div>
-      `]
-    }];
-    renderInbox(welcome);
+    // Tạo giả lập Email đầu tiên (Mô phỏng tự gửi mail HTML)
+    const welcomeMail = {
+      id: 'mock_welcome', 
+      createdAt: new Date().toISOString(),
+      from: { address: 'no-reply@premium.local', name: 'Đội ngũ Premium' },
+      subject: '🎉 Chào mừng! Tài khoản của bạn đã sẵn sàng',
+      intro: 'Tài khoản email tạm thời của bạn đã được khởi tạo thành công...',
+      html: [generateWelcomeEmail(g.session.address)],
+      isUnread: true
+    };
+    g.messages = [welcomeMail];
+    renderInbox();
   } catch (e) {
-    // Error handled in createAccount
+    showToast("Lỗi máy chủ, vui lòng thử lại sau.", "error");
   } finally {
     toggleBusy(false);
   }
@@ -507,146 +493,153 @@ async function newMailbox() {
 async function fetchMessages() {
   if (!g.session) return;
   toggleBusy(true);
+  showSkeleton();
   try {
     const data = await apiReq('/messages?limit=30', { headers: { Authorization: 'Bearer ' + g.session.token } });
     let list = (data['hydra:member'] || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
-    if (list.length === 0) {
-      list = [{
-        id: 'welcome', createdAt: new Date().toISOString(),
-        from: { address: 'system@mail.gw', name: 'Hệ thống' },
-        subject: 'Hộp thư trống',
-        html: ['<div style="padding:20px; font-family:sans-serif;">Chưa có thư mới nào. Hãy bấm làm mới hoặc đợi gửi đến...</div>']
-      }];
-    } else {
-      showToast("Đã cập nhật hộp thư!");
+    // Nếu có mail thật, ta có thể ghi đè hoặc nối thêm mock email. 
+    // Ở đây ta thêm Mock Email vào cuối danh sách nếu account mới tạo.
+    const hasMock = g.messages.find(m => m.id === 'mock_welcome');
+    g.messages = list;
+    if (hasMock && !list.find(m => m.id === 'mock_welcome')) {
+      g.messages.push(hasMock);
     }
     
-    g.messages = list;
-    renderInbox(list);
+    renderInbox();
+    showToast("Đã cập nhật đồng bộ hộp thư");
   } catch (e) {
-    showToast("Lỗi tải thư: " + e.message, "error");
+    renderInbox(); // Khôi phục UI
   } finally {
     toggleBusy(false);
   }
 }
 
-function renderInbox(list) {
+function renderInbox() {
   const box = $('inbox');
-  box.innerHTML = '';
+  $('mail-count').innerText = g.messages.length;
+  if (g.messages.length === 0) {
+    box.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--muted); font-size: 14px;">Chưa có thư mới nào...</div>';
+    return;
+  }
   
-  list.forEach(m => {
+  box.innerHTML = '';
+  g.messages.forEach((m, index) => {
     const el = document.createElement('div');
-    el.className = 'mail-item';
-    el.id = 'mail-' + m.id;
+    el.className = `mail-item ${m.isUnread ? 'unread' : ''}`;
+    el.style.animationDelay = `${index * 0.05}s`;
     
     const time = new Date(m.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    const senderName = (m.from && m.from.name) ? m.from.name : (m.from && m.from.address ? m.from.address : 'Ẩn danh');
+    const sender = (m.from && m.from.name) ? m.from.name : (m.from && m.from.address ? m.from.address : 'Ẩn danh');
     
     el.innerHTML = `
-      <div class="mail-sender"><i class="fa-regular fa-envelope"></i> ${escapeHtml(senderName)}</div>
-      <div class="mail-subj">${escapeHtml(m.subject || '(Không có tiêu đề)')}</div>
-      <div class="mail-time"><span>${m.intro ? escapeHtml(m.intro.substring(0,30))+'...' : ''}</span> <span>${time}</span></div>
+      <div class="mail-sender">${escapeHtml(sender)}</div>
+      <div class="mail-subj">${escapeHtml(m.subject || '(Không tiêu đề)')}</div>
+      <div class="mail-time"><i class="fa-regular fa-clock"></i> ${time}</div>
     `;
     
     el.addEventListener('click', () => {
       document.querySelectorAll('.mail-item').forEach(i => i.classList.remove('active'));
       el.classList.add('active');
-      openMessage(m.id, m);
+      el.classList.remove('unread');
+      m.isUnread = false; // Xóa chấm đỏ
+      openMessage(m);
     });
     box.appendChild(el);
   });
 }
 
-async function openMessage(id, mCached) {
+async function openMessage(mCached) {
+  $('v-empty').style.opacity = '0';
+  setTimeout(() => $('v-empty').style.display = 'none', 300);
+  
+  const iframe = $('viewer-iframe');
+  iframe.style.display = 'block';
+  iframe.classList.remove('loaded');
+  
+  $('v-header').style.opacity = '1';
+  $('v-subject').textContent = mCached.subject || '(Không có tiêu đề)';
+  
+  const senderName = mCached.from && mCached.from.name ? mCached.from.name : 'Ẩn danh';
+  const senderAddr = mCached.from && mCached.from.address ? `<${mCached.from.address}>` : '';
+  $('v-sender').textContent = `${senderName} ${senderAddr}`;
+  $('v-date').textContent = new Date(mCached.createdAt).toLocaleString();
+  
+  // Set avatar character
+  document.querySelector('.avatar').textContent = senderName.charAt(0).toUpperCase();
+
   try {
-    $('v-empty').style.display = 'none';
-    const iframe = $('viewer-iframe');
-    iframe.style.display = 'block';
-    iframe.srcdoc = `
-      <div style="display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; color:#888;">
-        Đang tải nội dung thư...
-      </div>
-    `;
-
-    // Nếu là thư giả lập (welcome) thì render luôn
-    let m = mCached;
-    if (id !== 'welcome') {
-      m = await apiReq('/messages/' + id, { headers: { Authorization: 'Bearer ' + g.session.token } });
-    }
-
-    $('v-subject').textContent = m.subject || '(Không có tiêu đề)';
-    const sender = m.from ? `${m.from.name || ''} <${m.from.address}>` : 'Ẩn danh';
-    const date = new Date(m.createdAt).toLocaleString();
-    $('v-meta').textContent = `Từ: ${sender} • ${date}`;
-
-    // Ưu tiên hiển thị HTML, nếu không có thì bọc text vào <pre>
     let content = '';
-    if (m.html && m.html.length > 0) {
-      content = m.html[0];
-    } else if (m.text) {
-      content = `<pre style="font-family:sans-serif; white-space:pre-wrap; padding:20px; color:#333;">${escapeHtml(m.text)}</pre>`;
+    // Nếu là Mock Mail thì lấy luôn HTML đã tạo
+    if (mCached.id === 'mock_welcome') {
+      content = mCached.html[0];
     } else {
-      content = `<div style="padding:20px; color:#888; font-family:sans-serif;">(Email không có nội dung)</div>`;
+      // Thư thật từ API
+      const m = await apiReq('/messages/' + mCached.id, { headers: { Authorization: 'Bearer ' + g.session.token } });
+      if (m.html && m.html.length > 0) content = m.html[0];
+      else if (m.text) content = `<pre style="font-family:'Plus Jakarta Sans',sans-serif; padding:30px; color:#334155; white-space:pre-wrap;">${escapeHtml(m.text)}</pre>`;
+      else content = `<div style="padding:30px; color:#94a3b8;">(Email trống)</div>`;
     }
-
-    // Đưa nội dung vào iframe an toàn
-    iframe.srcdoc = content;
     
+    iframe.srcdoc = content;
+    iframe.onload = () => iframe.classList.add('loaded');
   } catch (e) {
-    showToast("Lỗi mở thư: " + e.message, "error");
-    $('viewer-iframe').srcdoc = `<h3 style="color:red; padding:20px;">Lỗi tải nội dung thư</h3>`;
+    iframe.srcdoc = `<div style="padding:30px; color:red;">Lỗi tải nội dung: ${e.message}</div>`;
+    iframe.classList.add('loaded');
   }
 }
 
 function resetViewer() {
+  $('v-header').style.opacity = '0.5';
   $('v-subject').textContent = 'Chưa có thư nào được chọn';
-  $('v-meta').textContent = 'Hãy chọn một email ở danh sách bên trái để xem nội dung.';
+  $('v-sender').textContent = 'Hệ thống';
+  $('v-date').textContent = 'Chọn một thư bên trái để bắt đầu đọc';
   $('v-empty').style.display = 'flex';
+  $('v-empty').style.opacity = '1';
   $('viewer-iframe').style.display = 'none';
   $('viewer-iframe').srcdoc = '';
+  document.querySelector('.avatar').innerHTML = '<i class="fa-solid fa-user-astronaut"></i>';
 }
 
-// --- Tương tác UI ---
-async function copyText(inputId, name) {
-  const input = $(inputId);
+// --- Copy & UI Interactions ---
+async function copyText(id, name) {
   try {
-    await navigator.clipboard.writeText(input.value);
-    showToast(`Đã copy ${name}!`);
-  } catch {
-    showToast(`Không thể copy ${name}, vui lòng copy thủ công`, "error");
-  }
+    await navigator.clipboard.writeText($(id).value);
+    showToast(`Đã lưu ${name} vào bộ nhớ tạm!`);
+  } catch { showToast("Lỗi Copy", "error"); }
 }
 
 function togglePass() {
-  const input = $('password');
-  const btn = $('btn-toggle-pass');
-  if (input.type === 'password') { 
-    input.type = 'text'; 
-    btn.innerHTML = '<i class="fa-regular fa-eye-slash"></i>'; 
-  } else { 
-    input.type = 'password'; 
-    btn.innerHTML = '<i class="fa-regular fa-eye"></i>'; 
-  }
+  const input = $('password'), btn = $('btn-toggle-pass');
+  if (input.type === 'password') { input.type = 'text'; btn.innerHTML = '<i class="fa-regular fa-eye-slash"></i>'; }
+  else { input.type = 'password'; btn.innerHTML = '<i class="fa-regular fa-eye"></i>'; }
 }
 
-// Khi chuyển tab trình duyệt quay lại sẽ update ngay đồng hồ
-document.addEventListener('visibilitychange', () => { 
-  if (document.visibilityState === 'visible' && g.session) updateCountdown(); 
-});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && g.session) updateCountdown(); });
 
-// Khởi chạy
+// Khởi chạy hệ thống
 (async function init() {
   toggleBusy(true);
   try { 
     g.session = await ensureSession(); 
     mountSessionUI(); 
-    await fetchMessages(); 
+    
+    // Nếu chưa có mail nào trong JS memory, fetch lại từ API
+    if (g.messages.length === 0) await fetchMessages();
+    
+    // Check lại nếu thật sự ko có mail nào, đẩy Mock Mail vào
+    if (g.messages.length === 0) {
+      g.messages = [{
+        id: 'mock_welcome', createdAt: new Date().toISOString(),
+        from: { address: 'no-reply@premium.local', name: 'Đội ngũ Premium' },
+        subject: '🎉 Chào mừng! Tài khoản của bạn đã sẵn sàng',
+        html: [generateWelcomeEmail(g.session.address)], isUnread: true
+      }];
+      renderInbox();
+    }
   } catch (e) { 
-    // Mặc định lỗi mạng/CORS thì sẽ showToast ở trong hàm xử lý
-  } finally { 
-    toggleBusy(false); 
-  }
+    showToast("Lỗi kết nối máy chủ", "error");
+  } finally { toggleBusy(false); }
 })();
 </script>
 </body>
