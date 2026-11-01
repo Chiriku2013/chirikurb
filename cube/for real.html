@@ -1,0 +1,575 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Feed the Cube</title><style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#000;color:#fff;font:16px Georgia,serif}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+#ns{opacity:0;image-rendering:pixelated;pointer-events:none;z-index:6}
+.f{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vmin;text-align:center}
+#menu{z-index:5}#ld{z-index:50;background:#000;display:none}
+h1{font-size:min(10vw,13vh);letter-spacing:.1em;text-shadow:0 0 25px #fff9}
+#logo{max-height:20vh;max-width:50vw}
+.b{background:#22c55e;color:#032;border:0;border-radius:99px;padding:2vmin 7vmin;font:700 min(4.5vw,5.5vh) sans-serif;box-shadow:0 0 30px #22c55e99}
+#ex{position:fixed;top:10px;left:10px;z-index:40;display:none;padding:6px 18px;font-size:14px}
+.c{position:fixed;z-index:10;display:none;border-radius:50%;background:#fff3;border:2px solid #fff8}
+#js{left:5vw;bottom:9vh;width:28vmin;height:28vmin}
+#kn{position:absolute;left:32%;top:32%;width:36%;height:36%;border-radius:50%;background:#fffc}
+#jb{right:5vw;bottom:9vh;width:18vmin;height:18vmin}
+#jb:after{content:"";position:absolute;left:34%;top:40%;width:32%;height:32%;border:solid #fff;border-width:5px 0 0 5px;transform:rotate(45deg)}
+#eb{right:26vmin;bottom:16vh;width:14vmin;height:14vmin;font:700 6vmin sans-serif;align-items:center;justify-content:center}
+#pr{position:fixed;bottom:22vh;left:50%;transform:translateX(-50%);z-index:8;display:none;padding:8px 22px;border-radius:99px;background:linear-gradient(90deg,#fffa var(--p,0%),#0009 var(--p,0%));font:600 max(14px,3vmin) sans-serif;white-space:nowrap}
+#dlg{position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);width:min(90vw,800px);z-index:30;display:none;padding:14px 20px;background:#000d;border:2px solid #fff;border-radius:14px}
+#dn{color:#ff0;font:700 max(14px,2.8vmin) sans-serif}#dt{font-size:max(15px,3vmin);min-height:3em}
+#cd{position:fixed;top:12vh;width:100%;text-align:center;z-index:25;opacity:0;transition:opacity 2s;pointer-events:none}
+#cd b{font-size:min(8vw,9vh);letter-spacing:.2em;display:block}
+#ob{position:fixed;top:10px;right:14px;z-index:8;font:14px sans-serif;text-shadow:0 0 4px #000}
+.l{position:fixed;left:0;width:100%;height:0;background:#000;z-index:35;transition:height 3s ease-in-out;pointer-events:none}
+#fx{position:fixed;inset:0;z-index:36;pointer-events:none;opacity:0}
+</style></head><body>
+<canvas id="st"></canvas>
+<div id="menu" class="f"><img id="logo" src="" alt="" onerror="this.style.display='none'"><h1>FEED THE CUBE</h1><p>by Chiriku Lazy</p><button class="b" id="pl">Play Now</button></div>
+<div id="ld" class="f"><h1 style="font-size:5vh">Đang tải...</h1></div>
+<button class="b" id="ex">Exit</button>
+<canvas id="ns" width="80" height="45"></canvas>
+<div id="cd"><b id="c1"></b><i id="c2"></i></div><div id="ob"></div><div id="pr"></div>
+<div id="dlg"><div id="dn"></div><div id="dt"></div></div>
+<div class="c" id="js"><div id="kn"></div></div><div class="c" id="jb"></div><div class="c" id="eb">E</div>
+<div class="l" id="l1" style="top:0"></div><div class="l" id="l2" style="bottom:0"></div><div id="fx"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=i=>document.getElementById(i),T=THREE,R=Math.random,M=Math,V=new T.Vector3(),sleep=ms=>new Promise(r=>setTimeout(r,ms)),mob='ontouchstart'in window,LV=[],gu={value:0};
+let sc,cam,ren,P,hand,AC,ck=new T.Clock(),keys={},yaw=0,pit=0,roll=0,vy=0,mx=0,mz=0,eh=0,lk=0,held=0,near=0,I=[],W=[],U=[],busy=1,lvl=0,hold=0,tt=0,n=0,key=0,mon=0,sp=[0,0,0],cube,eyes,gm,gmat;
+// sao nền menu
+(()=>{const c=$('st'),x=c.getContext('2d'),s=[];const rs=()=>{c.width=innerWidth;c.height=innerHeight};rs();addEventListener('resize',rs);for(let i=0;i<220;i++)s.push({x:R()*3e3,y:R()*3e3,r:R()*1.6+.3,a:R()*6.28,v:R()*.3+.05});
+(function f(){if(c.style.display=='none')return;x.clearRect(0,0,c.width,c.height);s.forEach(p=>{p.a+=(R()-.5)*.2;p.x=(p.x+M.cos(p.a)*p.v+c.width)%c.width;p.y=(p.y+M.sin(p.a)*p.v+c.height)%c.height;x.globalAlpha=.4+.6*M.abs(M.sin(p.x+p.y+Date.now()/900));x.fillStyle='#fff';x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill()});requestAnimationFrame(f)})()})();
+// tiện ích
+const an=(ms,f)=>new Promise(r=>{const t0=performance.now();(function k(){const t=M.min((performance.now()-t0)/ms,1);f(t);t<1?requestAnimationFrame(k):r()})()});
+function snd(f,d,ty='sine',v=.2,s=0){try{AC=AC||new AudioContext();const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=ty;o.frequency.setValueAtTime(f,t);s&&o.frequency.exponentialRampToValueAtTime(s,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(t+d)}catch(e){}}
+const lids=c=>{$('l1').style.height=$('l2').style.height=c?'50%':'0'},card=async(a,b)=>{$('c1').textContent=a;$('c2').textContent=b;$('cd').style.opacity=1;await sleep(4500);$('cd').style.opacity=0},fx=(c,o,ms=0)=>{const e=$('fx');e.style.transition='opacity '+ms+'ms';e.style.background=c;e.style.opacity=o},talk=async a=>{busy=1;await say(a);busy=0};
+function say(a){return new Promise(res=>{const d=$('dlg');let i=0,t;d.style.display='block';(function s(){const[nm,x]=a[i];let k=0;$('dn').textContent=nm;$('dt').textContent='';clearInterval(t);t=setInterval(()=>{$('dt').textContent=x.slice(0,++k);k>=x.length&&clearInterval(t)},30);d.fin=()=>{if(k<x.length){k=x.length;$('dt').textContent=x;clearInterval(t)}else if(++i<a.length)s();else{clearInterval(t);d.style.display='none';d.fin=0;res()}}})()})}
+function tx(w,fn,rx=1,ry=1){const c=document.createElement('canvas');c.width=c.height=w;fn(c.getContext('2d'),w);const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx,ry);return t}
+const dots=(x,w,k,cols,a=.3,s=5)=>{for(let i=0;i<k;i++){x.globalAlpha=a;x.fillStyle=cols[i%cols.length];x.fillRect(R()*w,R()*w,R()*s+1,R()*s+1)}x.globalAlpha=1},mt=(c,m,e=0)=>new T.MeshLambertMaterial({color:c,map:m||null,emissive:e}),hit=(x,z)=>W.some(b=>x>b[0]-.35&&x<b[1]+.35&&z>b[2]-.35&&z<b[3]+.35),look=(dx,dy,s)=>{yaw-=dx*s;pit=M.max(-1.4,M.min(1.4,pit-dy*s))},jump=()=>{if(!busy&&P.y<=1.61)vy=7};
+function box(x,y,z,w,h,d,m,col=1){const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);sc.add(o);col&&W.push([x-w/2,x+w/2,z-d/2,z+d/2]);return o}
+const OM=new T.MeshBasicMaterial({color:0xffffff,side:T.BackSide,fog:false});
+function reg(m,t,f,r=2.2,ok){const o={m,t,f,r,ok,ol:[]},a=[];m.traverse(c=>c.isMesh&&a.push(c));a.forEach(c=>{const q=new T.Mesh(c.geometry,OM);q.scale.setScalar(1.06);q.visible=false;c.add(q);o.ol.push(q)});I.push(o);return o}
+function setNear(o){if(o===near)return;near&&near.ol.forEach(q=>q.visible=false);near=o;o&&o.ol.forEach(q=>q.visible=true);const p=$('pr');p.style.display=o?'block':'none';if(o)p.textContent=o.t;mob&&($('eb').style.display=o?'flex':'none')}
+function scan(dt){let b=0,bd=1e9;if(!busy)I.forEach(o=>{if(o.dead||(o.ok&&!o.ok()))return;o.m.getWorldPosition(V);const d=M.hypot(V.x-P.x,V.z-P.z);if(d<o.r&&d<bd){b=o;bd=d}});setNear(b);if(b&&(keys.e||eh)&&!lk){hold+=dt;$('pr').style.setProperty('--p',M.min(hold/.5,1)*100+'%');if(hold>.5){hold=0;lk=1;b.f(b)}}else{hold=0;$('pr').style.setProperty('--p','0%')}}
+function ns(){const x=$('ns').getContext('2d'),d=x.createImageData(80,45);for(let i=0;i<d.data.length;i+=4){d.data[i]=d.data[i+1]=d.data[i+2]=R()*255;d.data[i+3]=255}x.putImageData(d,0,0)}
+function hud(){$('ob').textContent='Đồ chơi: '+n+'/3'+(key?' | Chìa khoá: có':'')}
+function clear(){[...sc.children].forEach(o=>o!=cam&&sc.remove(o));cam.children.filter(c=>c.isLight).forEach(c=>cam.remove(c));I=[];W=[];U=[];mon=0;sc.fog=null;sc.background=new T.Color(0);n=key=hold=roll=0;setNear(0)}
+// mô hình
+function food(){const g=new T.Group(),p=[];for(let i=0;i<=14;i++){const t=i/14;p.push(new T.Vector2(.02+.17*M.sin(M.PI*M.pow(t,1.94)),t*.42))}g.add(new T.Mesh(new T.LatheGeometry(p,22),mt(0xc2762b,0,0x2a1204)));const b=new T.Mesh(new T.CylinderGeometry(.035,.035,.22,8),mt(0xf2ead0));b.position.y=-.1;g.add(b);[-.03,.03].forEach(x=>{const k=new T.Mesh(new T.SphereGeometry(.05,8,8),mt(0xf2ead0));k.position.set(x,-.21,0);g.add(k)});return g}
+function toy(i){const g=new T.Group(),c=[0xee3333,0x33bb33,0x3366ff][i%3],m=mt(c,0,c),k=i%3;if(k==0){g.add(new T.Mesh(new T.BoxGeometry(.3,.3,.3),m));const t=new T.Mesh(new T.BoxGeometry(.32,.08,.32),mt(0xffffff,0,0x888888));t.position.y=.1;g.add(t)}else if(k==1){const bm=mt(0xb87333,0,0x4a2a10);g.add(new T.Mesh(new T.SphereGeometry(.2,10,8),bm));const h=new T.Mesh(new T.SphereGeometry(.13,10,8),bm);h.position.y=.28;g.add(h);[-.1,.1].forEach(x=>{const e=new T.Mesh(new T.SphereGeometry(.06,8,6),bm);e.position.set(x,.4,0);g.add(e)})}else{const t=new T.Mesh(new T.ConeGeometry(.2,.4,12),m);t.rotation.x=M.PI;g.add(t);const s=new T.Mesh(new T.CylinderGeometry(.03,.03,.3),mt(0xffffff,0,0x888888));s.position.y=.3;g.add(s)}return g}
+const FT=tx(256,(x,w)=>{x.fillStyle='#d8d4c8';x.beginPath();x.ellipse(128,120,70,95,0,0,7);x.fill();x.fillStyle='#000';[[95,100],[161,100]].forEach(([a,b])=>{x.beginPath();x.ellipse(a,b,20,28,0,0,7);x.fill()});x.fillStyle='#f00';[[95,104],[161,104]].forEach(([a,b])=>{x.beginPath();x.arc(a,b,5,0,7);x.fill()});x.strokeStyle='#a00';x.lineWidth=4;[85,105,151,171].forEach(a=>{x.beginPath();x.moveTo(a,125);x.lineTo(a+R()*6-3,190+R()*40);x.stroke()});x.fillStyle='#000';x.beginPath();x.moveTo(75,160);x.quadraticCurveTo(128,235,181,160);x.quadraticCurveTo(128,200,75,160);x.fill();x.fillStyle='#fff';for(let i=0;i<9;i++)x.fillRect(82+i*11,168+M.sin(i/8*M.PI)*14,5,10)});
+// khởi tạo, điều khiển, vòng lặp
+function init(){ren=new T.WebGLRenderer({antialias:!mob});ren.setSize(innerWidth,innerHeight);ren.setPixelRatio(M.min(devicePixelRatio,2));ren.domElement.style.zIndex=1;document.body.appendChild(ren.domElement);sc=new T.Scene();cam=new T.PerspectiveCamera(70,innerWidth/innerHeight,.05,200);P=cam.position;P.y=1.6;sc.add(cam);hand=new T.Group();hand.position.set(.4,-.35,-.7);cam.add(hand);
+addEventListener('resize',()=>{ren.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
+onkeydown=e=>{const k=e.key.toLowerCase();keys[k]=1;if(k==' ')jump();if((k=='e'||k==' '||k=='enter')&&!e.repeat&&$('dlg').fin)$('dlg').fin()};onkeyup=e=>{const k=e.key.toLowerCase();keys[k]=0;if(k=='e')lk=0};
+document.onmousemove=e=>{if(document.pointerLockElement&&!busy)look(e.movementX,e.movementY,.0025)};ren.domElement.onclick=()=>!mob&&ren.domElement.requestPointerLock&&ren.domElement.requestPointerLock();
+$('dlg').onpointerdown=()=>$('dlg').fin&&$('dlg').fin();$('jb').ontouchstart=jump;$('eb').ontouchstart=()=>eh=1;$('eb').ontouchend=()=>{eh=0;lk=0};
+let jt=null,lt=null,lx,ly;const js=$('js'),jm=t=>{const r=js.getBoundingClientRect(),h=r.width/2;let dx=t.clientX-r.left-h,dy=t.clientY-r.top-h;const d=M.hypot(dx,dy),k=d>h?h/d:1;dx*=k;dy*=k;mx=dx/h;mz=dy/h;$('kn').style.transform=`translate(${dx}px,${dy}px)`};
+document.addEventListener('touchstart',e=>{for(const t of e.changedTouches){if(js.contains(t.target)&&jt==null){jt=t.identifier;jm(t)}else if(!t.target.closest('.c,#dlg,#ex')&&lt==null){lt=t.identifier;lx=t.clientX;ly=t.clientY}}});
+document.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches){if(t.identifier==jt)jm(t);else if(t.identifier==lt&&!busy){look(t.clientX-lx,t.clientY-ly,.006);lx=t.clientX;ly=t.clientY}}},{passive:false});
+const te=e=>{for(const t of e.changedTouches){if(t.identifier==jt){jt=null;mx=mz=0;$('kn').style.transform=''}if(t.identifier==lt)lt=null}};document.addEventListener('touchend',te);document.addEventListener('touchcancel',te);loop()}
+function loop(){requestAnimationFrame(loop);const dt=M.min(ck.getDelta(),.05);tt+=dt;U.forEach(f=>f(dt));
+if(!busy){const c=M.cos(yaw),s=M.sin(yaw);let ix=(keys.d?1:0)-(keys.a?1:0)+mx,iz=(keys.s?1:0)-(keys.w?1:0)+mz;const l=M.hypot(ix,iz);if(l>1){ix/=l;iz/=l}const k=4.2*dt,dx=(ix*c+iz*s)*k,dz=(iz*c-ix*s)*k;if(!hit(P.x+dx,P.z))P.x+=dx;if(!hit(P.x,P.z+dz))P.z+=dz}
+if(P.y>1.6||vy>0){vy-=20*dt;P.y+=vy*dt;if(P.y<1.6&&!busy){P.y=1.6;vy=0}}
+cam.rotation.set(pit,yaw,roll,'YXZ');scan(dt);if($('ns').style.opacity>0)ns();ren.render(sc,cam)}
+// MÀN MỞ ĐẦU
+function L0(){sp=[0,0,0];sc.background=new T.Color(0x87ceeb);sc.fog=new T.Fog(0x87ceeb,25,75);sc.add(new T.HemisphereLight(0xffffff,0x446644,.9));const sn=new T.DirectionalLight(0xfff2cc,.7);sn.position.set(5,10,3);sc.add(sn);
+gm=new T.Mesh(new T.PlaneGeometry(200,200),new T.MeshLambertMaterial({color:0x3f9b3f}));gm.rotation.x=-M.PI/2;sc.add(gm);
+const g=new T.PlaneGeometry(.07,.8,1,4),p=g.attributes.position,cl=[];g.translate(0,.4,0);for(let i=0;i<p.count;i++){const y=p.getY(i)/.8;p.setX(i,p.getX(i)*(1-y*.9));p.setZ(i,y*y*.2);cl.push(.3+.5*y,.55+.4*y,.15+.15*y)}g.setAttribute('color',new T.Float32BufferAttribute(cl,3));
+gmat=new T.MeshLambertMaterial({vertexColors:true,side:T.DoubleSide});gmat.onBeforeCompile=s=>{s.uniforms.t=gu;s.vertexShader='uniform float t;\n'+s.vertexShader.replace('#include <begin_vertex>','vec3 transformed=position;transformed.x+=sin(t*2.+instanceMatrix[3].x*.4+instanceMatrix[3].z*.3)*.1*position.y;')};
+const N=26000,gi=new T.InstancedMesh(g,gmat,N),o=new T.Object3D(),cc=new T.Color();for(let i=0;i<N;i++){let x,z;do{x=(R()-.5)*60;z=(R()-.5)*60}while(M.abs(x)<1.8&&M.abs(z+4.2)<1.8);o.position.set(x,0,z);o.rotation.y=R()*6.3;o.scale.set(1,.4+R()*.7,1);o.updateMatrix();gi.setMatrixAt(i,o.matrix);gi.setColorAt(i,cc.setHSL(.24+R()*.07,.6,.5+R()*.45))}sc.add(gi);U.push(()=>gu.value=tt);
+const stn=tx(256,(x,w)=>{x.fillStyle='#6b6b6b';x.fillRect(0,0,w,w);dots(x,w,2500,['#444','#999','#555','#888'],.35,8);x.strokeStyle='#222';for(let i=0;i<6;i++){x.beginPath();let a=R()*w,b=R()*w;x.moveTo(a,b);for(let k=0;k<6;k++)x.lineTo(a+=R()*40-20,b+=R()*40-20);x.stroke()}});
+cube=new T.Mesh(new T.BoxGeometry(2.5,2.5,2.5),mt(0xffffff,stn));cube.position.set(0,1.25,-4.2);sc.add(cube);W.push([-1.25,1.25,-5.45,-2.95]);reg(cube,'Giữ E để cho ăn',feed,4,()=>held);
+const et=tx(64,(x,w)=>{x.fillStyle='#eee';x.beginPath();x.ellipse(32,32,30,18,0,0,7);x.fill();x.fillStyle='#c00';x.beginPath();x.arc(32,32,13,0,7);x.fill();x.fillStyle='#000';x.fillRect(29,18,6,28)});
+eyes=[];for(let i=0;i<8;i++){const e=new T.Mesh(new T.PlaneGeometry(.5,.32),new T.MeshBasicMaterial({map:et,transparent:true}));e.position.set((R()-.5)*2,(R()-.5)*2,1.26);e.scale.y=.05;e.visible=false;eyes.push(e);cube.add(e)}
+const sg=new T.Group(),bd=new T.Mesh(new T.BoxGeometry(1.4,1.2,.08),new T.MeshLambertMaterial({map:tx(256,(x,w)=>{x.fillStyle='#6b4423';x.fillRect(0,0,w,w);x.fillStyle='#fff';x.font='bold 40px sans-serif';x.textAlign='center';x.fillText('FEED THE',128,80);x.fillText('CUBE',128,130);x.beginPath();x.moveTo(30,195);x.lineTo(90,150);x.lineTo(90,180);x.lineTo(226,180);x.lineTo(226,210);x.lineTo(90,210);x.lineTo(90,240);x.fill()})})),ps=new T.Mesh(new T.CylinderGeometry(.06,.06,1.6),mt(0x4a3018));bd.position.y=1.5;ps.position.y=.8;sg.add(bd,ps);sg.position.set(3.4,0,-3.3);sg.rotation.y=-.7;sc.add(sg);
+const fd=food();fd.position.set(-3.5,.2,-3.8);fd.rotation.z=M.PI/2;fd.rotation.y=.5;sc.add(fd);
+const fo=reg(fd,'Giữ E để nhặt',()=>{sc.remove(fd);fo.dead=1;held=food();held.scale.setScalar(.9);held.rotation.set(.3,0,-.5);hand.add(held);$('ob').textContent='Mang đồ ăn tới Cube';snd(500,.3,'triangle',.3,900)},2.6);$('ob').textContent='Tìm đồ ăn bên trái Cube'}
+async function feed(){busy=1;hand.remove(held);held=0;snd(70,2.5,'sine',.5);
+await say([['Cube','...'],['Cube','Ngon. Lâu lắm rồi... không ai nhớ tới ta.'],['me','Nó... biết nói sao?']]);
+const w=new T.Color(1,1,1),dk=new T.Color(.3,.12,.08),gc=new T.Color(0x3f9b3f),bg=sc.background.clone(),rd=new T.Color(0x2a0606);eyes.forEach(e=>e.visible=true);snd(50,6,'sawtooth',.3,30);
+await an(6000,t=>{cube.position.x=(R()-.5)*.1*t;cube.rotation.y=M.sin(t*60)*.03*t;gmat.color.lerpColors(w,dk,t);gm.material.color.lerpColors(gc,dk,t);sc.background.lerpColors(bg,rd,t);sc.fog.color.copy(sc.background);$('ns').style.opacity=t*.45;cam.fov=70+t*25;cam.updateProjectionMatrix();eyes.forEach((e,i)=>e.scale.y=t>i/9?1:.05)});
+await say([['Cube','Cảm ơn. Ta chẳng biết trả ơn thế nào... ngoài việc cho ngươi nếm thứ ta đã nuốt.'],['Cube','Những món đồ chơi. Những đứa trẻ. Tất cả ký ức của ta.'],['me','Dừng lại! Đầu tôi—']]);
+snd(1500,3,'square',.4,40);fx('#fff',1,200);await sleep(250);fx('#000',1,2500);
+await an(2800,t=>{roll=t*1.5;P.y=1.6-t*1.15;pit=-t*.7;$('ns').style.opacity=.45+t*.5});
+lids(1);await sleep(2500);$('ns').style.opacity=0;cam.fov=70;cam.updateProjectionMatrix();P.y=1.6;pit=roll=0;load(1)}
+// NHIỆM VỤ CHUNG: toys -> máy hợp nhất -> chìa khoá -> cửa (mỗi tầng tự dựng map riêng rồi gọi quest)
+function quest(q){q.toys.forEach((p,i)=>{const m=toy(i);m.position.set(p[0],.5,p[1]);sc.add(m);U.push(()=>{m.rotation.y=tt*1.5;m.position.y=.5+M.sin(tt*2+i)*.08});const o=reg(m,'Giữ E để nhặt đồ chơi',()=>{sc.remove(m);o.dead=1;n++;snd(700,.5,'triangle',.3,1500);hud();n==3&&talk([['me','Đủ ba món rồi. Giờ phải tìm cái máy để hợp nhất chúng.']])},2.2)});
+const fm=new T.Group(),bx=new T.Mesh(new T.BoxGeometry(1,1.4,1),mt(0x333344)),tb=new T.Mesh(new T.CylinderGeometry(.2,.2,1,12),new T.MeshBasicMaterial({color:0x66ccff}));bx.position.y=.7;tb.position.y=1.9;fm.add(bx,tb);fm.position.set(q.fuse[0],0,q.fuse[1]);sc.add(fm);W.push([q.fuse[0]-.5,q.fuse[0]+.5,q.fuse[1]-.5,q.fuse[1]+.5]);
+reg(fm,'Giữ E để hợp nhất đồ chơi',async()=>{busy=1;snd(200,3,'sawtooth',.3,900);await an(2500,t=>{tb.scale.y=1+t*1.5;bx.position.x=(R()-.5)*.08});key=1;hud();await say([['me','Chiếc chìa khoá... vẫn còn ấm như có sự sống.']]);busy=0},2.5,()=>n>=3&&!key);
+const dr=new T.Group(),dm=new T.Mesh(new T.BoxGeometry(1.4,2.4,.15),mt(0x3a2414)),hd=new T.Mesh(new T.SphereGeometry(.07),new T.MeshBasicMaterial({color:0xffdd55}));dm.position.y=1.2;hd.position.set(.5,1.2,.1);dr.add(dm,hd);dr.position.set(q.door[0],0,q.door[1]);sc.add(dr);reg(dr,'Giữ E để mở cửa',()=>load(lvl+1),2.5,()=>key);hud()}
+function npc(x,z,name,ls,c=0x888899){const g=new T.Group(),b=new T.Mesh(new T.ConeGeometry(.4,1.5,10),mt(c,0,0x111111)),h=new T.Mesh(new T.SphereGeometry(.22,12,10),mt(0xdddddd,0,0x222222));b.position.y=.75;h.position.y=1.7;g.add(b,h);g.position.set(x,0,z);sc.add(g);U.push(()=>g.lookAt(P.x,0,P.z));reg(g,'Giữ E để nói chuyện',()=>talk(ls.map(([s,t])=>[s||name,t])),2.6)}
+function note(x,z,t){const m=new T.Mesh(new T.BoxGeometry(.4,.04,.5),mt(0xffffee,0,0x555544));m.position.set(x,.03,z);sc.add(m);reg(m,'Giữ E để đọc ghi chú',()=>talk([['Ghi chú',t]]),2)}
+function monster(x,z,s=2.4){const m=new T.Mesh(new T.PlaneGeometry(1.1,1.4),new T.MeshBasicMaterial({map:FT,transparent:true}));m.position.set(x,1.4,z);m.h=[x,1.4,z];sc.add(m);mon=m;
+U.push(dt=>{if(busy)return;const dx=P.x-m.position.x,dz=P.z-m.position.z,d=M.hypot(dx,dz);m.lookAt(P.x,1.4,P.z);const fw=(-M.sin(yaw)*-dx-M.cos(yaw)*-dz)/d;if(fw<.55&&d<40){const k=s*dt/d,ax=dx*k,az=dz*k;if(!hit(m.position.x+ax,m.position.z))m.position.x+=ax;if(!hit(m.position.x,m.position.z+az))m.position.z+=az}if(d<1)die()})}
+async function die(){if(busy)return;busy=1;snd(1200,1.4,'sawtooth',.6,70);snd(80,1.4,'square',.5);const f=new T.Mesh(new T.PlaneGeometry(1.5,1.5),new T.MeshBasicMaterial({map:FT,transparent:true,depthTest:false}));f.position.z=-.8;f.renderOrder=9;cam.add(f);$('ns').style.opacity=.7;
+await an(1000,t=>{f.scale.setScalar(1+t*2.2);f.position.x=(R()-.5)*.15;f.position.y=(R()-.5)*.15;roll=(R()-.5)*.35;fx(t<.25?'#fff':'#a00',(1-t)*.6,0)});
+cam.remove(f);fx('#000',1,200);await sleep(300);$('ns').style.opacity=0;roll=0;card('BẠN ĐÃ CHẾT','Nó vẫn đang nhìn bạn...');await sleep(2800);P.set(sp[0],1.6,sp[1]);mon&&mon.position.set(...mon.h);fx('#000',0,1200);busy=0}
+async function load(k){busy=1;lvl=k;const L=LV[k];fx('#000',1,0);lids(1);if(!L){card('CÒN TIẾP...','Các tầng sau sẽ được nối vào ở phần kế tiếp');return}
+clear();L.b();P.set(sp[0],1.6,sp[1]);yaw=sp[2];pit=0;await sleep(3000);lids(0);fx('#000',0,1800);await sleep(3200);card(L.n,L.t);await sleep(2500);await say(L.intro);busy=0;hud()}
+$('pl').onclick=async()=>{try{await document.documentElement.requestFullscreen();await screen.orientation.lock('landscape')}catch(e){}
+$('menu').style.display=$('st').style.display='none';$('ld').style.display='flex';$('ex').style.display='block';$('ex').onclick=()=>{document.fullscreenElement&&document.exitFullscreen();location.reload()};
+await sleep(800);init();L0();$('ld').style.display='none';mob&&['js','jb'].forEach(i=>$(i).style.display='block');busy=0};
+// ===== TẦNG 1: PHÒNG VÀNG (mê cung DFS, quái chỉ tiến khi bạn không nhìn) =====
+LV[1]={n:'TẦNG 1',t:'PHÒNG VÀNG',intro:[['Cube','Ngươi nghe thấy ta chứ? Ta nuốt nhiều quá... nên chúng nằm rải rác khắp nơi.'],['Cube','Ba món đồ chơi. Hợp chúng thành chìa khoá. Rồi tìm cánh cửa.'],['me','Mùi thảm ẩm... đèn huỳnh quang kêu rè rè. Đây là đâu?']],
+b(){const S=2.6,N=17,wl=mt(0xffffff,tx(128,(x,w)=>{x.fillStyle='#cdbf5a';x.fillRect(0,0,w,w);x.fillStyle='#b5a540';for(let i=0;i<w;i+=16)x.fillRect(i,0,5,w);dots(x,w,300,['#7a6a28'],.25,3)})),fl=mt(0xffffff,tx(128,(x,w)=>{x.fillStyle='#7d6d35';x.fillRect(0,0,w,w);dots(x,w,3000,['#5a4c20','#9a8a48'],.4,2)},16,16)),g=[...Array(N)].map(()=>Array(N).fill(1));
+sc.background=new T.Color(0x0e0c04);sc.fog=new T.Fog(0x0e0c04,2,16);sc.add(new T.AmbientLight(0xfff0a0,.3));const pl=new T.PointLight(0xfff0a0,1,13);cam.add(pl);U.push(()=>pl.intensity=R()<.04?.2:1);
+(function d(x,y){g[y][x]=0;[[2,0],[-2,0],[0,2],[0,-2]].sort(()=>R()-.5).forEach(([a,b])=>{const X=x+a,Y=y+b;if(X>0&&Y>0&&X<N-1&&Y<N-1&&g[Y][X]){g[y+b/2][x+a/2]=0;d(X,Y)}})})(1,1);
+for(let i=0;i<30;i++){const x=1+R()*(N-2)|0,y=1+R()*(N-2)|0;(x+y)%2&&(g[y][x]=0)}
+const f=new T.Mesh(new T.PlaneGeometry(N*S,N*S),fl);f.rotation.x=-M.PI/2;f.position.set((N-1)*S/2,0,(N-1)*S/2);sc.add(f);const c=new T.Mesh(new T.PlaneGeometry(N*S,N*S),mt(0xcfc9a0));c.rotation.x=M.PI/2;c.position.set((N-1)*S/2,3,(N-1)*S/2);sc.add(c);
+const cells=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(g[y][x])box(x*S,1.5,y*S,S,3,S,wl);else if(x%2&&y%2){cells.push([x*S,y*S]);if((x+y)%4==0){const l=new T.Mesh(new T.BoxGeometry(1.2,.05,.5),new T.MeshBasicMaterial({color:0xfffff0}));l.position.set(x*S,2.95,y*S);sc.add(l)}}}
+const far=cells.filter(p=>M.hypot(p[0]-S,p[1]-S)>14).sort(()=>R()-.5);sp=[S,S,0];
+quest({toys:far.slice(0,3),fuse:[(N-2)*S,S],door:[(N-2)*S,(N-2)*S]});
+note(far[3][0],far[3][1],'Nó chỉ đứng yên khi ngươi nhìn nó. Đừng bao giờ quay lưng quá lâu.');
+npc(far[4][0],far[4][1],'Người đi trước',[[0,'Suỵt... ngươi cũng là kẻ đã cho nó ăn, phải không?'],['me','Ông là ai? Chỗ này là gì?'],[0,'Đồ chơi thường nằm ở những góc cụt. Cái máy phát sáng xanh nằm ở rìa phía đông, còn cửa ở góc xa nhất.'],[0,'Và nếu nghe tiếng bước chân sau lưng... đừng chạy. Hãy quay lại nhìn.']]);
+monster(far[5][0],far[5][1],2.4)}};
+// ===== PHẦN 2: công cụ dùng chung =====
+function env(c,a,b,am=.3,lc=0xfff0a0,li=1){sc.background=new T.Color(c);sc.fog=new T.Fog(c,a,b);sc.add(new T.AmbientLight(lc,am));const pl=new T.PointLight(lc,li,13);cam.add(pl);U.push(()=>pl.intensity=R()<.04?li*.2:li)}
+const plane=(w,d,x,y,z,m,up=1)=>{const o=new T.Mesh(new T.PlaneGeometry(w,d),m);o.rotation.x=up?-M.PI/2:M.PI/2;o.position.set(x,y,z);sc.add(o);return o},inv=new T.MeshBasicMaterial({visible:false}),
+SN=tx(64,(x,w)=>{x.fillStyle='#111';x.fillRect(0,0,w,w);dots(x,w,1500,['#fff','#888','#333'],1,3)}),
+scat=(k,x0,x1,z0,z1,f)=>{for(let i=0;i<k;i++){let x,z,t=0;do{x=x0+R()*(x1-x0);z=z0+R()*(z1-z0)}while(hit(x,z)&&++t<20);f(x,z,i)}},
+blood=(x,z,s=1)=>{const o=plane(s,s,x,.03,z,new T.MeshBasicMaterial({color:0x6a0000}));o.rotation.z=R()*6;o.scale.set(1,1+R(),1)};
+function skull(x,z,y=.12){const g=new T.Group(),m=mt(0xe8e0c8,0,0x221f18),j=new T.Mesh(new T.BoxGeometry(.12,.05,.1),m);g.add(new T.Mesh(new T.SphereGeometry(.13,10,8),m));j.position.set(0,-.1,.04);g.add(j);[-.05,.05].forEach(a=>{const e=new T.Mesh(new T.SphereGeometry(.035,6,6),new T.MeshBasicMaterial({color:0}));e.position.set(a,.02,.11);g.add(e)});g.position.set(x,y,z);g.rotation.y=R()*6;sc.add(g)}
+function grave(x,z){const m=mt(0x555a55,0,0x080808),a=new T.Mesh(new T.BoxGeometry(.7,1,.15),m),b=new T.Mesh(new T.CylinderGeometry(.35,.35,.15,12),m),g=new T.Group();b.rotation.x=M.PI/2;b.position.y=.5;g.add(a,b);g.position.set(x,.5,z);g.rotation.y=R()*.6-.3;sc.add(g);W.push([x-.4,x+.4,z-.3,z+.3]);blood(x,z+.6,.8)}
+function tv(x,z){const o=box(x,.4,z,.7,.55,.5,mt(0x222222),0),s=new T.Mesh(new T.PlaneGeometry(.55,.4),new T.MeshBasicMaterial({map:SN}));s.position.z=.26;o.add(s);o.rotation.y=R()*6}
+function lamp(x,z){const p=new T.Mesh(new T.CylinderGeometry(.06,.08,5),mt(0x333333)),h=new T.Mesh(new T.BoxGeometry(.6,.12,.3),new T.MeshBasicMaterial({color:0xffcc88}));p.position.set(x,2.5,z);h.position.set(x,5,z);sc.add(p,h);U.push(()=>h.visible=R()>.03)}
+function car(x,z,r,c){const g=new T.Group(),a=new T.Mesh(new T.BoxGeometry(1.8,.7,4),mt(c)),t=new T.Mesh(new T.BoxGeometry(1.6,.6,2),mt(0x223344,0,0x050810));a.position.y=.7;t.position.set(0,1.3,-.2);g.add(a,t);[[-.9,1.3],[.9,1.3],[-.9,-1.3],[.9,-1.3]].forEach(([u,v])=>{const w=new T.Mesh(new T.CylinderGeometry(.35,.35,.25,10),mt(0x111111));w.rotation.z=M.PI/2;w.position.set(u,.35,v);g.add(w)});g.position.set(x,0,z);g.rotation.y=r;sc.add(g);const hw=r?2:.9,hd=r?.9:2;W.push([x-hw,x+hw,z-hd,z+hd])}
+
+// ===== TẦNG 2: HÀNH LANG VÔ TẬN (đua chạy, quái đuổi sau lưng) =====
+LV[2]={n:'TẦNG 2',t:'HÀNH LANG VÔ TẬN',intro:[['Cube','Ngươi chạy nhanh đấy. Nhưng thứ phía sau thì không bao giờ mệt.'],['me','Hành lang này... dài vô tận.'],['Cube','Đồ chơi nằm trong những căn phòng bên hông. Đừng dừng lại quá lâu.']],
+b(){env(0x0b0a12,3,24,.35,0xffe0f0);const L=110,wd=3.2,pk=mt(0xffffff,tx(128,(x,w)=>{x.fillStyle='#d9a5b8';x.fillRect(0,0,w,w);x.fillStyle='#c48ba2';for(let i=0;i<w;i+=32)x.fillRect(0,i,w,3);dots(x,w,300,['#8a5a70'],.2,2)})),ck=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#e8e0f0';x.fillRect(0,0,w,w);x.fillStyle='#3a2a4a';x.fillRect(0,0,32,32);x.fillRect(32,32,32,32)},wd/1.5,L/1.5)),zc=2-L/2;
+plane(wd,L,0,0,zc,ck);plane(wd,L,0,3,zc,pk,0);box(0,1.5,3.5,wd+2,3,1,pk);box(0,1.5,-L+3.5,wd+2,3,1,pk);
+const segs=(s,gs)=>{let a=3.5;gs.forEach(g=>{const b=g+1.2;box(s*(wd/2+.5),1.5,(a+b)/2,1,3,a-b,pk);a=g-1.2});const b=-L+3.5;box(s*(wd/2+.5),1.5,(a+b)/2,1,3,a-b,pk)},
+G=[[-22,-86],[-54]],alc=(s,z)=>{const xc=s*(wd/2+3);box(xc+s*2.25,1.5,z,.5,3,5,pk);box(xc,1.5,z-2.5,4,3,.5,pk);box(xc,1.5,z+2.5,4,3,.5,pk);plane(4,5,xc,0,z,ck);plane(4,5,xc,3,z,pk,0);blood(xc,z+1.2,1.5);skull(xc+s,z-1.5);return[xc,z]};
+segs(1,G[0]);segs(-1,G[1]);const toys=[alc(1,-22),alc(-1,-54),alc(1,-86)];
+for(let i=0;i<14;i++){const z=-5-i*7;if([...G[0],...G[1]].some(g=>M.abs(z-g)<3))continue;[1,-1].forEach(s=>box(s*(wd/2-.06),1.1,z,.12,2.2,1.2,mt([0x7a3b3b,0x3b6a7a,0x6a5a2a][i%3]),0))}
+sp=[0,-6,0];quest({toys,fuse:[-1,-L+7],door:[0,-L+4.2]});
+note(0,-12,'Nó nghe thấy tiếng ngươi thở. Đừng dừng lại.');
+npc(.9,-L+9,'Đứa trẻ',[[0,'Chị... cũng cho nó ăn rồi sao?'],[0,'Cánh cửa ở cuối. Nhưng chìa khoá phải hợp từ ba món đồ của em.'],['me','Em đã ở đây bao lâu rồi?'],[0,'Em không đếm nữa.']]);
+monster(0,2.6,3.2)}};
+
+// ===== TẦNG 3: XA LỘ 7 (analog horror, đồng hoang đêm) =====
+LV[3]={n:'TẦNG 3',t:'XA LỘ 7 — 03:17 SÁNG',intro:[['Cube','Mắt ngươi bắt đầu mờ đi. Tốt. Đây là nơi ta nhớ rõ nhất.'],['me','Xe bỏ hoang... một trạm xăng... và mọi chiếc tivi đều đang nhìn mình.'],['Cube','Đừng tin thứ gì bật sáng sau ba giờ sáng.']],
+b(){env(0x120508,6,50,.5,0xff9999,.8);const dl=new T.DirectionalLight(0x883344,.6);dl.position.set(10,20,-5);sc.add(dl);
+const mo=new T.Mesh(new T.SphereGeometry(8,16,12),new T.MeshBasicMaterial({color:0xcc2222,fog:false}));mo.position.set(-40,45,-120);sc.add(mo);
+plane(300,300,0,0,-90,mt(0x1c2a16,tx(64,(x,w)=>{x.fillStyle='#25381c';x.fillRect(0,0,w,w);dots(x,w,500,['#3a5a2a','#142010'],.5,2)},60,60)));
+plane(8,200,0,.02,-85,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#222';x.fillRect(0,0,w,w);x.fillStyle='#cc9';x.fillRect(30,8,4,28)},1,100)));
+[[-26,-80,2,200],[26,-80,2,200],[0,10,60,2],[0,-170,60,2]].forEach(([x,z,w,d])=>box(x,1,z,w,2,d,inv));
+[[3,-20,0,0x8a1a1a],[-3,-35,0,0x1a3a6a],[2.5,-55,1.57,0x555555],[-2,-80,0,0x6a6a1a],[4,-120,0,0x2a2a2a],[-4,-140,1.57,0x7a3a1a]].forEach(a=>car(...a));
+for(let z=-10;z>-170;z-=22){lamp(-5,z);lamp(5,z-11)}
+scat(6,-12,12,-150,-10,tv);U.push(()=>SN.offset.set(R(),R()));scat(9,-3,3,-150,-5,(x,z)=>blood(x,z,1.2));
+for(let i=0;i<8;i++){const x=-12-(i%4)*2.4,z=-40-(i>>2)*3;grave(x,z);skull(x+.3,z+.9)}
+box(-8,3,-60,5,2.4,.2,mt(0xffffff,tx(256,(x,w)=>{x.fillStyle='#200';x.fillRect(0,0,w,w);x.fillStyle='#f33';x.font='bold 30px sans-serif';x.textAlign='center';x.fillText('CHÀO MỪNG',128,100);x.fillText('TRỞ LẠI',128,150)})),0);
+box(14,3.4,-100,12,.3,9,mt(0xaa2222),0);[[9,-96],[19,-96],[9,-104],[19,-104]].forEach(([x,z])=>box(x,1.7,z,.4,3.4,.4,mt(0xcccccc)));box(11,.8,-98,.6,1.6,.6,mt(0xcc3333));box(11,.8,-102,.6,1.6,.6,mt(0xcc3333));box(24,1.5,-104,6,3,6,mt(0x777777));
+sp=[0,0,0];quest({toys:[[6,-24],[-15,-48],[17,-96]],fuse:[14,-100],door:[0,-165]});
+npc(16,-97,'Người bán xăng',[[0,'Ba giờ mười bảy. Lúc nào cũng ba giờ mười bảy.'],['me','Ông là người thật sao?'],[0,'Tôi từng là. Cái máy hợp nhất ở dưới mái hiên này. Đồ chơi thì... rải theo những ngôi mộ.']]);
+monster(10,-60,2.8)}};
+
+// ===== TẦNG 4: PHÒNG BƠI (liminal, hồ nước máu) =====
+LV[4]={n:'TẦNG 4',t:'PHÒNG BƠI',intro:[['Cube','Nước ở đây nhớ tất cả những kẻ đã chìm.'],['me','Gạch trắng... tiếng nước nhỏ giọt vang khắp nơi.'],['Cube','Đừng lại gần mép hồ. Chúng đang đợi bên dưới.']],
+b(){env(0x8fd0d8,2,30,.9,0xeeffff,.6);const C=10,K=4,H=K*C+2,tl=mt(0xffffff,tx(128,(x,w)=>{x.fillStyle='#e8f4f4';x.fillRect(0,0,w,w);x.strokeStyle='#9bb';x.lineWidth=2;x.strokeRect(0,0,w,w);dots(x,w,200,['#cde'],.4,2)},H/2,H/2)),wt=new T.MeshBasicMaterial({color:0x2ab8d8,transparent:true,opacity:.75}),rd=new T.MeshBasicMaterial({color:0x8a0a0a,transparent:true,opacity:.85});
+plane(H,H,H/2,0,H/2,tl);plane(H,H,H/2,3.5,H/2,tl,0);box(H/2,1.75,-.5,H+2,3.5,1,tl);box(H/2,1.75,H+.5,H+2,3.5,1,tl);box(-.5,1.75,H/2,1,3.5,H,tl);box(H+.5,1.75,H/2,1,3.5,H,tl);
+for(let i=0;i<K;i++)for(let j=0;j<K;j++){const x0=2+i*C,z0=2+j*C,red=(i*3+j)%5==2;plane(8,8,x0+4,.03,z0+4,red?rd:wt);W.push([x0,x0+8,z0,z0+8]);if(red){skull(x0+2+R()*4,z0+2+R()*4,.05);skull(x0+2+R()*4,z0+2+R()*4,.05);blood(x0+4,z0+4,3)}if(i&&j)box(i*C+1,1.75,j*C+1,1,3.5,1,tl)}
+U.push(()=>wt.opacity=.7+M.sin(tt*2)*.05);
+sp=[1,1,M.PI];quest({toys:[[11,31],[31,11],[41,41]],fuse:[1,21],door:[41,.3]});
+note(1,11,'Nó trồi lên khi nước lặng. Đừng quay lưng với hồ đỏ.');
+npc(11,1,'Người cứu hộ',[[0,'Còi hết hơi rồi... không ai nghe thấy tôi nữa.'],['me','Ông biết đường ra không?'],[0,'Cửa ở góc đông bắc. Cái máy ở rìa phía tây. Đi men theo mép, đừng bước xuống nước.']]);
+monster(21,41,2.7)}};
+// ===== PHẦN 3: quái đa dạng + tầng 5-7 =====
+// k: 0 chỉ tiến khi bạn không nhìn | 1 chỉ tiến khi bạn di chuyển | 2 dịch chuyển khi bạn không nhìn | 3 đuổi liên tục
+function mons(x,z,k,s=2.5){const m=new T.Group(),h=new T.Mesh(new T.PlaneGeometry(1,1.2),new T.MeshBasicMaterial({map:FT,transparent:true,color:[0xffffff,0x99ff99,0xff8888,0x9999ff][k]})),b=new T.Mesh(new T.BoxGeometry(.5,1.4,.3),new T.MeshBasicMaterial({color:0x040404}));h.position.y=1.7;b.position.y=.7;m.add(h,b);m.position.set(x,0,z);m.h=[x,0,z];sc.add(m);mon=m;let t0=0,lx=P.x,lz=P.z;
+U.push(dt=>{if(busy)return;const dx=P.x-m.position.x,dz=P.z-m.position.z,d=M.hypot(dx,dz),sn=(M.sin(yaw)*dx+M.cos(yaw)*dz)/d>.55,mv=M.hypot(P.x-lx,P.z-lz)>.004,go=q=>{const a=dx/d*q,c=dz/d*q;if(!hit(m.position.x+a,m.position.z))m.position.x+=a;if(!hit(m.position.x,m.position.z+c))m.position.z+=c};lx=P.x;lz=P.z;h.lookAt(P.x,1.7,P.z);
+if(((k==0&&!sn)||(k==1&&mv)||k==3)&&d<40)go(s*dt);
+if(k==2&&!sn&&d>3&&(t0+=dt)>2.2){t0=0;const ux=m.position.x+dx/d*4,uz=m.position.z+dz/d*4;if(!hit(ux,uz)){snd(90,.5,'sawtooth',.4,40);m.position.x=ux;m.position.z=uz}}
+if(d<1)die()})}
+const wz=(x,a,b,gs,m)=>{gs.forEach(g=>{const l=a-g-1.2;l>.1&&box(x,1.6,(a+g+1.2)/2,.4,3.2,l,m);a=g-1.2});box(x,1.6,(a+b)/2,.4,3.2,a-b,m)};
+
+// ===== TẦNG 5: LỚP HỌC BỎ HOANG (hành lang + 10 phòng học, cô giáo chỉ bước khi bạn bước) =====
+LV[5]={n:'TẦNG 5',t:'LỚP HỌC BỎ HOANG',intro:[['Cube','Ngươi còn nhớ giờ ra chơi chứ? Bọn trẻ không bao giờ ra khỏi lớp.'],['me','Bảng đen... chi chít chữ viết bằng thứ gì đó màu đỏ.'],['Cube','Cô giáo đứng ở cuối hành lang. Cô chỉ bước khi ngươi bước.']],
+b(){env(0x0a120c,2,24,.45,0xcfffd0,1);const wd=mt(0xffffff,tx(128,(x,w)=>{x.fillStyle='#8a6a3a';x.fillRect(0,0,w,w);x.fillStyle='#6a4a22';for(let i=0;i<w;i+=16)x.fillRect(0,i,w,2);dots(x,w,300,['#4a3010'],.3,3)},8,16)),wl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#a8b89a';x.fillRect(0,0,w,w);x.fillStyle='#788868';x.fillRect(0,40,w,24);dots(x,w,150,['#586848'],.3,2)})),bb=mt(0xffffff,tx(256,(x,w)=>{x.fillStyle='#1c2a20';x.fillRect(0,0,w,w);x.fillStyle='#d8d8c8';x.font='26px sans-serif';x.textAlign='center';['NÓ ĐÓI','CHO NÓ ĂN','ĐỪNG NGHE','TỚI LƯỢT EM','ĐỪNG DỪNG LẠI'].forEach((s,i)=>x.fillText(s,128,50+i*42))})),dm=mt(0x6a4a2a),Z=[-8,-20,-32,-44,-56];
+plane(24,64,0,0,-32,wd);plane(24,64,0,3.2,-32,wl,0);wz(-2,0,-62,Z,wl);wz(2,0,-62,Z,wl);box(0,1.6,-62,24,3.2,.4,wl);box(0,1.6,.2,24,3.2,.4,wl);box(-12,1.6,-31,.4,3.2,62,wl);box(12,1.6,-31,.4,3.2,62,wl);[-2,-14,-26,-38,-50,-62].forEach(z=>{box(-7,1.6,z,10,3.2,.4,wl);box(7,1.6,z,10,3.2,.4,wl)});
+Z.forEach(z=>[-1,1].forEach(s=>{for(let a=0;a<3;a++)for(let c=0;c<3;c++){const x=s*(5+a*2.4),zz=z-3+c*3;box(x,.45,zz,1.1,.06,.7,dm,0);box(x,.22,zz,.9,.4,.5,dm,0);R()<.15&&skull(x,zz,.55)}box(s*11.8,1.7,z,.1,1.3,4.5,bb,0);R()<.6&&blood(s*8,z+R()*3-1.5,2)}));
+sp=[0,-1.5,0];quest({toys:[[-9,Z[0]],[9,Z[2]],[-9,Z[4]]],fuse:[-1,-59],door:[0,-61.6]});
+note(0,-30,'Cô giáo chỉ bước khi em bước. Đứng yên là em an toàn.');
+npc(9,Z[1],'Bé Lan',[[0,'Em chưa làm xong bài. Cô không cho em về.'],['me','Em có thấy đồ chơi nào không?'],[0,'Trên bàn giáo viên, ở ba lớp học. Cái máy nằm cuối hành lang.']]);
+mons(0,-45,1,2.6)}};
+
+// ===== TẦNG 6: SÂN CHƠI LÚC NỬA ĐÊM (không gian mở, xích đu đung đưa, gã hề dịch chuyển) =====
+LV[6]={n:'TẦNG 6',t:'SÂN CHƠI LÚC NỬA ĐÊM',intro:[['Cube','Tiếng cười của chúng vẫn còn vọng lại đây.'],['me','Xích đu đung đưa dù không có gió...'],['Cube','Gã hề không thích bị nhìn. Mỗi lần ngươi quay đi, hắn lại gần hơn.']],
+b(){env(0x0a0818,4,38,.5,0xaabbff,.7);const dl=new T.DirectionalLight(0x6677cc,.5);dl.position.set(5,20,5);sc.add(dl);plane(80,80,0,0,0,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#2a3a28';x.fillRect(0,0,w,w);dots(x,w,500,['#1a2a18','#3a4a30'],.5,2)},30,30)));
+[[0,-40,80,1],[0,40,80,1],[-40,0,1,80],[40,0,1,80]].forEach(([x,z,w,d])=>box(x,1.5,z,w,3,d,mt(0x222233)));for(let i=-36;i<=36;i+=12)lamp(i,-38),lamp(i,38);
+const swing=(x,z)=>{const m=mt(0x553322);box(x-1.4,1.2,z,.15,2.4,.15,m,0);box(x+1.4,1.2,z,.15,2.4,.15,m,0);box(x,2.4,z,3,.12,.12,m,0);[-.6,.6].forEach((o,i)=>{const p=new T.Group(),s=new T.Mesh(new T.BoxGeometry(.5,.06,.25),mt(0x222222)),c=new T.Mesh(new T.CylinderGeometry(.01,.01,1.8),mt(0x888888));s.position.y=-1.8;c.position.y=-.9;p.add(s,c);p.position.set(x+o,2.4,z);sc.add(p);U.push(()=>p.rotation.x=M.sin(tt*1.2+i*2+x)*.4)})};
+swing(-12,20);swing(12,10);swing(-15,-10);
+const mr=new T.Group(),dk=new T.Mesh(new T.CylinderGeometry(2,2,.25,20),mt(0xaa2233,0,0x330008));dk.position.y=.35;mr.add(dk);for(let a=0;a<4;a++){const p=new T.Mesh(new T.CylinderGeometry(.04,.04,1.2),mt(0xcccccc));p.position.set(M.cos(a*1.57)*1.5,.9,M.sin(a*1.57)*1.5);mr.add(p)}sc.add(mr);W.push([-2,2,-2,2]);U.push(dt=>mr.rotation.y+=dt*.6);
+const sl=box(18,1,-14,1.2,.15,5,mt(0x2255aa),0);sl.rotation.x=.5;box(18,.5,-17,1.2,1,.2,mt(0x884422));
+scat(12,-35,35,-35,35,(x,z)=>{const t=toy(1);t.position.set(x,.2,z);t.rotation.z=1.4;sc.add(t)});scat(10,-35,35,-35,35,(x,z)=>blood(x,z,1.3));scat(8,-35,35,-35,35,(x,z)=>skull(x,z,.1));for(let i=0;i<6;i++)grave(-30+i*3,-33);
+U.push(()=>R()<.003&&snd(300+R()*250,1.2,'triangle',.1,200));
+sp=[0,32,0];quest({toys:[[-12,22],[22,-14],[-24,-26]],fuse:[0,-30],door:[0,-39.4]});
+note(0,26,'Đừng chớp mắt. Hắn nhích lại mỗi lần ngươi quay đi.');
+npc(8,20,'Bé Bông',[[0,'Chơi xích đu với em không?'],['me','Đồ chơi của Cube... em có thấy không?'],[0,'Dưới xích đu, sau cái cầu trượt, và gần mấy bia mộ nhỏ.']]);
+mons(20,-30,2)}};
+
+// ===== TẦNG 7: BỆNH VIỆN SỐ 0 (hành lang vòng quanh phòng mổ, y tá đuổi không ngừng) =====
+LV[7]={n:'TẦNG 7',t:'BỆNH VIỆN SỐ 0',intro:[['Cube','Ta ra đời ở đây. Hay là ta chết ở đây? Ta không còn nhớ.'],['me','Mùi thuốc sát trùng trộn với mùi gì đó đã hỏng...'],['Cube','Y tá sẽ không bao giờ ngừng đi tìm ngươi.']],
+b(){env(0x060c0c,2,20,.4,0xaaffee,1);const tl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#bfd0cc';x.fillRect(0,0,w,w);x.strokeStyle='#8aa';x.strokeRect(0,0,w,w)},13,13)),wl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#9ab8b0';x.fillRect(0,0,w,w);x.fillStyle='#5a7a70';x.fillRect(0,0,w,18);dots(x,w,100,['#456'],.3,2)}));plane(26,26,0,0,0,tl);plane(26,26,0,3,0,wl,0);
+[[0,-13,26,.4],[0,13,26,.4],[-13,0,.4,26],[13,0,.4,26],[-6,0,.4,12],[6,0,.4,12],[0,-6,12,.4],[-3.6,6,4.8,.4],[3.6,6,4.8,.4]].forEach(([x,z,w,d])=>box(x,1.5,z,w,3,d,wl));
+const bed=(x,z)=>{box(x,.35,z,1,.25,2,mt(0xddddcc));box(x,.55,z,.9,.15,1.8,mt(0xaa9999),0);R()<.5&&blood(x,z,1.2)};for(let i=-10;i<=10;i+=4)if(M.abs(i)>2){bed(-12,i);bed(12,i);bed(i,-12)}
+box(0,.5,0,1.2,.1,2.4,mt(0xcccccc,0,0x222222));box(0,2.6,0,1.4,.2,1.4,new T.MeshBasicMaterial({color:0xffffee}),0);blood(0,0,4);skull(.9,1,.1);
+scat(8,-12,12,-12,12,(x,z)=>{box(x,1,z,.05,2,.05,mt(0x999999),0);box(x+.1,1.8,z,.15,.3,.1,mt(0x99ccff),0)});scat(10,-12,12,-12,12,(x,z)=>blood(x,z,1.3));scat(6,-12,12,-12,12,(x,z)=>skull(x,z,.1));
+sp=[0,10,0];quest({toys:[[-9,-9],[9,-9],[9,9]],fuse:[0,-4.2],door:[0,-12.7]});
+note(0,9,'Giường số 0 đã trống từ lâu. Đừng hỏi ai từng nằm đó.');
+npc(3,-3,'Bác sĩ cuối cùng',[[0,'Ta là người đã cho nó miếng ăn đầu tiên.'],['me','Ông đã làm gì?'],[0,'Cái máy ở trong phòng này. Đồ chơi nằm ở ba góc hành lang. Chạy đi, cô y tá không bao giờ mỏi.']]);
+mons(10,-10,3,1.7)}};
+// ===== PHẦN 4: tầng 8-11 =====
+// ===== TẦNG 8: THƯ VIỆN KHÔNG ĐÁY (sảnh kệ sách xen kẽ, sách bay lơ lửng) =====
+LV[8]={n:'TẦNG 8',t:'THƯ VIỆN KHÔNG ĐÁY',intro:[['Cube','Mỗi cuốn sách ở đây là một ký ức bị lãng quên.'],['me','Những kệ sách cao tới trần... và sách đang bay lơ lửng.'],['Cube','Thủ thư không thích tiếng ồn. Đừng để hắn thấy ngươi nhìn lại.']],
+b(){env(0x0a0604,2,18,.4,0xffcc88,1);const bk=mt(0xffffff,tx(128,(x,w)=>{for(let i=0;i<w;i+=8){x.fillStyle=`hsl(${R()*40+5},45%,${20+R()*25}%)`;x.fillRect(i,0,7,w)}},6,2)),fl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#3a2410';x.fillRect(0,0,w,w);dots(x,w,300,['#2a1808','#4a3018'],.4,3)},18,28)),wl=mt(0x2a1c10);
+plane(36,56,0,0,-28,fl);plane(36,56,0,5,-28,wl,0);box(0,2.5,.2,38,5,.4,wl);box(0,2.5,-56,38,5,.4,wl);box(-18,2.5,-28,.4,5,56,wl);box(18,2.5,-28,.4,5,56,wl);
+const sh=(x,a,b)=>box(x,2.5,(a+b)/2,1.4,5,a-b,bk),row=(x,gs)=>{let a=-1;gs.forEach(g=>{sh(x,a,g+1.6);a=g-1.6});sh(x,a,-55)};
+row(-12,[-14,-42]);row(-6,[-28]);row(0,[-14,-42]);row(6,[-28]);row(12,[-14,-42]);
+scat(26,-16,16,-54,-2,(x,z,i)=>{const b=box(x,1+R()*3,z,.4,.1,.3,mt([0x7a2a2a,0x2a4a6a,0x5a4a1a][i%3],0,0x110808),0);U.push(()=>{b.position.y+=M.sin(tt*1.5+i)*.002;b.rotation.y+=.01})});
+scat(14,-16,16,-54,-2,(x,z)=>blood(x,z,1.4));scat(8,-16,16,-54,-2,(x,z)=>skull(x,z,.1));scat(3,-16,16,-54,-2,tv);
+sp=[-9,-2,0];quest({toys:[[-15,-8],[3,-35],[15,-50]],fuse:[-15,-52],door:[15,-55.6]});
+note(-9,-4,'Phiếu mượn: HỘP ĐỒ CHƠI. Người mượn: (bị gạch đi, chỉ còn chữ "me"). Hạn trả: đã quá hai mươi năm.');
+npc(3,-20,'Thủ thư mù',[[0,'Ở đây sách không bao giờ được trả, chỉ được nhớ lại.'],['me','Ông có thấy một hộp đồ chơi không?'],[0,'Nó từng được mượn bởi một đứa trẻ. Đồ chơi nằm ở lối bên trái, giữa và bên phải. Cái máy ở cuối lối bên trái.']]);
+mons(15,-30,0,2.5)}};
+
+// ===== TẦNG 9: CÁNH ĐỒNG HOA MẮT (dreamcore: trời hồng, hoa nhìn theo bạn, cửa dẫn tới hư không) =====
+LV[9]={n:'TẦNG 9',t:'CÁNH ĐỒNG HOA MẮT',intro:[['Cube','Ngươi biết nơi này mà. Ngươi từng chạy ở đây.'],['me','Bầu trời màu hồng... và những bông hoa đang nhìn mình.'],['Cube','Đừng chạy. Hắn chỉ đuổi theo khi ngươi cử động.']],
+b(){env(0xffb8d8,6,55,.9,0xffe8f0,.3);sc.add(new T.HemisphereLight(0xffd0e8,0xb8a0e8,.5));
+plane(120,120,0,0,0,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#d8b8f0';x.fillRect(0,0,w,w);x.fillStyle='#f0c8e0';x.fillRect(0,0,32,32);x.fillRect(32,32,32,32)},40,40)));
+[[0,-46,92,1],[0,46,92,1],[-46,0,1,92],[46,0,1,92]].forEach(([x,z,w,d])=>box(x,1.5,z,w,3,d,inv));
+plane(30,20,-20,.02,-20,new T.MeshBasicMaterial({color:0xbfe8ff,transparent:true,opacity:.6}));W.push([-35,-5,-30,-10]);
+const eT=tx(64,(x,w)=>{x.fillStyle='#fff';x.beginPath();x.arc(32,32,30,0,7);x.fill();x.fillStyle='#d02060';x.beginPath();x.arc(32,32,15,0,7);x.fill();x.fillStyle='#000';x.beginPath();x.arc(32,32,7,0,7);x.fill()}),
+flw=(x,z)=>{const h=3+R()*3,g=new T.Group(),hd=new T.Group(),pm=mt([0xffee66,0xff88bb,0xffffff][(R()*3)|0],0,0x302020),s=new T.Mesh(new T.CylinderGeometry(.08,.1,h),mt(0x44bb66,0,0x0a2010));s.position.y=h/2;for(let i=0;i<8;i++){const p=new T.Mesh(new T.SphereGeometry(.5,6,4),pm);p.scale.set(1,.2,1);p.position.set(M.cos(i*.785)*.8,0,M.sin(i*.785)*.8);hd.add(p)}const e=new T.Mesh(new T.SphereGeometry(.5,10,8),new T.MeshBasicMaterial({map:eT}));e.rotation.y=-1.57;hd.add(e);hd.position.y=h;g.add(s,hd);g.position.set(x,0,z);sc.add(g);U.push(()=>hd.lookAt(P.x,P.y,P.z))},
+fr=(x,z)=>{const m=mt(0xffffff,0,0xffffff);box(x-.7,1.1,z,.12,2.2,.12,m,0);box(x+.7,1.1,z,.12,2.2,.12,m,0);box(x,2.2,z,1.5,.12,.12,m,0);const s=new T.Mesh(new T.PlaneGeometry(1.3,2.1),new T.MeshBasicMaterial({map:SN}));s.position.set(x,1.1,z);s.rotation.y=R()*.5;sc.add(s)};
+scat(45,-42,42,-42,42,flw);scat(8,-40,40,-40,40,fr);U.push(()=>SN.offset.set(R(),R()));
+scat(10,-40,40,-40,40,(x,z)=>{const g=new T.Group(),b=new T.Mesh(new T.SphereGeometry(.3,10,8),new T.MeshBasicMaterial({color:0xcc1122})),s=new T.Mesh(new T.CylinderGeometry(.005,.005,2),new T.MeshBasicMaterial({color:0xffffff}));b.scale.y=1.2;b.position.y=3;s.position.y=2;g.add(b,s);g.position.set(x,0,z);sc.add(g);U.push(()=>g.position.y=M.sin(tt+x)*.3)});
+scat(12,-40,40,-40,40,(x,z)=>skull(x,z,.1));scat(12,-40,40,-40,40,(x,z)=>blood(x,z,1.3));for(let i=0;i<5;i++)grave(-38+i*2.5,-34);
+sp=[0,38,0];quest({toys:[[-38,-4],[20,-12],[-10,-36]],fuse:[30,-30],door:[0,-44.2]});
+note(0,34,'Bức vẽ bằng sáp màu: một đứa trẻ, một chiếc hộp thật to, và hai chữ "BẠN MÃI".');
+npc(8,24,'Người làm vườn',[[0,'Hoa ở đây nở ra từ những giấc mơ bị bỏ quên.'],['me','Tôi chưa từng đến nơi này.'],[0,'Cậu từng chơi ở đây mà. Cậu chỉ... quên thôi. Đồ chơi nằm quanh hồ gương, máy ở phía đông, cửa ở tận cùng.']]);
+mons(0,-20,1,3.4)}};
+
+// ===== TẦNG 10: SIÊU THỊ 24H (analog horror ánh sáng chói, người mẫu bất động) =====
+LV[10]={n:'TẦNG 10',t:'SIÊU THỊ 24H',intro:[['Cube','Ánh đèn ở đây không bao giờ tắt. Thứ để quên cũng vậy.'],['me','Sáng quá... sáng đến mức thấy ớn lạnh.'],['Cube','Đừng nhìn những người mẫu quá lâu. Một trong số chúng đang đi.']],
+b(){env(0xdfe8e0,6,40,.9,0xffffff,.4);const tl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#e8f0e8';x.fillRect(0,0,w,w);x.fillStyle='#b8d8c0';x.fillRect(0,0,32,32);x.fillRect(32,32,32,32)},20,22)),wl=mt(0xdde8dd),pd=mt(0xffffff,tx(128,(x,w)=>{for(let i=0;i<8;i++)for(let j=0;j<4;j++){x.fillStyle=`hsl(${R()*360},60%,50%)`;x.fillRect(i*16+1,j*32+2,14,26)}},6,1));
+plane(40,44,0,0,-22,tl);plane(40,44,0,3.2,-22,wl,0);box(0,1.6,.2,40,3.2,.4,wl);box(0,1.6,-44,40,3.2,.4,wl);box(-20,1.6,-22,.4,3.2,44,wl);box(20,1.6,-22,.4,3.2,44,wl);
+[[-10,-10,15],[10,-10,15],[0,-18,28],[-10,-26,15],[10,-26,15],[0,-34,28]].forEach(([x,z,w])=>box(x,1,z,w,2,1,pd));
+box(-12,.5,-4,3,1,1.2,mt(0x888888));box(12,.5,-4,3,1,1.2,mt(0x888888));box(5,2.4,-43.7,3,1.2,.1,mt(0xffffff,tx(256,(x,w)=>{x.fillStyle='#c00';x.fillRect(0,0,w,w);x.fillStyle='#fff';x.font='bold 44px sans-serif';x.textAlign='center';x.fillText('TUỔI THƠ',128,100);x.fillText('GIẢM 100%',128,160)})),0);
+const mn=(x,z)=>{const g=new T.Group(),m=mt(0xeeeeee,0,0x333333),b=new T.Mesh(new T.CylinderGeometry(.22,.3,1.1),m),h=new T.Mesh(new T.SphereGeometry(.15,10,8),m);b.position.y=.9;h.position.y=1.65;g.add(b,h);g.position.set(x,0,z);g.rotation.y=R()*6;sc.add(g)};
+scat(14,-18,18,-42,-2,mn);scat(6,-18,18,-42,-2,tv);scat(14,-18,18,-42,-2,(x,z)=>blood(x,z,1.5));scat(6,-18,18,-42,-2,(x,z)=>skull(x,z,.1));
+sp=[0,-2,0];quest({toys:[[-18,-14],[18,-30],[0,-38]],fuse:[-16,-40],door:[0,-43.6]});
+note(0,-6,'Thông báo: Quý khách đã để quên "tuổi thơ" tại quầy số 0. Vui lòng nhận lại trước khi đóng cửa.');
+npc(-12,-6,'Thu ngân',[[0,'Quầy số không... chưa ai thanh toán cho nó.'],['me','Thanh toán cái gì?'],[0,'Những món đồ chơi. Cái giá của chúng là thứ cậu đã bỏ lại. Đồ chơi nằm ở các lối đi, cái máy ở góc sau bên trái.']]);
+mons(16,-22,0,2.8)}};
+
+// ===== TẦNG 11: PHÒNG CHIẾU SỐ 0 (khán giả quay mặt ra khi bạn lại gần) =====
+LV[11]={n:'TẦNG 11',t:'PHÒNG CHIẾU SỐ 0',intro:[['Cube','Phim này chiếu đã hai mươi năm. Chỉ có một khán giả.'],['me','Tất cả ghế đều có người ngồi... và ai cũng quay lưng lại.'],['Cube','Đừng để họ quay mặt ra.']],
+b(){env(0x04040a,2,22,.25,0xaab8ff,.7);const st=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#5a0a14';x.fillRect(0,0,w,w);dots(x,w,300,['#3a0610','#7a1a24'],.5,2)},4,1)),fl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#1a1018';x.fillRect(0,0,w,w);dots(x,w,300,['#2a1a28','#0a0408'],.5,3)},15,22)),wl=mt(0x1a0c14);
+plane(30,44,0,0,-22,fl);plane(30,44,0,5,-22,wl,0);box(0,2.5,.2,30,5,.4,wl);box(0,2.5,-44,30,5,.4,wl);box(-15,2.5,-22,.4,5,44,wl);box(15,2.5,-22,.4,5,44,wl);
+const scr=new T.Mesh(new T.PlaneGeometry(18,8),new T.MeshBasicMaterial({map:SN})),tz=new T.Mesh(new T.PlaneGeometry(9,5),new T.MeshBasicMaterial({map:tx(256,(x,w)=>{x.fillStyle='#f22';x.font='bold 46px sans-serif';x.textAlign='center';x.fillText('ĐỪNG NHÌN',128,140)}),transparent:true})),bm=new T.Mesh(new T.CylinderGeometry(.2,6,40,12,1,true),new T.MeshBasicMaterial({color:0xcfd8ff,transparent:true,opacity:.06,side:T.DoubleSide,depthWrite:false}));
+scr.position.set(0,4,-43.6);tz.position.set(0,4,-43.5);bm.rotation.x=M.PI/2;bm.position.set(0,3.2,-22);sc.add(scr,tz,bm);U.push(()=>{SN.offset.set(R(),R());tz.visible=R()<.08});
+const Z=[-8,-12,-16,-20,-24,-28];Z.forEach(z=>[[-12,-3],[3,12]].forEach(([a,b])=>{box((a+b)/2,.55,z,b-a,1.1,1,st);box((a+b)/2,1.2,z+.45,b-a,.9,.2,st,0)}));
+const au=(x,z)=>{const g=new T.Group(),m=mt(0x0a0a0a),b=new T.Mesh(new T.BoxGeometry(.5,.9,.3),m),h=new T.Mesh(new T.SphereGeometry(.17,8,8),m),f=new T.Mesh(new T.PlaneGeometry(.36,.44),new T.MeshBasicMaterial({map:FT,transparent:true}));b.position.y=1.15;h.position.y=1.8;f.position.set(0,1.78,.17);g.add(b,h,f);g.position.set(x,0,z);sc.add(g);U.push(()=>{const d=M.hypot(P.x-x,P.z-z);f.visible=d<9;g.lookAt(d<9?P.x:x,0,d<9?P.z:z-5)})};
+Z.forEach(z=>{for(let i=0;i<4;i++)au((R()<.5?-1:1)*(3.8+R()*7.4),z+.1)});[-12,-20,-28].forEach(z=>skull(-7.5,z,1.3));scat(16,-14,14,-42,-2,(x,z)=>blood(x,z,1.5));
+sp=[0,-1.5,0];quest({toys:[[-13.5,-14],[13.5,-26],[0,-34]],fuse:[12,-40],door:[-12,-43.6]});
+note(0,-5,'Phim hôm nay: "TUỔI THƠ CỦA ME". Suất chiếu duy nhất. Không hoàn tiền.');
+npc(-13.5,-20,'Người soát vé',[[0,'Phim chiếu hai mươi năm rồi. Ta chỉ xé vé, không xem.'],['me','Phim kể về ai vậy?'],[0,'Về một đứa trẻ đã bỏ lại hộp đồ chơi của mình. Cái máy ở phía trước, bên phải. Đồ chơi nằm trong các lối đi.']]);
+mons(0,-38,3,2.1)}};
+// ===== PHẦN 5: công cụ + tầng 12-14 =====
+const sph=(r,m,x=0,y=0,z=0,a=1,b=1,c=1)=>{const o=new T.Mesh(new T.SphereGeometry(r,10,8),m);o.position.set(x,y,z);o.scale.set(a,b,c);return o},
+cyl=(a,b,h,m,x=0,y=0,z=0)=>{const o=new T.Mesh(new T.CylinderGeometry(a,b,h,8),m);o.position.set(x,y,z);return o},
+vp=(w,h,x,y,z,m,r=0)=>{const o=new T.Mesh(new T.PlaneGeometry(w,h),m);o.position.set(x,y,z);o.rotation.y=r;sc.add(o);return o},
+ey=(x,y,z,r)=>{const g=new T.Group();g.add(sph(r,new T.MeshBasicMaterial({color:0}),x,y,z),sph(r*.4,new T.MeshBasicMaterial({color:0xff0000}),x,y,z+r*.8));return g},
+GR=tx(128,(x,w)=>{x.fillStyle='#000';x.fillRect(0,0,w,w);x.fillStyle='#fff';[[36,34],[92,34]].forEach(([a,b])=>{x.beginPath();x.ellipse(a,b,7,10,0,0,7);x.fill()});x.beginPath();x.moveTo(6,64);x.quadraticCurveTo(64,150,122,64);x.quadraticCurveTo(64,100,6,64);x.fill();x.fillStyle='#000';for(let i=1;i<9;i++)x.fillRect(6+i*13,78,2,30)}),
+mask=(w,h,y,z)=>{const o=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:GR}));o.position.set(0,y,z);return o},
+// gắn mô hình quái riêng lên logic mons (k: 0 nhìn thì đứng | 1 chỉ nhích khi bạn nhích | 2 dịch chuyển | 3 đuổi)
+skin=(mk,k,x,z,s,sz=1)=>{mons(x,z,k,s);const m=mon,g=mk();g.scale.setScalar(sz);m.children.forEach(c=>c.visible=false);m.add(g);U.push(()=>g.lookAt(P.x,0,P.z))},
+teddy=()=>{const g=new T.Group(),f=mt(0xb08860,0,0x1a1008),r=new T.MeshBasicMaterial({color:0x7a0000});g.add(sph(.45,f,0,.75,0,1,1.2,.8),sph(.32,f,0,1.6),sph(.12,f,-.26,1.88),sph(.12,f,.26,1.88),sph(.14,f,0,1.5,.3,1,.8,.8),sph(.17,r,0,.75,.36,.9,1.4,.3),ey(-.12,1.68,.28,.06),ey(.12,1.68,.28,.06),sph(.16,f,-.58,.9),sph(.16,f,.58,.9),sph(.18,f,-.25,.2,.1),sph(.18,f,.25,.2,.1));return g},
+tall=()=>{const g=new T.Group(),k=mt(0x050505);g.add(cyl(.14,.2,2.4,k,0,1.5),sph(.16,mt(0xdad6cc,0,0x1a1a18),0,2.9,0,1,1.3,1),cyl(.04,.04,1.7,k,-.3,1.7,.05),cyl(.04,.04,1.7,k,.3,1.7,.05),cyl(.06,.06,1.4,k,-.1,.7),cyl(.06,.06,1.4,k,.1,.7),mask(.3,.18,2.9,.17));return g},
+crow=()=>{const g=new T.Group(),s=mt(0xb09a50,0,0x1a1608),d=mt(0x4a3018),a=cyl(.05,.05,2,d,0,1.9);a.rotation.z=M.PI/2;g.add(cyl(.05,.05,2.8,d,0,1.4),a,sph(.3,s,0,1.6,0,1,1.5,.7),sph(.24,mt(0xc8b078,0,0x201a10),0,2.5),cyl(.01,.4,.3,mt(0x1a1208),0,2.82),cyl(.45,.45,.04,mt(0x1a1208),0,2.68),mask(.26,.2,2.5,.245),cyl(.02,.02,.5,s,-.9,1.7),cyl(.02,.02,.5,s,.9,1.7));return g};
+
+// ===== TẦNG 12: PHÒNG NGỦ KHỔNG LỒ (đồ vật to gấp 3, gấu bông chỉ nhích khi bạn không nhìn, hộp nhạc đẩy nó về chỗ cũ) =====
+LV[12]={n:'TẦNG 12',t:'PHÒNG NGỦ KHỔNG LỒ',intro:[['Cube','Đây là phòng ngủ của ngươi. Hay là ngươi đã bị thu nhỏ lại?'],['me','Cái giường to gấp ba... mọi thứ đều quá khổ. Mình lại bé như hồi đó.'],['Cube','Con gấu bông chỉ nhích khi ngươi không nhìn. Hộp nhạc sẽ đưa nó về chỗ cũ.']],
+b(){env(0x1a1020,3,38,.6,0xffb0c8,.9);const H=9,fl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#6a4a2a';x.fillRect(0,0,w,w);x.fillStyle='#4a3018';for(let i=0;i<w;i+=16)x.fillRect(0,i,w,2);dots(x,w,200,['#3a2410'],.3,2)},10,12)),wl=mt(0xffffff,tx(128,(x,w)=>{x.fillStyle='#d8b0c8';x.fillRect(0,0,w,w);x.fillStyle='#b88aa8';for(let i=0;i<w;i+=32)x.fillRect(i,0,6,w);x.fillStyle='#ffe8a0';for(let i=0;i<8;i++)x.fillRect(R()*w,R()*w,5,5)},6,1)),bl=[...'MEOCAB'].map(c=>mt(0xffffff,tx(64,(x,w)=>{x.fillStyle=['#c33','#36c','#3a3','#cb3'][R()*4|0];x.fillRect(0,0,w,w);x.fillStyle='#fff';x.font='bold 44px sans-serif';x.textAlign='center';x.fillText(c,32,48)})));
+plane(40,44,0,0,-22,fl);plane(40,44,0,H,-22,wl,0);[[0,.2,40,.4],[0,-44,40,.4],[-20,-22,.4,44],[20,-22,.4,44]].forEach(([x,z,w,d])=>box(x,H/2,z,w,H,d,wl));
+box(-14,1,-12,9,2,16,mt(0x5a3a22));box(-14,2.3,-10,8.6,.6,12,mt(0x4a6aa8),0);box(-14,2.7,-18,6,.8,2.5,mt(0xeeeeee,0,0x222222),0);plane(3,3,-14,2.62,-8,new T.MeshBasicMaterial({color:0x6a0000})).rotation.z=R()*6;
+[[-3,-8],[8,-14],[2,-24],[12,-30],[-6,-34],[10,-4]].forEach(([x,z],i)=>box(x,1.5,z,3,3,3,bl[i]));box(8,4.5,-14,3,3,3,bl[2],0);box(12,4.5,-30,3,3,3,bl[5],0);
+box(16.5,1.5,-6,5,3,5,mt(0xffffff,tx(128,(x,w)=>{x.fillStyle='#b89868';x.fillRect(0,0,w,w);x.fillStyle='#222';x.font='bold 24px sans-serif';x.textAlign='center';x.fillText('ĐỒ CHƠI',64,56);x.fillText('BẠN MÃI',64,96)})));
+[0xcc3333,0x3366cc,0xddcc33].forEach((c,i)=>{const o=cyl(.25,.25,5,mt(c),-2+i*4,.25,-16+i*1.4);o.rotation.set(0,R()*3,M.PI/2);sc.add(o)});
+scat(14,-18,18,-42,-2,(x,z)=>blood(x,z,1.5));scat(8,-18,18,-42,-2,(x,z)=>skull(x,z,.1));
+[[-4,-4],[2,-30]].forEach(([x,z])=>{const m=box(x,.5,z,1,1,1,mt(0xaa3355,0,0x330010),0),k=new T.Mesh(new T.BoxGeometry(.6,.08,.12),mt(0xffd060,0,0x886600));k.position.y=.6;m.add(k);U.push(()=>k.rotation.y=tt*2);reg(m,'Giữ E để lên dây hộp nhạc',()=>{snd(660,2,'triangle',.3,330);mon.position.set(...mon.h);talk([['me','Tiếng nhạc ngân lên... con gấu khựng lại rồi biến mất.']])},2.2)});
+sp=[0,-2,0];quest({toys:[[-7,-10],[14,-22],[-12,-40]],fuse:[14,-40],door:[0,-43.6]});
+note(-8,-3,'Nhật ký nét bút chì run run: "Mẹ nói mai mình phải vào viện. Mình hứa sẽ quay về chơi với Cube. — me"');
+npc(-16,-26,'Thỏ bông',[[0,'Cậu lớn rồi... còn bọn tớ vẫn bé như ngày cậu bỏ đi.'],['me','Bỏ đi? Tớ đã đi đâu?'],[0,'Ngày họ đưa cậu vào viện, nắp hộp đồ chơi bị đóng lại. Từ đó Cube chỉ biết đói.'],[0,'Đồ chơi nằm sau mấy khối gỗ. Gặp gấu bông thì lên dây hộp nhạc.']]);
+skin(teddy,0,10,-38,2.3,2.2)}};
+
+// ===== TẦNG 13: GA TÀU ĐIỆN NGẦM (đoàn tàu đậu giữa ga, mất điện định kỳ, đèn sáng lại thì người cao đã đứng trước mặt) =====
+LV[13]={n:'TẦNG 13',t:'GA TÀU ĐIỆN NGẦM — 03:17',intro:[['Cube','Chuyến tàu cuối đã rời đi hai mươi năm trước. Chỉ có ngươi bị bỏ lại.'],['me','Đèn nhấp nháy... và một đoàn tàu đang đậu giữa ga, cửa sổ sáng đèn.'],['Cube','Mỗi lần đèn tắt rồi sáng lại, người cao đứng gần hơn. Đừng đứng yên trong bóng tối.']],
+b(){env(0x040a08,2,28,.3,0xc8ffd8,1);const L=100,pl=cam.children.find(c=>c.isPointLight),al=sc.children.find(c=>c.isAmbientLight),tl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#8fa89c';x.fillRect(0,0,w,w);x.strokeStyle='#4a6a5c';x.strokeRect(0,0,w,w);dots(x,w,100,['#3a5448'],.3,2)},L/4,1.2)),fl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#4a5450';x.fillRect(0,0,w,w);dots(x,w,500,['#2a3430','#6a746e'],.4,2)},6,25)),tr=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#55606a';x.fillRect(0,0,w,w);x.fillStyle='#8a2a2a';x.fillRect(0,40,w,6)})),wt=[0,1,2].map(i=>new T.MeshBasicMaterial({map:tx(64,(x,w)=>{x.fillStyle='#1a1a1a';x.fillRect(0,0,w,w);x.fillStyle='#ffe9a8';x.fillRect(5,5,54,54);if(i){x.fillStyle='#000';x.beginPath();x.arc(32,30,7+i*2,0,7);x.fill();x.fillRect(22,38,20,22);x.fillStyle='#f00';x.fillRect(28,28,3,3);x.fillRect(34,28,3,3)}},6,1)}));
+plane(26,L,0,0,-L/2,fl);plane(26,L,0,4.5,-L/2,mt(0x1a2420),0);[[-13,-L/2,.4,L],[13,-L/2,.4,L],[0,.2,26,.4],[0,-L,26,.4]].forEach(([x,z,w,d])=>box(x,2.25,z,w,4.5,d,tl));
+for(let i=0;i<4;i++){const z=-13-i*18;box(0,1.7,z,6,3.4,14,tr);[1,-1].forEach(s=>vp(13,1.7,s*3.02,2.2,z,wt[(i+(s>0))%3],s*M.PI/2))}
+const tb=[];for(let z=-6;z>-L;z-=9)[-8,8].forEach(x=>{const t=new T.Mesh(new T.BoxGeometry(2.4,.06,.3),new T.MeshBasicMaterial({color:0xe8fff0}));t.position.set(x,4.4,z);sc.add(t);tb.push(t)});
+vp(2.8,1.8,0,3.5,-L+.3,new T.MeshBasicMaterial({map:tx(256,(x,w)=>{x.fillStyle='#000';x.fillRect(0,0,w,w);x.fillStyle='#f22';x.font='bold 70px monospace';x.textAlign='center';x.fillText('03:17',128,110);x.font='24px sans-serif';x.fillText('TÀU KẾ TIẾP:',128,170);x.fillText('KHÔNG BAO GIỜ',128,205)})}));
+for(let z=-10;z>-96;z-=14)[-1,1].forEach(s=>{box(s*12.3,.3,z,.7,.6,2.6,mt(0x4a3622),0);R()<.5&&skull(s*12,z+1.6,.65)});
+scat(6,-12,12,-98,-4,tv);scat(18,-12,12,-98,-4,(x,z)=>blood(x,z,1.4));scat(8,-12,12,-98,-4,(x,z)=>skull(x,z,.1));
+let off=0;U.push(()=>{const b=tt%22>19;tb.forEach(t=>t.visible=!b&&R()>.04);if(b){pl.intensity=0;al.intensity=.04;off||snd(110,2.5,'sawtooth',.4,60)}else{al.intensity=.3;if(off&&!busy){const qx=P.x-M.sin(yaw)*6,qz=P.z-M.cos(yaw)*6;!hit(qx,qz)&&M.abs(qx)<12&&qz<-1&&mon.position.set(qx,0,qz)}}off=b});
+sp=[-8,-2,0];quest({toys:[[-9,-32],[9,-62],[10,-86]],fuse:[-9,-94],door:[0,-99.6]});
+note(-8,-12,'Bảng thông báo: "Hành lý vô chủ: 01 hộp gỗ lớn, để lại từ chuyến 03:17. Không ai nhận."');
+npc(-11,-48,'Cô lao công',[[0,'Đèn tắt là hắn tới. Mỗi lần sáng lại, hắn đứng gần hơn một chút.'],['me','Hắn là ai?'],[0,'Người đã bỏ cái hộp lại sân ga này. Hắn ghét bất cứ ai còn nhớ tới nó.'],[0,'Đồ chơi nằm trên ghế chờ. Máy hợp nhất ở phòng điều khiển cuối ga, bên trái.']]);
+skin(tall,0,8,-78,2.2)}};
+
+// ===== TẦNG 14: RỪNG SƯƠNG MÙ (cây dựng bằng instancing, lửa trại, người rơm chỉ nhích khi bạn nhích) =====
+LV[14]={n:'TẦNG 14',t:'RỪNG SƯƠNG MÙ',intro:[['Cube','Cây ở đây mọc lên từ những lời hứa bị bỏ quên.'],['me','Sương dày đặc... chỉ còn ánh lửa trại ở đằng xa.'],['Cube','Người rơm chỉ nhích khi ngươi nhích. Hãy đứng yên khi hắn tới gần.']],
+b(){env(0x0a120e,1,20,.4,0x9fc0b0,.9);const bk=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#2a1c12';x.fillRect(0,0,w,w);x.fillStyle='#120a06';for(let i=0;i<w;i+=7)x.fillRect(i,0,2,w)},1,2)),st=mt(0x555a55,0,0x080808),pts=[[0,38],[-30,10],[25,-5],[5,-30],[-22,-30],[0,0],[0,-40],[8,6],[-8,32]];
+plane(100,100,0,0,0,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#1a2418';x.fillRect(0,0,w,w);dots(x,w,500,['#0a140a','#2a3a22','#3a2a1a'],.5,2)},30,30)));[[0,-44,100,1],[0,44,100,1],[-44,0,1,100],[44,0,1,100]].forEach(([x,z,w,d])=>box(x,1.5,z,w,3,d,inv));
+const N=60,ti=new T.InstancedMesh(new T.CylinderGeometry(.15,.4,9,6),bk,N),bi=new T.InstancedMesh(new T.CylinderGeometry(.03,.1,3.5,5).translate(0,1.75,0),bk,N*3),o=new T.Object3D();ti.frustumCulled=bi.frustumCulled=false;
+for(let i=0;i<N;i++){let x,z,t=0;do{x=(R()-.5)*86;z=(R()-.5)*86}while(t++<40&&pts.some(p=>M.hypot(p[0]-x,p[1]-z)<5));const h=.8+R()*.5;o.position.set(x,4.5*h,z);o.rotation.set(0,0,0);o.scale.set(1,h,1);o.updateMatrix();ti.setMatrixAt(i,o.matrix);W.push([x-.5,x+.5,z-.5,z+.5]);for(let j=0;j<3;j++){o.position.set(x,(3+j*1.8)*h,z);o.rotation.set(0,R()*6.3,.6+R()*.5);o.scale.set(1,1,1);o.updateMatrix();bi.setMatrixAt(i*3+j,o.matrix)}}sc.add(ti,bi);
+const fr=new T.PointLight(0xff7733,1.6,16),fc=new T.Mesh(new T.ConeGeometry(.35,1.1,7),new T.MeshBasicMaterial({color:0xff9a33}));fr.position.set(0,1.2,0);fc.position.y=.6;sc.add(fr,fc);U.push(()=>{fr.intensity=1.3+R()*.6;fc.scale.set(1+R()*.2,1+R()*.4,1+R()*.2)});W.push([-.8,.8,-.8,.8]);
+for(let i=0;i<3;i++){const lg=cyl(.1,.1,1.4,mt(0x3a2410),M.cos(i*2.1)*.45,.12,M.sin(i*2.1)*.45);lg.rotation.set(0,i*2.1,M.PI/2);sc.add(lg)}
+scat(14,-40,40,-40,40,(x,z)=>{if(pts.some(p=>M.hypot(p[0]-x,p[1]-z)<4))return;const g=crow();g.position.set(x,0,z);g.rotation.y=M.atan2(-x,-z);sc.add(g);W.push([x-.4,x+.4,z-.4,z+.4])});
+scat(12,-40,40,-40,40,(x,z)=>skull(x,z,.1));scat(14,-40,40,-40,40,(x,z)=>blood(x,z,1.4));for(let i=0;i<5;i++)grave(-6+i*3,-9);
+box(-1.3,1.6,-40.2,.6,3.2,.6,st);box(1.3,1.6,-40.2,.6,3.2,.6,st);box(0,3.3,-40.2,3.2,.5,.6,st,0);
+sp=[0,38,0];quest({toys:[[-30,10],[25,-5],[5,-30]],fuse:[-22,-30],door:[0,-40]});
+note(0,34,'Bức thư nhàu nát: "Chờ con khỏe lại, bố sẽ đưa con đi cắm trại, mang cả Cube theo nhé." Ngày tháng đã bị cháy mất.');
+npc(8,6,'Người giữ lửa',[[0,'Ngồi xuống sưởi đi. Lửa này đã cháy từ cái đêm lời hứa bị bỏ lại.'],['me','Lời hứa nào?'],[0,'Cắm trại mùa hè. Cậu bé sốt cao, người ta đưa đi, và cái hộp ở lại bên đống tro.'],[0,'Đồ chơi rải rác trong rừng, máy hợp nhất ở rìa tây nam. Cứ đứng yên khi người rơm tới gần.']]);
+skin(crow,1,0,-26,2.1,1.1)}};
+// ===== PHẦN 6: công cụ + tầng 15-20 =====
+const hse=(x,z,r,c)=>{box(x,2.5,z,8,5,10,mt(c));const o=new T.Mesh(new T.ConeGeometry(6.4,3,4),mt(0x3a1a1a));o.position.set(x,6.5,z);o.rotation.y=M.PI/4;sc.add(o);[-2.2,2.2].forEach(a=>vp(1.6,1.6,x-r*4.02,2.6,z+a,R()<.5?new T.MeshBasicMaterial({map:SN}):new T.MeshBasicMaterial({color:0xffcc66}),-r*M.PI/2))},
+bell=(x,z)=>reg(box(x,1.3,z,.15,.22,.15,mt(0xffdd88,0,0x886600),0),'Giữ E để bấm chuông cửa',()=>{snd(880,1.5,'sine',.4,660);mon&&mon.position.set(...mon.h);talk([['me','Tiếng chuông vang khắp phố... hắn quay về nhà số bảy rồi.']])},2.6),
+pm=new T.MeshBasicMaterial({map:tx(128,(x,w)=>{const g=x.createLinearGradient(0,0,w,w);g.addColorStop(0,'#dff');g.addColorStop(.5,'#58688a');g.addColorStop(1,'#cfe');x.fillStyle=g;x.fillRect(0,0,w,w);x.globalAlpha=.55;x.fillStyle='#000';x.beginPath();x.ellipse(64,44,13,17,0,0,7);x.fill();x.fillRect(48,60,32,68)})}),
+portal=(x,z,f,qx,qz,yw)=>{const g=new T.Group(),p=new T.Mesh(new T.PlaneGeometry(3,4.4),pm);p.position.z=.07;g.add(new T.Mesh(new T.BoxGeometry(3.4,4.8,.1),mt(0xc9a227,0,0x403000)),p);g.position.set(x,2.4,z);g.rotation.y=f?0:M.PI;sc.add(g);reg(g,'Giữ E để bước qua gương',()=>{snd(300,.8,'sine',.3,1200);fx('#fff',1,0);sleep(90).then(()=>fx('#fff',0,800));P.x=qx;P.z=qz;yaw=yw},3.2)},
+bars=rx=>{const m=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#555';for(let i=2;i<w;i+=11)x.fillRect(i,0,4,w);x.fillRect(0,6,w,5);x.fillRect(0,50,w,5)},rx,1));m.alphaTest=.5;m.side=T.DoubleSide;return m},
+gate=(x,z,w,rx)=>{const g=box(x,2,z,w,4,1,bars(rx)),c=W[W.length-1];return()=>{sc.remove(g);W.splice(W.indexOf(c),1)}},
+clown=()=>{const g=new T.Group(),w=mt(0xeeeeee,0,0x222222),r=mt(0xcc1111,0,0x300000);g.add(cyl(.3,.6,1.5,mt(0x2244cc,0,0x080820),0,.85),sph(.3,w,0,1.85),sph(.09,r,0,1.85,.33),sph(.2,r,-.35,1.95),sph(.2,r,.35,1.95),cyl(.01,.25,.5,mt(0xffdd33),0,2.35),cyl(.03,.03,1.4,w,-.5,1.1),cyl(.03,.03,1.4,w,.5,1.1),mask(.34,.22,1.8,.31));return g},
+skel=()=>{const g=new T.Group(),b=mt(0xe2dcc8,0,0x1c1a14);g.add(sph(.2,b,0,2,0,1,1.15,1),ey(-.08,2.04,.17,.06),ey(.08,2.04,.17,.06),cyl(.03,.03,1.1,b,0,1.15),cyl(.03,.03,.9,b,-.38,1.45),cyl(.03,.03,.9,b,.38,1.45),cyl(.04,.04,.9,b,-.1,.45),cyl(.04,.04,.9,b,.1,.45));for(let i=0;i<4;i++){const r=cyl(.02,.02,.55,b,0,1.65-i*.17);r.rotation.z=M.PI/2;g.add(r)}return g},
+host=()=>{const g=new T.Group(),k=mt(0x080808),h=new T.Mesh(new T.BoxGeometry(.6,.5,.5),mt(0x222222)),s=new T.Mesh(new T.PlaneGeometry(.48,.38),new T.MeshBasicMaterial({map:GR}));h.position.y=1.85;s.position.set(0,1.85,.26);g.add(cyl(.2,.28,1.4,k,0,.8),cyl(.05,.05,1.2,k,-.35,1.2),cyl(.05,.05,1.2,k,.35,1.2),cyl(.07,.07,.9,k,-.12,.3),cyl(.07,.07,.9,k,.12,.3),h,s);return g};
+
+// ===== TẦNG 15: PHỐ SỐ 7 (ngoại ô analog horror, chuông cửa gọi quái về nhà) =====
+LV[15]={n:'TẦNG 15',t:'PHỐ SỐ 7 — 03:17',intro:[['Cube','Ngươi nhận ra con phố này không? Căn nhà số bảy là của ngươi.'],['me','Nhà nào cũng tắt đèn... chỉ có những chiếc tivi sau cửa sổ là vẫn sáng.'],['Cube','Hắn bước theo ngươi mỗi khi ngươi không nhìn. Hãy bấm chuông cửa — chuông sẽ gọi hắn về nhà.']],
+b(){env(0x080b18,3,34,.6,0x99aaee,.8);const L=110,zc=-L/2,cl=[0x7a6a5a,0x5a6a7a,0x6a5a6a,0x5a7a6a,0x8a7a5a];
+plane(56,L,0,-.02,zc,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#16241a';x.fillRect(0,0,w,w);dots(x,w,400,['#0c160e','#26382a'],.5,2)},20,50)));plane(10,L,0,0,zc,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#222';x.fillRect(0,0,w,w);x.fillStyle='#cc9';x.fillRect(30,8,4,28)},1,L/8)));
+[[-28,zc,1,L],[28,zc,1,L],[0,.5,56,1],[0,-L,56,1]].forEach(([x,z,w,d])=>box(x,2,z,w,4,d,inv));
+for(let i=0;i<5;i++)[1,-1].forEach(r=>hse(r*12,-14-i*20,r,cl[(i+(r>0))%5]));
+for(let z=-8;z>-L;z-=22)lamp(-6.5,z),lamp(6.5,z-11);car(-3.5,-30,0,0x6a1a1a);car(3.5,-72,0,0x1a3a6a);bell(-7.8,-14);bell(7.8,-54);bell(-7.8,-94);U.push(()=>SN.offset.set(R(),R()));
+scat(8,-4,4,-104,-4,tv);scat(18,-26,26,-106,-4,(x,z)=>blood(x,z,1.4));scat(10,-26,26,-106,-4,(x,z)=>skull(x,z,.1));
+sp=[0,-2,0];quest({toys:[[20,-24],[-20,-64],[20,-84]],fuse:[-20,-104],door:[0,-109.4]});
+note(-4,-5,'Phong bì chưa bóc: "Gửi me. Nếu con còn nghe thấy, mẹ vẫn ngồi cạnh giường con." Dấu bưu điện ghi 03:17.');
+npc(5.5,-32,'Người đưa thư',[[0,'Thư của cậu, mẹ viết mỗi ngày. Tôi chưa giao được lá nào.'],['me','Vì sao không giao được?'],[0,'Vì địa chỉ ghi là "giường số không, phòng bệnh". Nhà số bảy chẳng có ai ở cả.'],[0,'Đồ chơi nằm ở sân sau các căn nhà. Máy hợp nhất ở cuối phố. Nếu hắn đứng sau lưng, cứ bấm chuông.']]);
+mons(0,-70,2)}};
+
+// ===== TẦNG 16: CUNG ĐIỆN GƯƠNG (3 phòng kín, chỉ đi qua gương; bóng phản chiếu chỉ nhúc nhích khi bạn nhúc nhích) =====
+LV[16]={n:'TẦNG 16',t:'CUNG ĐIỆN GƯƠNG',intro:[['Cube','Cung điện này dựng từ những gì ngươi thấy trong cơn sốt.'],['me','Toàn là gương... và người trong gương không chớp mắt.'],['Cube','Các phòng không có cửa. Hãy bước qua gương. Hình phản chiếu chỉ nhúc nhích khi ngươi nhúc nhích.']],
+b(){env(0x08040e,3,36,.6,0xffd8f0,.9);const fl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#e8e0f0';x.fillRect(0,0,w,w);x.fillStyle='#2a1a3a';x.fillRect(0,0,32,32);x.fillRect(32,32,32,32)},14,42)),wl=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#5a1a3a';x.fillRect(0,0,w,w);x.fillStyle='#7a2a52';for(let i=0;i<w;i+=16)x.fillRect(i,0,6,w)},8,1)),gl=new T.MeshBasicMaterial({color:0xffeeaa}),fc=new T.MeshBasicMaterial({map:FT});
+plane(29,85,0,0,-42,fl);plane(29,85,0,8,-42,wl,0);[0.5,-28,-56,-84].forEach(z=>box(0,4,z,30,8,1,wl));[-15,15].forEach(x=>box(x,4,-42,1,8,85,wl));
+[-9,9].forEach(x=>[-14,-42,-70].forEach(z=>box(x,4,z,1.2,8,1.2,mt(0xe8e0f0))));[-14,-42,-70].forEach(z=>sc.add(sph(.6,gl,0,6.6,z),cyl(.03,.03,1.4,mt(0x888888),0,7.4,z)));
+[-1,1].forEach(s=>[-8,-18,-38,-48,-64,-76].forEach(z=>vp(1.8,2.4,s*13.9,3.5,z,fc,-s*M.PI/2)));
+portal(0,-27.4,1,0,-31,0);portal(0,-28.6,0,0,-24.9,M.PI);portal(0,-55.4,1,0,-59.1,0);portal(0,-56.6,0,0,-52.9,M.PI);
+scat(14,-13,13,-82,-2,(x,z)=>blood(x,z,1.5));scat(8,-13,13,-82,-2,(x,z)=>skull(x,z,.1));
+sp=[0,-4,0];quest({toys:[[-11,-20],[11,-48],[-11,-64]],fuse:[10,-79],door:[0,-83.4]});
+note(-6,-34,'Mảnh gương vỡ khắc nguệch ngoạc: "Cube không phải quái vật. Cube là chiếc hộp tôi ôm mỗi lần khóc."');
+npc(8,-10,'Cô gái trong gương',[[0,'Nhìn tôi đi. Cậu bao nhiêu tuổi?'],['me','Hai mươi... không. Bàn tay mình nhỏ quá.'],[0,'Tám tuổi. Cậu luôn là cậu bé tám tuổi. Cube chưa từng nuốt cậu — nó chỉ nuốt thời gian của cậu.'],[0,'Mỗi phòng có một món đồ chơi. Gương sẽ đưa cậu sang phòng kế tiếp.']]);
+mons(8,-40,1,2.4)}};
+
+// ===== TẦNG 17: HỘI CHỢ KHÔNG BAO GIỜ MỞ CỬA (bật máy phát điện để mở cổng, đèn sáng thì gã hề thức dậy) =====
+LV[17]={n:'TẦNG 17',t:'HỘI CHỢ KHÔNG BAO GIỜ MỞ CỬA',intro:[['Cube','Hội chợ này chưa từng mở cửa. Ngươi chỉ đứng ngoài hàng rào mà nhìn vào.'],['me','Không đèn, không nhạc... chỉ có tiếng máy phát điện kêu rè rè đâu đó.'],['Cube','Hãy bật điện để mở cổng. Nhưng ánh sáng sẽ đánh thức hắn dậy.']],
+b(){env(0x06050a,2,13,.22,0xff9a9a,.55);const fe=mt(0x1a1a1e),sg=t=>new T.MeshBasicMaterial({map:tx(128,(x,w)=>{x.fillStyle='#300';x.fillRect(0,0,w,w);x.fillStyle='#ff4';x.font='bold 21px sans-serif';x.textAlign='center';x.fillText(t,64,70)})});let on=0;
+plane(80,76,0,-.02,-37,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#2a2218';x.fillRect(0,0,w,w);dots(x,w,500,['#18120a','#3a3020'],.5,2)},30,30)));[[0,.5,80,1],[0,-75,80,1],[-40,-37,1,76],[40,-37,1,76]].forEach(([x,z,w,d])=>box(x,2,z,w,4,d,fe));const op=gate(0,-18,80,28);
+const wh=new T.Group(),gd=[];wh.add(new T.Mesh(new T.TorusGeometry(8,.14,6,28),fe));for(let i=0;i<8;i++){const s=cyl(.05,.05,16,fe);s.rotation.z=i*M.PI/8;wh.add(s);const a=i*M.PI/4,g=new T.Mesh(new T.BoxGeometry(1.1,.9,.9),mt([0xcc2222,0x2255cc,0xddaa22][i%3]));g.position.set(M.cos(a)*8,M.sin(a)*8,0);wh.add(g);gd.push(g)}wh.position.set(-22,9.6,-40);sc.add(wh);box(-24,4.8,-40,.6,9.6,.6,fe);box(-20,4.8,-40,.6,9.6,.6,fe);U.push(dt=>{if(on){wh.rotation.z+=dt*.25;gd.forEach(g=>g.rotation.z=-wh.rotation.z)}});
+const cr=new T.Group();cr.add(cyl(4,4,.4,mt(0x884433),0,.3,0),cyl(.01,4.6,1.6,mt(0xaa2233),0,4.2,0));for(let i=0;i<6;i++){const a=i*1.047;cr.add(cyl(.05,.05,3.4,mt(0xdddddd),M.cos(a)*3,1.9,M.sin(a)*3),sph(.4,mt(0xeeeeee,0,0x222222),M.cos(a)*3,1.3+(i%2)*.4,M.sin(a)*3,1,.8,1.5))}cr.position.set(14,0,-30);sc.add(cr);W.push([10,18,-34,-26]);U.push(dt=>on&&(cr.rotation.y+=dt*.5));
+[[26,-50,0xdddddd],[-8,-56,0x2a4a8a],[-18,-28,0xaa2222],[10,-44,0x7a2a8a]].forEach(([x,z,c])=>{const o=new T.Mesh(new T.ConeGeometry(4,4.5,8),mt(c));o.position.set(x,2.25,z);sc.add(o);W.push([x-3.3,x+3.3,z-3.3,z+3.3]);skull(x+1,z+4.4,.1);blood(x,z+4.5,2)});
+[[-28,-8,'ĐOÁN TUỔI'],[26,-26,'CÂU CÁ'],[-30,-32,'BẮN TRÚNG'],[24,-70,'NHÀ MA']].forEach(([x,z,t])=>{box(x,1.4,z,4,2.8,2,mt(0x4a2a1a));box(x,3.1,z,4.6,.3,2.6,mt(0xaa1111));vp(3,1,x,2.1,z+1.02,sg(t))});
+const bi=new T.InstancedMesh(new T.SphereGeometry(.12,6,5),new T.MeshBasicMaterial({color:0xffe9a0}),117),o=new T.Object3D();let k=0;[-12,-34,-56].forEach(z=>{for(let x=-38;x<=38;x+=2){o.position.set(x,5.2-M.sin(((x+38)%12)/12*M.PI)*.8,z);o.updateMatrix();bi.setMatrixAt(k++,o.matrix)}});bi.visible=false;sc.add(bi);
+const ge=box(6,.7,-6,1.6,1.4,1,mt(0x3a4a2a,0,0x0a1a05)),go=reg(ge,'Giữ E để khởi động máy phát điện',()=>{go.dead=1;on=1;bi.visible=true;op();sc.fog.far=48;sc.fog.near=8;sc.children.find(c=>c.isAmbientLight).intensity=.8;snd(60,4,'sawtooth',.5,120);fx('#fff',.8,0);sleep(100).then(()=>fx('#fff',0,900));skin(clown,3,0,-62,2,1.1);talk([['me','Đèn sáng cả rồi, cổng cũng mở... nhưng có tiếng cười trẻ con ở rất gần.']])},2.6);
+scat(14,-36,36,-72,-20,(x,z)=>blood(x,z,1.4));scat(8,-36,36,-72,-20,(x,z)=>skull(x,z,.1));scat(4,-36,36,-72,-20,tv);U.push(()=>SN.offset.set(R(),R()));
+sp=[0,-3,0];quest({toys:[[-34,-22],[34,-40],[-14,-68]],fuse:[30,-10],door:[0,-74.4]});
+note(-3,-6,'Ảnh Polaroid: bố, mẹ và một cậu bé ôm chiếc hộp gỗ dán chữ CUBE. Gương mặt cậu bé bị ai đó cào xước.');
+npc(2,-11,'Ông bán vé',[[0,'Vé cuối cùng: một chuyến lên đỉnh đu quay. Hồi đó cậu bé nài nỉ bố mãi.'],['me','Bố tôi... đã hứa đưa tôi đi hội chợ.'],[0,'Ông ấy tới rồi. Nhưng cậu bé không ra khỏi phòng bệnh được. Ông cầm tấm vé đứng đây suốt đêm.'],[0,'Bật máy phát điện ở kia để mở cổng. Đồ chơi nằm quanh các quầy. Hắn sẽ thức dậy cùng ánh đèn.']])}};
+
+// ===== TẦNG 18: HẦM MỘ (thắp 3 lò lửa để mở cổng sắt, kẻ canh mộ chỉ bước khi bạn không nhìn) =====
+LV[18]={n:'TẦNG 18',t:'HẦM MỘ DƯỚI NHÀ THỜ',intro:[['Cube','Chúng ta đang đi xuống. Càng sâu, ký ức càng cũ, càng đói.'],['me','Tường xếp toàn xương... và ai đó đã thắp nến dọc lối đi.'],['Cube','Cổng sắt cuối hầm chỉ mở khi ba lò lửa cháy. Đừng quay lưng với kẻ canh mộ.']],
+b(){env(0x040304,1.5,16,.3,0xffd0a0,.8);const st=mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#4a4640';x.fillRect(0,0,w,w);x.strokeStyle='#2a2824';for(let i=0;i<w;i+=16)x.strokeRect(0,i,w,16);dots(x,w,200,['#2a2824','#6a665e'],.4,3)},6,1)),wd=mt(0x3a2414),lit=[0,0,0];
+plane(28,70,0,0,-35,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#35322e';x.fillRect(0,0,w,w);x.strokeStyle='#1a1816';x.strokeRect(0,0,w,w);dots(x,w,150,['#1a1816'],.4,2)},14,35)));plane(28,70,0,3.2,-35,st,0);box(0,1.6,.2,28,3.2,.4,st);box(0,1.6,-70,28,3.2,.4,st);box(-14.2,1.6,-35,.4,3.2,70,st);box(14.2,1.6,-35,.4,3.2,70,st);
+wz(-6,0,-70,[-16,-52],st);wz(6,0,-70,[-34],st);const op=gate(0,-64,12,4);
+[[-16,-1],[-52,-1],[-34,1]].forEach(([z,s])=>{const x=s*10;box(x,1.6,z-4,8,3.2,.4,st);box(x,1.6,z+4,8,3.2,.4,st);box(s*12,.4,z,1.2,.8,2.4,wd);blood(x,z+1.5,2);skull(x-s*2,z,.1)});
+const sk=new T.InstancedMesh(new T.SphereGeometry(.14,6,5),mt(0xd8d0b8,0,0x1a1810),520),o=new T.Object3D();for(let i=0;i<520;i++){const s=i%2?1:-1,z=-1.5-R()*67;(s<0?[-16,-52]:[-34]).some(g=>M.abs(z-g)<1.6)?o.scale.setScalar(0):o.scale.set(1,1.1,.8);o.position.set(s*5.7,.15+R()*2.9,z);o.updateMatrix();sk.setMatrixAt(i,o.matrix)}sc.add(sk);
+[[-4,-12],[4,-28],[-4,-46]].forEach(([x,z],i)=>{const b=new T.Group(),f=new T.Mesh(new T.ConeGeometry(.2,.6,6),new T.MeshBasicMaterial({color:0xff8833})),l=new T.PointLight(0xff7722,0,12);f.position.y=1.3;f.visible=false;l.position.set(x,1.6,z);b.add(cyl(.3,.15,.9,mt(0x2a2a2a),0,.45,0),cyl(.35,.3,.12,mt(0x2a2a2a),0,.95,0),f);b.position.set(x,0,z);sc.add(b,l);W.push([x-.4,x+.4,z-.4,z+.4]);const q=reg(b,'Giữ E để thắp lửa',()=>{q.dead=1;f.visible=true;lit[i]=1;snd(300,1,'triangle',.3,120);if(lit.every(a=>a)){op();snd(70,2.5,'sawtooth',.5,40);talk([['me','Có tiếng xích kéo ở cuối hầm... cổng sắt đã mở.']])}},2.4);U.push(()=>{if(lit[i]){l.intensity=1.1+R()*.6;f.scale.y=1+R()*.5}})});
+grave(-4,-5);grave(4,-9);grave(0,-62);scat(12,-5,5,-62,-2,(x,z)=>blood(x,z,1.3));
+sp=[0,-2,0];quest({toys:[[-9,-16],[9,-34],[-9,-52]],fuse:[4,-58],door:[0,-69.7]});
+note(-3,-57,'Bia đá: "ME — bé trai tám tuổi". Dòng ngày mất chỉ còn đúng một chữ: "chưa".');
+npc(2,-8,'Người đào mộ',[[0,'Huyệt cuối hầm đào xong từ lâu. Chỉ còn chờ người nằm xuống.'],['me','Huyệt của ai?'],[0,'Bia ghi chữ "ME". Họ chuẩn bị sẵn từ lúc bác sĩ lắc đầu.'],[0,'Thắp ba lò lửa để mở cổng sắt. Đồ chơi nằm trong các nhà nguyện nhỏ. Kẻ canh mộ chỉ bước khi cậu không nhìn.']]);
+skin(skel,0,0,-40,2.7,1.15)}};
+
+// ===== TẦNG 19: PHÒNG THU 03:17 (mất sóng định kỳ, gã dẫn chương trình hiện ngay sau lưng bạn) =====
+LV[19]={n:'TẦNG 19',t:'PHÒNG THU 03:17',intro:[['Cube','Mọi kênh đều đã tắt, trừ một kênh. Kênh phát nhịp tim của ngươi.'],['me','Hàng trăm màn hình... và tất cả đều chiếu cảnh mình đang đứng đây.'],['Cube','Mỗi lần mất sóng, gã dẫn chương trình sẽ hiện ra sau lưng ngươi. Hãy quay lại nhìn hắn.']],
+b(){env(0x050507,3,30,.4,0xddddff,.8);const nm=new T.MeshBasicMaterial({map:SN}),fm=new T.MeshBasicMaterial({map:FT}),wl=mt(0x0c0c10),k=mt(0x1a1a1a),
+cm=(x,z,r)=>{const g=new T.Group(),b=new T.Mesh(new T.BoxGeometry(.5,.4,.8),k),l=cyl(.15,.12,.3,mt(0),0,1.6,.5);b.position.y=1.6;l.rotation.x=M.PI/2;g.add(cyl(.05,.2,1.4,k,0,.7),b,l);g.position.set(x,0,z);g.rotation.y=r;sc.add(g);W.push([x-.4,x+.4,z-.4,z+.4])};
+plane(40,50,0,0,-25,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#16161a';x.fillRect(0,0,w,w);x.fillStyle='#202026';x.fillRect(0,0,32,32);x.fillRect(32,32,32,32)},20,25)));plane(40,50,0,6,-25,wl,0);[[0,.2,40,.4],[0,-50,40,.4],[-20,-25,.4,50],[20,-25,.4,50]].forEach(([x,z,w,d])=>box(x,3,z,w,6,d,wl));
+for(let z=-4;z>-48;z-=3.2)[-1,1].forEach(s=>[1.2,2.5,3.8].forEach(y=>vp(2.8,1.1,s*19.75,y,z,R()<.12?fm:nm,-s*M.PI/2)));
+for(let i=0;i<8;i++){const c=plane(.12,26,R()*30-15,.02,-25,mt(0x050505));c.rotation.z=R()*1.2-.6}
+box(0,.6,-30,7,1.2,1.8,mt(0x2a2a30));cm(-8,-16,.4);cm(9,-22,-.5);cm(-6,-38,.2);for(let i=0;i<6;i++)sc.add(cyl(.25,.4,.7,mt(0x111111),-14+i*5.6,5.4,-26));
+vp(3,.9,10,4.6,-49.75,new T.MeshBasicMaterial({map:tx(128,(x,w)=>{x.fillStyle='#000';x.fillRect(0,0,w,w);x.fillStyle='#f22';x.font='bold 38px monospace';x.textAlign='center';x.fillText('ON AIR',64,80)})}));
+vp(8,4,-10,3.5,-49.75,new T.MeshBasicMaterial({map:tx(256,(x,w)=>{x.fillStyle='#012';x.fillRect(0,0,w,w);x.fillStyle='#fff';x.font='bold 26px sans-serif';x.textAlign='center';x.fillText('BẢN TIN 03:17',128,60);x.fillStyle='#f33';x.fillText('BỆNH NHI SỐ 0',128,115);x.fillText('NHỊP TIM: 41',128,160);x.fillStyle='#fff';x.fillText('NGÀY HÔN MÊ: 19',128,210)})}));
+scat(10,-18,18,-48,-2,(x,z)=>blood(x,z,1.4));scat(6,-18,18,-48,-2,(x,z)=>skull(x,z,.1));U.push(()=>SN.offset.set(R(),R()));
+let sg=0;U.push(()=>{const b=tt%14>12.3;if(!busy)$('ns').style.opacity=b?.55:0;if(b&&!sg&&!busy){sg=1;snd(900,.9,'sawtooth',.35,60);const qx=P.x+M.sin(yaw)*4.5,qz=P.z+M.cos(yaw)*4.5;!hit(qx,qz)&&M.abs(qx)<19&&qz<-1&&qz>-49&&mon.position.set(qx,0,qz)}if(!b)sg=0});
+sp=[0,-3,0];quest({toys:[[-14,-12],[14,-26],[-12,-40]],fuse:[-16,-44],door:[0,-49.7]});
+note(-2,-27,'Kịch bản bản tin, mực loang: "Bệnh nhi số 0 vẫn hôn mê. Mẹ cháu ngồi cạnh giường, nắm tay cháu, gọi tên cháu suốt đêm."');
+npc(10,-8,'Biên tập viên',[[0,'Chương trình duy nhất còn phát là bản tin về chính cậu.'],['me','Về tôi?'],[0,'Góc màn hình là nhịp tim của cậu. Mỗi lần mất sóng, một nhịp yếu đi.'],[0,'Lúc mất sóng, gã dẫn chương trình hiện ngay sau lưng cậu. Quay lại nhìn hắn, đừng để hắn đứng đó.'],[0,'Đồ chơi nằm cạnh các máy quay. Phòng điều khiển ở cuối studio.']]);
+skin(host,2,0,-40,2.5)}};
+
+// ===== TẦNG 20: BÊN TRONG CUBE — NGÀY THỨ 20 (phòng bệnh số 0, mắt khắp tường, nhịp tim nhanh dần khi trùm cuối lại gần) =====
+LV[20]={n:'TẦNG 20',t:'BÊN TRONG CUBE — NGÀY THỨ 20',intro:[['Cube','Đây là bụng của ta. Cũng là phòng bệnh của ngươi.'],['me','Chiếc giường ở giữa... có một cậu bé đang nằm. Máy thở, dây truyền, tiếng bíp... Đó là mình.'],['Cube','Ta chỉ muốn giữ ngươi ở lại, vì tưởng ngoài kia chẳng còn ai chờ. Nhưng mẹ ngươi vẫn đang gọi tên ngươi.'],['Cube','Hắn đang tới. Kẻ đã cho ta miếng ăn đầu tiên. Nhặt đồ chơi, mở cánh cửa cuối cùng. Rồi ta sẽ đứng cạnh ngươi.']],
+b(){$('ns').style.opacity=0;env(0x060203,3,34,.42,0xffb0a0,.8);const sm=mt(0xffffff,tx(256,(x,w)=>{x.fillStyle='#6b6b6b';x.fillRect(0,0,w,w);dots(x,w,2500,['#444','#999','#555','#888'],.35,8);x.strokeStyle='#222';for(let i=0;i<6;i++){x.beginPath();let a=R()*w,b=R()*w;x.moveTo(a,b);for(let k=0;k<6;k++)x.lineTo(a+=R()*40-20,b+=R()*40-20);x.stroke()}},8,8));
+plane(32,72,0,0,-35,sm);plane(32,72,0,9,-35,sm,0);[[0,.2,32,.4],[0,-70,32,.4],[-16,-35,.4,72],[16,-35,.4,72]].forEach(([x,z,w,d])=>box(x,4.5,z,w,9,d,sm));[-9,9].forEach(x=>[-12,-24,-48,-60].forEach(z=>box(x,4.5,z,1.6,9,1.6,sm)));
+const bx=(w,h,d,c,x,y,z)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),mt(c));o.position.set(x,y,z);return o},bd=new T.Group();sc.add(cyl(5.5,5.5,.3,mt(0x8a8a8a),0,.15,-36));bd.add(bx(1.1,.4,2.2,0xcccccc,0,.6,0),bx(.7,.12,.5,0xffffff,0,.86,-.8),bx(.9,.22,1.3,0x99aabb,0,.95,.35),sph(.28,mt(0xe8c8b0,0,0x302018),0,1,-.78),cyl(.03,.03,2.2,mt(0xaaaaaa),.85,1.2,-.5),bx(.15,.3,.1,0x99ccff,.85,2.3,-.5));bd.position.set(0,.3,-36);sc.add(bd);W.push([-.8,.8,-37.3,-34.7]);blood(0,-36,3);
+reg(bd,'Giữ E để chạm vào cậu bé',()=>talk([['Cậu bé','...là cậu sao?'],['me','Mình đây. Mình đã tìm lại hết rồi.'],['Cậu bé','Đừng cho Cube ăn nữa... mỗi lần như vậy, mình lại quên thêm một người.'],['me','Mình nhớ rồi. Bố. Mẹ. Cube. Và lời hứa đi cắm trại.'],['Cậu bé','Vậy thì đi tiếp đi. Mẹ đang gọi.']]),3);
+const cv=document.createElement('canvas');cv.width=128;cv.height=64;const cx=cv.getContext('2d'),ct=new T.CanvasTexture(cv);let ph=0,hb=0;sc.add(bx(.9,.7,.5,0x222222,2.2,1.1,-36));vp(.8,.5,2.2,1.15,-35.73,new T.MeshBasicMaterial({map:ct}));W.push([1.7,2.7,-36.4,-35.6]);
+U.push(dt=>{ph+=dt;cx.fillStyle='#001a08';cx.fillRect(0,0,128,64);cx.strokeStyle='#4f8';cx.beginPath();for(let i=0;i<128;i++){const u=(i/128+ph*.5)%1;cx.lineTo(i,(u>.45&&u<.5?14:u>.5&&u<.55?52:32)+R()*1.5)}cx.stroke();ct.needsUpdate=true;if(ph>hb){hb=ph+(mon?M.max(.35,M.min(1.2,M.hypot(P.x-mon.position.x,P.z-mon.position.z)/14)):1.2);snd(880,.12,'sine',.12)}});
+const em=new T.MeshBasicMaterial({map:tx(64,(x,w)=>{x.fillStyle='#eee';x.beginPath();x.ellipse(32,32,30,18,0,0,7);x.fill();x.fillStyle='#c00';x.beginPath();x.arc(32,32,13,0,7);x.fill();x.fillStyle='#000';x.fillRect(29,18,6,28)}),transparent:true}),es=[];
+for(let i=0;i<26;i++){const s=i%2?1:-1,e=new T.Mesh(new T.PlaneGeometry(1.4,.9),em);e.position.set(s*15.8,1.2+R()*6.5,-4-R()*62);e.rotation.y=-s*M.PI/2;sc.add(e);es.push(e)}U.push(()=>es.forEach((e,i)=>e.scale.y=M.sin(tt*.8+i*1.9)>.93?.08:1));
+const dm=new T.MeshBasicMaterial({map:tx(128,(x,w)=>{x.fillStyle='#e8dfc8';x.fillRect(0,0,w,w);x.strokeStyle='#c22';x.lineWidth=3;x.beginPath();x.arc(30,28,12,0,7);x.moveTo(30,40);x.lineTo(30,80);x.moveTo(10,55);x.lineTo(50,55);x.stroke();x.strokeStyle='#26c';x.strokeRect(70,50,40,40);x.fillStyle='#000';x.font='15px sans-serif';x.fillText('ME + CUBE',22,116)})});[-12,-30,-44,-60].forEach((z,i)=>vp(2,2,i%2?15.8:-15.8,2.4,z,dm,(i%2?-1:1)*M.PI/2));
+const mb=new T.Group();for(let i=0;i<9;i++){const t=toy(i);t.position.set(M.cos(i*.7)*3.5,5+M.sin(i)*.5,M.sin(i*.7)*3.5);mb.add(t)}mb.position.set(0,0,-36);sc.add(mb);U.push(dt=>mb.rotation.y+=dt*.4);
+const bl=new T.PointLight(0xffe8d0,1.5,20);bl.position.set(0,6,-36);sc.add(bl);scat(22,-14,14,-68,-2,(x,z)=>blood(x,z,1.6));scat(10,-14,14,-68,-2,(x,z)=>skull(x,z,.1));
+// ===== HOÀN THÀNH TẦNG 20 =====
+sp=[0,-4,0];quest({toys:[[-11,-14],[11,-28],[-11,-50]],fuse:[11,-60],door:[0,-69.6]});
+note(-4,-8,'Tờ giấy ra viện chưa ký, nét bút của mẹ run run: "Nếu con nghe thấy, mẹ vẫn ở đây. Mẹ chưa về."');
+npc(-12,-24,'Y tá đêm',[[0,'Sáng mai họ sẽ hỏi mẹ cậu có muốn dừng lại hay không. Cậu chỉ còn đêm nay.'],['me','Vậy mình phải tự tỉnh lại?'],[0,'Đồ chơi quanh giường, máy ở góc phải cuối phòng, cửa ở cuối. Bác sĩ đang tới — đừng để hắn tiêm cậu.']]);
+skin(boss,3,0,-66,2.2,1.15)}};
+
+// ===== OUTRO 3D: "NGÀY THỨ HAI MƯƠI" =====
+const _ld=load;load=k=>k>20?outro():_ld(k);
+let ts=1,CM=0,ct=0,shk=0,orr=.9;const oc=new T.Vector3();
+const lerp=(a,b,t)=>a+(b-a)*t,ez=t=>t*t*(3-2*t),cp=(t,a=0,b=1)=>M.max(a,M.min(b,t));
+const aim=(ax,ay,az,bx,by,bz,fv=60,rl=0)=>{const s=shk*.1;P.set(ax+(R()-.5)*s,ay+(R()-.5)*s,az+(R()-.5)*s);vy=0;yaw=M.atan2(ax-bx,az-bz);pit=M.atan2(by-ay,M.hypot(bx-ax,bz-az));roll=rl;if(cam.fov!=fv){cam.fov=fv;cam.updateProjectionMatrix()}};
+const beat=(s,f)=>new Promise(r=>{const t0=ct;CM=()=>{const t=cp((ct-t0)/s);f(t);if(t>=1){CM=0;r()}}});
+const sb=document.createElement('div');sb.style.cssText='position:fixed;left:0;width:100%;bottom:13vh;padding:0 6vw;text-align:center;z-index:31;font:italic max(16px,3.4vmin) Georgia,serif;text-shadow:0 0 8px #000,0 0 3px #000;pointer-events:none;opacity:0;transition:opacity .5s';document.body.appendChild(sb);
+const sub=async(t,ms=2800,c='#fff')=>{sb.style.color=c;sb.textContent=t;sb.style.opacity=1;await sleep(ms);sb.style.opacity=0;await sleep(450)};
+const say2=a=>a.reduce((p,[t,ms,c])=>p.then(()=>sub(t,ms,c)),Promise.resolve());
+const act=(s,f,a)=>Promise.all([beat(s,f),a?say2(a):0]);
+const chord=(a,d=5,v=.07)=>a.forEach((f,i)=>setTimeout(()=>snd(f,d,'sine',v),i*250));
+const pfx=(col,n,sz,gy=0,ad=1)=>{const g=new T.BufferGeometry(),p=new Float32Array(n*3),v=new Float32Array(n*3),o=new T.Points(g,new T.PointsMaterial({color:col,size:sz,transparent:true,blending:ad?T.AdditiveBlending:T.NormalBlending,depthWrite:false}));g.setAttribute('position',new T.BufferAttribute(p,3));Object.assign(o,{p,v,mode:0,k:4,tg:new T.Vector3(),visible:false,frustumCulled:false});sc.add(o);U.push(dt=>{if(!o.visible)return;dt*=ts;for(let i=0;i<n*3;i+=3)for(let j=0;j<3;j++){if(o.mode){v[i+j]+=(o.tg.getComponent(j)-p[i+j])*o.k*dt;v[i+j]*=.97}else if(j==1)v[i+1]-=gy*dt;p[i+j]+=v[i+j]*dt}g.attributes.position.needsUpdate=true});return o};
+const burst=(o,x,y,z,s,up=0)=>{for(let i=0;i<o.p.length;i+=3){const a=R()*6.28,b=R()*2-1,r=M.sqrt(1-b*b),q=s*R();o.p[i]=x;o.p[i+1]=y;o.p[i+2]=z;o.v[i]=M.cos(a)*r*q;o.v[i+1]=b*q+up;o.v[i+2]=M.sin(a)*r*q}o.mode=0;o.visible=true};
+const bq=(w,h,d,m,x=0,y=0,z=0)=>{const o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);return o},SK=mt(0xf0c8a8,0,0x302018);
+const sT=tx(128,(x,w)=>{x.fillStyle='#6b6b6b';x.fillRect(0,0,w,w);dots(x,w,1200,['#444','#999','#555','#888'],.35,6);x.strokeStyle='#222';for(let i=0;i<4;i++){x.beginPath();let a=R()*w,b=R()*w;x.moveTo(a,b);for(let k=0;k<5;k++)x.lineTo(a+=R()*30-15,b+=R()*30-15);x.stroke()}});
+const eM=new T.MeshBasicMaterial({map:tx(64,(x,w)=>{x.fillStyle='#eee';x.beginPath();x.ellipse(32,32,30,18,0,0,7);x.fill();x.fillStyle='#c00';x.beginPath();x.arc(32,32,13,0,7);x.fill();x.fillStyle='#000';x.fillRect(29,18,6,28)}),transparent:true,fog:false});
+const kid=()=>{const g=new T.Group(),pj=mt(0x4a78c8,0,0x101830),ha=mt(0x2a1a10),bk=mt(0),lm=(x,y,L)=>{const p=new T.Group();p.position.set(x,y,0);p.add(cyl(.06,.05,L,pj,0,-L/2,0),sph(.055,SK,0,-L,0));return p};
+g.h=new T.Group();g.h.position.y=1.2;g.h.add(sph(.18,SK),sph(.19,ha,0,.05,-.04,1,.85,1),sph(.025,bk,-.06,0,.17),sph(.025,bk,.06,0,.17));g.ld=[-.06,.06].map(x=>{const l=sph(.036,SK,x,0,.166);l.scale.y=.05;g.h.add(l);return l});
+g.l=lm(-.09,.55,.55);g.r=lm(.09,.55,.55);g.al=lm(-.23,1.02,.45);g.ar=lm(.23,1.02,.45);g.add(cyl(.17,.2,.5,pj,0,.8,0),g.h,g.l,g.r,g.al,g.ar);return g};
+const mom=()=>{const g=new T.Group(),cd=mt(0xb06070,0,0x201018),ha=mt(0x3a2418),bk=mt(0),tr=cyl(.2,.26,.7,cd,0,.88,0),ar=cyl(.06,.06,.8,cd,.12,.92,.45);tr.rotation.x=.2;ar.rotation.x=-1.2;g.hd=new T.Group();g.hd.position.set(0,1.3,.06);g.hd.add(sph(.2,SK),sph(.22,ha,0,.05,-.05,1,.9,1),sph(.12,ha,0,.22,-.1),sph(.02,bk,-.07,.02,.19),sph(.02,bk,.07,.02,.19));g.hd.rotation.x=.9;
+[-.1,.1].forEach(x=>{const t=cyl(.09,.08,.5,cd,x,.56,.25),s=cyl(.08,.06,.5,cd,x,.28,.5);t.rotation.x=1.57;g.add(t,s)});g.add(tr,ar,g.hd,sph(.065,SK,.12,.78,.84));return g};
+const boss=()=>{const g=new T.Group(),k=mt(0x060609,0,0x0a0a10),w=mt(0xe8e8e0,0,0x303030),m=mt(0xcccccc),sy=new T.Group();g.add(cyl(.22,.6,2.3,k,0,1.45),cyl(.5,.55,.5,k,0,.28),sph(.25,w,0,2.75,0,1,1.2,1),mask(.34,.22,2.72,.26),cyl(.07,.07,1.8,k,-.5,1.9),cyl(.07,.07,1.8,k,.5,1.9));sy.add(cyl(.06,.06,.9,new T.MeshBasicMaterial({color:0x66ff99})),cyl(.012,.012,.7,m,0,-.8,0),cyl(.11,.11,.04,m,0,.47,0),cyl(.02,.02,.3,m,0,.62,0));sy.position.set(.62,2.2,.45);g.add(sy);g.sy=sy;return g};
+const cube2=()=>{const g=new T.Group(),sm=mt(0xffffff,sT),pv=[],mk=(px,py,pz,ax,sg,ox,oy,oz,w,h,d)=>{const p=new T.Group();p.position.set(px,py,pz);p.add(bq(w,h,d,sm,ox,oy,oz));g.add(p);Object.assign(p,{ax,sg});pv.push(p)};
+mk(0,0,1.25,'x',1,0,1.25,0,2.5,2.5,.14);mk(0,0,-1.25,'x',-1,0,1.25,0,2.5,2.5,.14);mk(1.25,0,0,'z',-1,0,1.25,0,.14,2.5,2.5);mk(-1.25,0,0,'z',1,0,1.25,0,.14,2.5,2.5);mk(0,2.5,-1.25,'x',-1,0,0,1.25,2.5,.14,2.5);g.add(bq(2.5,.14,2.5,sm,0,.07,0));
+g.ey=[[0,0,.5,.09,0],[0,-.6,1.5,.09,0],[0,.6,1.9,.09,0],[2,.09,1.2,0,1.57],[3,-.09,1.2,.4,-1.57],[1,0,1.2,-.09,3.14]].map(([i,x,y,z,r])=>{const e=new T.Mesh(new T.PlaneGeometry(.6,.4),eM);e.position.set(x,y,z);e.rotation.y=r;pv[i].add(e);return e});Object.assign(g,{pv,sm});return g};
+const chest=()=>{const g=new T.Group(),wd=mt(0x8a5a2a,0,0x2a1808),gd=new T.MeshBasicMaterial({color:0xffd24a}),lp=new T.Group();g.add(bq(1.7,1,1.1,wd,0,.5,0),bq(.12,1.04,1.14,gd,-.6,.5,0),bq(.12,1.04,1.14,gd,.6,.5,0),bq(1.5,.04,.9,new T.MeshBasicMaterial({color:0xffe9a0}),0,.99,0));lp.position.set(0,1,-.55);lp.add(bq(1.7,.28,1.1,wd,0,.14,.55),bq(.12,.3,1.14,gd,-.6,.14,.55),bq(.12,.3,1.14,gd,.6,.14,.55));g.add(lp);g.lp=lp;const lb=new T.Mesh(new T.PlaneGeometry(.9,.4),new T.MeshBasicMaterial({map:tx(128,(x,w)=>{x.fillStyle='#f3e3b0';x.fillRect(0,0,w,w);x.fillStyle='#c22';x.font='bold 40px sans-serif';x.textAlign='center';x.fillText('CUBE',64,80)})}));lb.position.set(0,.5,.56);g.add(lb);return g};
+const gkey=()=>{const o=new T.Group(),g=new T.Group(),m=new T.MeshBasicMaterial({color:0xffd24a});g.add(new T.Mesh(new T.TorusGeometry(.2,.055,8,18),m),cyl(.04,.04,1,m,0,-.7,0),bq(.2,.07,.05,m,.12,-1,0),bq(.14,.07,.05,m,.1,-1.15,0));o.add(g);o.k=g;return o};
+const pol=i=>new T.Mesh(new T.PlaneGeometry(.9,.9),new T.MeshBasicMaterial({side:2,map:tx(128,(x,w)=>{x.fillStyle='#f4efe0';x.fillRect(0,0,w,w);x.fillStyle=['#112244','#2a1a40','#bbddee','#ffdde8'][i];x.fillRect(8,8,112,100);x.fillStyle=x.strokeStyle=['#ffee88','#ffcc66','#ff9944','#dd6666'][i];x.lineWidth=3;
+if(i==0){x.beginPath();x.moveTo(30,100);x.lineTo(60,50);x.lineTo(90,100);x.fill();x.beginPath();x.arc(98,30,10,0,7);x.fill()}
+else if(i==1){x.beginPath();x.arc(64,60,38,0,7);x.stroke();for(let a=0;a<6;a++){x.moveTo(64,60);x.lineTo(64+M.cos(a*1.05)*38,60+M.sin(a*1.05)*38)}x.stroke()}
+else if(i==2){[[40,'#3366cc'],[64,'#cc3333'],[88,'#33aa33']].forEach(([a,c],j)=>{x.fillStyle=c;x.beginPath();x.arc(a,46+j%2*8,9,0,7);x.fill();x.fillRect(a-8,56+j%2*8,16,36)});x.fillStyle='#aa7744';x.fillRect(52,80,24,24)}
+else{x.beginPath();x.arc(64,56,28,0,7);x.fill();x.fillStyle='#552222';x.beginPath();x.arc(64,48,30,3.3,6.1);x.fill();x.fillStyle='#000';x.fillRect(52,54,4,4);x.fillRect(72,54,4,4);x.beginPath();x.arc(64,66,9,.2,2.9);x.stroke()}})}));
+
+async function outro(){
+busy=1;['js','jb','eb'].forEach(i=>$(i).style.display='none');$('pr').style.display='none';$('ob').textContent='';fx('#fff',1,1500);await sleep(1700);clear();$('ns').style.opacity=0;ts=1;ct=0;shk=0;CM=0;oc.set(0,1,0);oc.free=0;orr=.9;
+const RX=200,rst=()=>{by.l.rotation.x=by.r.rotation.x=by.al.rotation.x=by.ar.rotation.x=0};
+sc.background=new T.Color(0x020103);sc.fog=new T.Fog(0x020103,14,46);
+const am=new T.AmbientLight(0x552222,.8),pl=new T.PointLight(0xff3322,1.2,50),gl=new T.PointLight(0xffc040,0,40);pl.position.set(0,7,0);sc.add(am,pl,gl);
+U.push(dt=>{ct+=dt*ts;shk*=M.pow(.03,dt);CM&&CM()});let hbT=0;U.push(dt=>{hbT+=dt*ts;if(hbT>1&&P.x<100){hbT=0;snd(60,.25,'sine',.45,40);setTimeout(()=>snd(55,.2,'sine',.35,38),180)}});
+// --- đấu trường trong bụng Cube ---
+const sF=sT.clone();sF.needsUpdate=true;sF.repeat.set(8,8);const fl=new T.Mesh(new T.CircleGeometry(18,48),mt(0xffffff,sF)),rg=new T.Mesh(new T.RingGeometry(13,13.4,64),new T.MeshBasicMaterial({color:0xff2200,side:2}));fl.rotation.x=rg.rotation.x=-M.PI/2;rg.position.y=.02;sc.add(fl,rg);
+const sg=new T.BufferGeometry(),sa=[];for(let i=0;i<500;i++){const a=R()*6.28,b=R()*1.4+.05;sa.push(M.cos(a)*M.cos(b)*40,M.sin(b)*40,M.sin(a)*M.cos(b)*40)}sg.setAttribute('position',new T.Float32BufferAttribute(sa,3));const sm2=new T.PointsMaterial({color:0xff6644,size:.4,fog:false});sc.add(new T.Points(sg,sm2));
+const ge=[];for(let i=0;i<16;i++){const e=new T.Mesh(new T.PlaneGeometry(4,2.6),eM),a=i/16*6.28;e.position.set(M.cos(a)*26,3+R()*9,M.sin(a)*26);e.lookAt(0,e.position.y,0);sc.add(e);ge.push(e)}
+const by=kid(),cb=cube2(),bs=boss(),ch=chest(),ky=gkey(),dk=pfx(0x9a1535,180,.28,0,0),gd=pfx(0xffd060,220,.16,0,1),BP=bs.position;
+by.position.set(-2,0,3);by.rotation.y=M.PI;cb.position.set(2.4,.25,2.6);cb.rotation.y=M.PI+.35;bs.position.set(0,0,-16);ch.visible=ky.visible=false;ch.scale.setScalar(.01);sc.add(by,cb,bs,ch,ky);
+const tz=[0,1,2].map(i=>{const t=toy(i);t.scale.setScalar(1.3);sc.add(t);return t});
+U.push(()=>{oc.free||oc.set(by.position.x,1.1+by.position.y,by.position.z);tz.forEach((t,i)=>{if(t.fl)return;const a=ct*1.8+i*2.1;t.position.set(oc.x+M.cos(a)*orr,oc.y+M.sin(ct*2+i)*.15,oc.z+M.sin(a)*orr);t.rotation.y=a})});
+const sk=[];for(let i=0;i<16;i++){const c=new T.Mesh(new T.ConeGeometry(.32,3.2,6),mt(0x08080c,0,0x500010));c.visible=false;sc.add(c);sk.push(c)}
+const spk=(i,x,z,t)=>{const c=sk[i],h=M.sin(cp(t)*M.PI);c.visible=t>0&&t<1;c.scale.set(1,M.max(h,.01),1);c.position.set(x,1.6*h,z)};
+const rays=[];for(let i=0;i<10;i++){const r=cyl(.03,.03,7,new T.MeshBasicMaterial({color:0xffe080}),0,0,0);r.rotation.set(R()*3,R()*3,R()*3);r.visible=false;sc.add(r);rays.push(r)}
+const pl4=[0,1,2,3].map(i=>{const p=pol(i);p.visible=false;sc.add(p);return p});
+// --- phòng bệnh buổi sáng (cách đấu trường 200m) ---
+const ra=(o,x,y,z)=>{o.position.set(RX+x,y,z);sc.add(o);return o},wm=new T.MeshBasicMaterial({color:0x182440}),wl=mt(0xd4e2d6,0,0x1a221c),wd=mt(0x8a5a30);
+plane(10,10,RX,0,.5,mt(0xffffff,tx(64,(x,w)=>{x.fillStyle='#b9c6bd';x.fillRect(0,0,w,w);x.strokeStyle='#8fa196';x.strokeRect(0,0,w,w)},5,5)));plane(10,10,RX,3.2,.5,mt(0xe8efe8),0);
+vp(10,3.2,RX,1.6,-4.5,wl,0);vp(10,3.2,RX,1.6,5.5,wl,M.PI);vp(10,3.2,RX-5,1.6,.5,wl,M.PI/2);vp(10,3.2,RX+5,1.6,.5,wl,-M.PI/2);vp(2.4,1.9,RX+4.97,1.9,-1.4,wm,-M.PI/2);
+ra(bq(.08,1.9,.08,mt(0xffffff,0,0x444444)),4.95,1.9,-1.4);ra(bq(.08,.08,2.4,mt(0xffffff,0,0x444444)),4.95,1.9,-1.4);
+vp(1.1,.85,RX-.2,2.2,-4.46,new T.MeshBasicMaterial({map:tx(128,(x,w)=>{x.fillStyle='#fffbe8';x.fillRect(0,0,w,w);x.strokeStyle='#3366cc';x.lineWidth=4;x.beginPath();x.arc(36,40,10,0,7);x.moveTo(36,50);x.lineTo(36,84);x.moveTo(20,64);x.lineTo(52,64);x.moveTo(36,84);x.lineTo(26,108);x.moveTo(36,84);x.lineTo(46,108);x.stroke();x.fillStyle='#aa7744';x.fillRect(70,60,40,40);x.fillStyle='#000';x.fillRect(78,72,6,6);x.fillRect(96,72,6,6);x.fillStyle='#d33';x.font='bold 17px sans-serif';x.fillText('BẠN MÃI',26,22)})}),0);
+ra(bq(1.3,.35,2.7,mt(0x8a8a90)),0,.3,.1);ra(bq(1.2,.25,2.6,mt(0xeef2ee)),0,.55,.1);ra(bq(1.3,.9,.08,mt(0x8a8a90)),0,.8,-1.25);ra(bq(.62,.14,.42,mt(0xffffff)),0,.72,-.85);ra(bq(1.18,.16,1.3,mt(0x7fb0c8)),0,.78,.5);
+const rp=new T.Group(),rk=kid();rk.position.y=-.6;rp.add(rk);rp.rotation.x=-M.PI/2;ra(rp,0,.88,-.1);rk.ld.forEach(l=>l.scale.y=1);
+const mm=mom();mm.rotation.y=-M.PI/2;ra(mm,1.2,0,-.2);ra(bq(.5,.06,.5,wd),1.2,.5,-.2);ra(bq(.06,.8,.5,wd),1.5,.88,-.2);
+const ec=document.createElement('canvas');ec.width=128;ec.height=64;const ex=ec.getContext('2d'),et2=new T.CanvasTexture(ec);let ep=0,bpm=40,lb=0;
+ra(bq(.55,.4,.3,mt(0x222226)),-1.3,1.2,-1).rotation.y=.6;ra(cyl(.03,.03,1,mt(0x888888)),-1.3,.6,-1);ra(new T.Mesh(new T.PlaneGeometry(.46,.3),new T.MeshBasicMaterial({map:et2})),-1.2,1.2,-.865).rotation.y=.6;
+U.push(dt=>{dt*=ts;ep+=dt*bpm/60;ex.fillStyle='#001a08';ex.fillRect(0,0,128,64);ex.strokeStyle='#4f8';ex.beginPath();for(let i=0;i<128;i++){const u=((i/128*2.5-ep)%1+1)%1;ex.lineTo(i,(u>.42&&u<.47?12:u>.47&&u<.53?54:32)+R()*1.2)}ex.stroke();et2.needsUpdate=true;if(M.floor(ep)>lb){lb=M.floor(ep);P.x>150&&snd(880,.12,'sine',.1)}});
+ra(bq(.55,.9,.55,wd),-1.15,.45,-1.9);const cx2=chest();cx2.scale.setScalar(.3);cx2.rotation.y=.35;ra(cx2,-1.15,.9,-1.9);const ce=new T.Mesh(new T.PlaneGeometry(.6,.4),eM);ce.position.set(0,1.03,.55);ce.visible=false;cx2.add(ce);
+const rs=new T.DirectionalLight(0xffe0b0,0),rm=new T.AmbientLight(0x223344,0),rl=new T.PointLight(0xffe8c8,0,12);rs.position.set(RX+8,5,-1.4);rs.target.position.set(RX,.5,.2);rl.position.set(RX,2.6,.5);sc.add(rs,rs.target,rm,rl);
+const du=pfx(0xffeebb,90,.05,0,1);for(let i=0;i<270;i+=3){du.p[i]=RX+R()*8-4;du.p[i+1]=R()*3;du.p[i+2]=R()*8-3;du.v[i]=R()*.12-.06;du.v[i+1]=R()*.08-.03;du.v[i+2]=R()*.12-.06}
+const bmm=new T.MeshBasicMaterial({map:tx(64,(x,w)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'rgba(255,230,170,0)');g.addColorStop(.5,'rgba(255,230,170,.9)');g.addColorStop(1,'rgba(255,230,170,0)');x.fillStyle=g;x.fillRect(0,0,w,w)}),transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,side:2});
+[-2.2,-1.4,-.6].forEach(z=>{const b=new T.Mesh(new T.PlaneGeometry(1.1,6),bmm);b.rotation.z=-1.17;ra(b,2,1.4,z)});
+const dawn=t=>{rs.intensity=lerp(0,1.5,t);rl.intensity=lerp(.2,1,t);rm.color.setHex(0x223344).lerp(new T.Color(0xffe6c0),t);wm.color.setHex(0x182440).lerp(new T.Color(0xffe2a0),t);bmm.opacity=lerp(0,.35,t)};
+
+// ===== CẢNH 1: KẺ CHO ĂN ĐẦU TIÊN =====
+fx('#fff',0,1800);$('l1').style.height=$('l2').style.height='9%';snd(55,9,'sine',.5,30);
+await act(14.5,t=>{bs.position.z=lerp(-16,-6,t);bs.position.y=M.abs(M.sin(ct*3))*.05;aim(lerp(-.8,.8,t),1.2,lerp(9,7.6,t),0,2.1,bs.position.z,lerp(56,44,t))},[['Ngủ đi, bé con. Ngủ thì sẽ không còn đau nữa.',3200,'#ff7070'],['Tôi... muốn tỉnh dậy.',2400,'#9fd0ff'],['Ta là lời thì thầm đầu tiên bên giường cậu: "không còn hy vọng".',3600,'#ff7070'],['Cube đã nuốt câu ấy. Đó là miếng ăn đầu tiên của nó.',3400,'#ff7070']]);
+// ===== CẢNH 2: GAI ĐEN, CUBE LAO RA CHẮN =====
+let h1=0;
+await act(5,t=>{bs.position.z=lerp(-6,-4.5,t);bs.sy.rotation.x=lerp(-.5,-2.6,ez(cp(t*3)));
+for(let i=0;i<9;i++)t<.75?spk(i,lerp(BP.x,-1.6,i/8),lerp(BP.z,2.4,i/8),(t-.2-i*.05)/.3):sk[i].visible=false;
+const d=ez(cp((t-.5)*3.5));cb.position.set(lerp(2.4,-.6,d),.25,lerp(2.6,1.2,d));cb.rotation.y=M.PI+.35-d*.35;
+if(t>.75&&!h1){h1=1;shk=1.4;fx('#fff',.8,0);setTimeout(()=>fx('#fff',0,500),60);snd(70,.7,'square',.6,25);burst(dk,-.6,1.4,.6,7,2);cb.sm.emissive.setRGB(.35,0,0)}
+aim(lerp(5,3.2,t),.55,lerp(-2.5,.5,t),-1,.9,0,62,.12)},[['Cậu không được thức.',2400,'#ff7070']]);
+// ===== CẢNH 3: ĐUỔI BẮT QUANH BOSS =====
+const a0=1.84;rst();
+await act(7.5,t=>{const a=a0+t*5,s=M.sin(ct*14);by.position.set(BP.x+M.cos(a)*7.5,M.abs(s)*.08,BP.z+M.sin(a)*7.5);by.rotation.y=M.atan2(-M.sin(a),M.cos(a));by.l.rotation.x=s*.9;by.r.rotation.x=-s*.9;by.al.rotation.x=-s*.8;by.ar.rotation.x=s*.8;bs.rotation.y=M.atan2(by.position.x-BP.x,by.position.z-BP.z);
+cb.position.set(BP.x+M.cos(a-.5)*9.5,.25+M.sin(ct*3)*.1,BP.z+M.sin(a-.5)*9.5);cb.rotation.y=M.atan2(BP.x-cb.position.x,BP.z-cb.position.z);
+for(let i=0;i<16;i++){const b=i/16*.8,g=a0+b*5;spk(i,BP.x+M.cos(g)*7.5,BP.z+M.sin(g)*7.5,(t-b)/.14)}
+tz.forEach((o,i)=>{const u=cp((t-.45-i*.08)/.25);if(u>0){o.fl=1;o.position.set(lerp(by.position.x,BP.x,u),lerp(1.1,1.9,u)+M.sin(u*M.PI)*1.2,lerp(by.position.z,BP.z,u));o.rotation.y+=.5;if(u>=1&&!o.h){o.h=1;shk=.6;snd(500+i*140,.3,'triangle',.3,120);burst(gd,BP.x,1.9,BP.z,3,1)}}if(t>.85){o.fl=0;o.h=0}});
+aim(BP.x+M.cos(a-.55)*11.5,1.4,BP.z+M.sin(a-.55)*11.5,by.position.x,1,by.position.z,58,.14*M.sin(t*9))},[['Cube: Chạy đi, me! Đừng dừng lại!',2600,'#ffd77a']]);
+sk.forEach(c=>c.visible=false);
+// ===== CẢNH 4: BỊ DỒN VÀO GÓC, CUBE HỨNG ĐÒN, NỞ RA THÀNH HỘP ĐỒ CHƠI =====
+rst();by.position.set(-2,0,3);by.rotation.y=M.PI;cb.position.set(1.4,.25,2.4);cb.rotation.y=M.PI;BP.set(0,0,-3);bs.rotation.y=0;tz.forEach(o=>o.fl=0);let h2=0;
+await act(4,t=>{BP.z=lerp(-3,.6,ez(cp(t*1.4)));bs.sy.rotation.x=lerp(-2.6,.5,ez(cp((t-.45)*3)));const k=ez(cp((t-.55)*4));cb.position.set(lerp(1.4,-1,k),.25,lerp(2.4,1.7,k));
+if(t>.78&&!h2){h2=1;shk=1.8;fx('#fff',.9,0);setTimeout(()=>fx('#fff',0,600),70);snd(60,.9,'square',.7,20);burst(dk,-.8,1.6,1.2,8,2);cb.sm.emissive.setRGB(.6,0,0);cb.ey.forEach(e=>e.scale.y=.25)}
+aim(-4.2,1.35,5.6,.2,1.6,.6,50,-.05)},[['Cube: Ta đói... nhưng ta không muốn nuốt ngươi nữa.',3000,'#ffd77a']]);
+ts=.3;oc.free=1;ch.visible=true;ch.position.set(cb.position.x,0,cb.position.z);ch.rotation.y=cb.rotation.y;chord([196,247,294],6,.08);
+await act(2.2,t=>{const op=ez(cp(t*1.5));cb.pv.forEach(p=>p.rotation[p.ax]=p.sg*op*(p.position.y?2.3:1.52));ch.scale.setScalar(lerp(.01,1,ez(cp(t*2))));ch.lp.rotation.x=-ez(cp((t-.35)*2))*1.9;gl.intensity=lerp(0,7,t);gl.position.set(cb.position.x,2,cb.position.z);rg.material.color.set(t>.5?0xffc040:0xff2200);by.ar.rotation.x=lerp(0,-1.2,cp(t*3));oc.set(cb.position.x,2.2,cb.position.z);orr=lerp(.9,3.2,t);
+aim(cb.position.x+M.cos(t*3-1)*7,lerp(1.4,3.2,t),cb.position.z+M.sin(t*3-1)*7,cb.position.x,1.6,cb.position.z,lerp(60,75,t))},[['Mở ra đi, Cube. Mình quay về rồi.',3000,'#9fd0ff'],['...Ừ. Ta mở đây.',2800,'#ffd77a']]);
+ts=1;
+// ===== CẢNH 5: ĐỒ CHƠI HỢP THÀNH CHÌA KHOÁ, me LAO LÊN KHOÁ BOSS =====
+const kt=new T.Vector3(-2,3.2,3);tz.forEach(o=>{o.fl=1;o.st=o.position.clone()});rst();by.ar.rotation.x=0;
+await act(3.5,t=>{const u=ez(cp(t*1.15));tz.forEach((o,i)=>{const a=u*8+i*2.1;o.position.set(lerp(o.st.x,kt.x,u)+M.cos(a)*(1-u)*1.5,lerp(o.st.y,kt.y,u),lerp(o.st.z,kt.z,u)+M.sin(a)*(1-u)*1.5);o.rotation.y+=.3;o.scale.setScalar(1.3*(1-u*.6))});
+if(t>.85&&!ky.visible){ky.visible=true;tz.forEach(o=>o.visible=false);shk=.8;fx('#fff',.9,0);setTimeout(()=>fx('#fff',0,500),60);snd(1500,1.2,'sine',.3,3000);burst(gd,kt.x,kt.y,kt.z,5,1)}
+ky.position.copy(kt);ky.k.rotation.y=ct*4;gl.intensity=7+M.sin(ct*10);aim(-2+M.cos(t*2.2)*4.5,lerp(.6,1.8,t),3+M.sin(t*2.2)*4.5,kt.x,lerp(1.6,3.2,t),kt.z,lerp(70,52,t))},[['Ba món đồ chơi... chiếc chìa khoá của Cube.',2800,'#9fd0ff']]);
+dk.tg.set(cb.position.x,1.1,cb.position.z);let k1=0,k2=0;BP.set(0,0,.6);
+await act(5,t=>{ts=t<.4?.45:1;const u=ez(cp(t/.42)),w=ez(cp((t-.8)/.2)),kk=cp(t/.2);
+by.position.set(lerp(lerp(-2,0,u),-2.4,w),(lerp(0,1.2,u)+M.sin(u*M.PI)*1.2)*(1-w),lerp(lerp(3,1.55,u),3.4,w));
+by.ar.rotation.x=lerp(0,-1.57,cp(t/.3));by.al.rotation.x=by.ar.rotation.x*.8;by.l.rotation.x=-.5*(1-w);by.r.rotation.x=.4*(1-w);
+if(ky.visible){ky.position.set(lerp(kt.x,by.position.x+.1,kk),lerp(kt.y,by.position.y+1.05,kk),lerp(kt.z,by.position.z-.5,kk));ky.rotation.x=lerp(0,M.PI/2,kk);ky.k.rotation.y=t>.5?(t-.5)*30:0}
+if(t>.42&&!k1){k1=1;shk=1.5;fx('#fff',.8,0);setTimeout(()=>fx('#fff',0,500),60);snd(120,.7,'square',.6,30);burst(gd,0,1.9,.6,6,1)}
+bs.position.x=t>.42&&t<.84?(R()-.5)*.15:0;bs.sy.rotation.x=lerp(.5,1.4,cp((t-.42)*4));
+rays.forEach(r=>{r.visible=t>.5&&t<.84;r.position.set(BP.x,1.9,BP.z);r.scale.set(1+M.sin(ct*30)*.4,cp((t-.5)*3),1+M.sin(ct*30)*.4)});
+if(t>.84&&!k2){k2=1;bs.visible=ky.visible=false;rays.forEach(r=>r.visible=false);shk=2;fx('#fff',.9,0);setTimeout(()=>fx('#fff',0,700),80);snd(900,1.8,'sawtooth',.5,40);burst(dk,0,1.8,.6,9,1.5);setTimeout(()=>{dk.mode=1;dk.k=7},700)}
+aim(lerp(-4,-1.8,t),lerp(.9,1.9,t),lerp(5.8,3.8,t),0,1.7,.6,lerp(60,48,t),lerp(.15,0,t))},[['Tôi không ngủ nữa.',2600,'#9fd0ff']]);
+ts=1;
+// ===== CẢNH 6: CUBE NUỐT NỖI SỢ — LẦN ĐẦU "CHO ĂN" ĐÚNG CÁCH =====
+rst();let ab=0;
+await beat(4.5,t=>{ch.lp.rotation.x=lerp(-1.9,0,ez(cp((t-.25)*3)));if(t>.4&&!ab){ab=1;shk=1;snd(200,.5,'square',.5,40);dk.visible=false;burst(gd,cb.position.x,1.3,cb.position.z,4,2)}
+const op=1-ez(cp((t-.45)*2));cb.pv.forEach(p=>p.rotation[p.ax]=p.sg*op*(p.position.y?2.3:1.52));ch.scale.setScalar(lerp(1,.01,ez(cp((t-.45)*2.2))));ge.forEach((e,i)=>e.scale.y=lerp(1,.05,cp((t-.2)*1.4-i*.02)));cb.ey.forEach(e=>e.scale.y=.06);cb.sm.emissive.setRGB(lerp(.6,.35,t),lerp(0,.25,t),lerp(0,.05,t));gl.intensity=lerp(7,3,t);
+aim(lerp(7,3.6,t),lerp(3.2,1.7,t),lerp(1,7.5,t),-1,1.2,1.7,lerp(75,55,t))});
+// ===== CẢNH 7: KÝ ỨC TRỞ VỀ =====
+sm2.color.set(0xffd080);pl.color.set(0xffd080);rg.material.color.set(0xffc040);chord([262,330,392,523],7,.07);
+await act(14,t=>{pl4.forEach((p,i)=>{const e=ez(cp((t-.04-i*.07)/.3)),w=cp((t-.5-i*.08)/.25),a=ct*1.3+i*1.57,r=lerp(.1,1.7,e)*(1-w);p.visible=t>.04+i*.07&&w<1;p.position.set(by.position.x+M.cos(a)*r,lerp(1.2,1.5+i*.12,e),by.position.z+M.sin(a)*r);p.scale.setScalar((1-w)*e);p.lookAt(P.x,P.y,P.z);if(w>=1&&!p.d){p.d=1;burst(gd,by.position.x,1.1,by.position.z,2.5,1);snd(660+i*110,1.2,'sine',.12,1320)}});
+aim(lerp(3.6,-.4,t),lerp(1.7,1.5,t),lerp(7.5,6,t),-2.2,1.1,3.1,lerp(55,44,t))},[['Cube: Ngon quá... lần đầu tiên ta ăn mà không phải nuốt mất ai.',3400,'#ffd77a'],['Trả lại cho mình đi, Cube.',2400,'#9fd0ff'],['Cube: Đây. Cả bố, cả mẹ, và lời hứa đi cắm trại.',3200,'#ffd77a'],['— me ơi... mẹ đây. Mẹ ở đây rồi.',3400,'#ffc0d0']]);
+fx('#fff',1,2200);await sleep(2600);
+// ===== CẢNH 8: NGÀY THỨ HAI MƯƠI — PHÒNG BỆNH BUỔI SÁNG =====
+sc.fog=null;sc.background=new T.Color(0x0a1018);pl.intensity=gl.intensity=am.intensity=0;ge.forEach(e=>e.visible=false);du.visible=true;rm.intensity=.55;dawn(0);bpm=40;P.x>0;
+fx('#fff',0,2500);sub('Ngày thứ hai mươi.',3000,'#ddd');chord([262,392,523],8,.05);
+await beat(6,t=>{dawn(t*.5);aim(RX-3.6,lerp(1.9,1.6,t),lerp(4.2,3,t),RX,.9,-.3,lerp(55,48,t))});
+await beat(4.5,t=>{dawn(.5+t*.1);bpm=lerp(40,58,t);rk.ar.rotation.z=t>.5?-.18*M.sin((t-.5)*40)*cp((.9-t)*5):0;aim(RX+lerp(.9,.6,t),lerp(1.15,1,t),lerp(.9,.5,t),RX+.28,.86,-.05,lerp(50,38,t))});
+await act(4.5,t=>{dawn(.6+t*.15);bpm=lerp(58,72,t);mm.hd.rotation.x=lerp(.9,0,ez(cp(t*1.6)));aim(RX+lerp(2.6,1.9,t),1.35,lerp(1.9,.9,t),RX+1.14,1.3,-.2,46)},[['— ...me?',2200,'#ffc0d0'],['— Con ơi?!',2000,'#ffc0d0']]);
+await act(5.5,t=>{dawn(.75+t*.2);bpm=lerp(72,88,t);rk.ld.forEach(l=>l.scale.y=lerp(1,.05,ez(cp(t*2.2))));aim(RX+lerp(.5,.2,t),lerp(1.75,1.45,t),lerp(-.35,-.55,t),RX,.98,-.7,lerp(46,36,t))},[['Mẹ... con mơ thấy Cube.',2800,'#9fd0ff'],['— Cube vẫn ở đây, con yêu.',2600,'#ffc0d0']]);
+await act(7,t=>{dawn(.95);const u=ez(cp(t*1.6));rp.rotation.x=lerp(-M.PI/2,-.15,u);rp.position.set(RX,lerp(.88,1,u),lerp(-.1,-.3,u));mm.position.x=RX+lerp(1.2,1,u);mm.hd.rotation.x=lerp(0,-.2,u);aim(RX+lerp(-1.2,1.4,t),lerp(1.4,1.7,t),lerp(4,3.6,t),RX+.3,1.05,-.4,52)},[['Con tưởng mình ngủ hai mươi năm cơ...',3000,'#9fd0ff'],['— Mới hai mươi ngày thôi. Mẹ đếm từng ngày.',3200,'#ffc0d0']]);
+await act(6,t=>{dawn(1);cx2.lp.rotation.x=-.22*ez(cp((t-.2)*3));ce.visible=t>.45;ce.scale.y=M.sin(ct*6)>.9?.1:1;gl.position.set(RX-1.15,1.3,-1.8);gl.intensity=lerp(0,1.2,t);aim(RX+lerp(-.2,-.7,t),lerp(1.3,1.1,t),lerp(-.5,-1.1,t),RX-1.15,1.05,-1.9,lerp(48,32,t))},[['Cube: ...Cảm ơn đã cho ta ăn.',3000,'#ffd77a'],['Cube: Lần sau, đừng bỏ ta lại nữa nhé.',3200,'#ffd77a']]);
+await sleep(1200);fx('#000',1,2500);await sleep(2800);$('l1').style.height=$('l2').style.height='0';
+const tc=document.createElement('div');tc.className='f';tc.style.cssText='z-index:60;background:#000;opacity:0;transition:opacity 3s';tc.innerHTML='<h1>FEED THE CUBE</h1><p style="font-size:max(14px,2.6vmin);opacity:.85">by Chiriku Lazy</p><p style="max-width:80vw;font-style:italic;opacity:.75;line-height:1.7">Hộp đồ chơi nào cũng đang chờ một đứa trẻ quay về mở nắp.</p><button class="b" id="rp2" style="margin-top:3vh">Chơi lại</button>';document.body.appendChild(tc);requestAnimationFrame(()=>tc.style.opacity=1);$('rp2').onclick=()=>location.reload();chord([262,330,392,523,659],9,.06)}
+</script></body></html>
